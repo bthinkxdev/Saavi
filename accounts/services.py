@@ -592,7 +592,7 @@ def request_email_otp(*, email: str, purpose: str) -> EmailOTPRequest:
     if existing_request and existing_code:
         send_email(
             email=normalized_email,
-            subject="Your Sarocchi Luxe Designs Verification Code",
+            subject="Your Saavi By Neethu Verification Code",
             message=f"Your verification code is: {existing_code}. It is valid for 5 minutes.",
         )
         return existing_request
@@ -611,7 +611,7 @@ def request_email_otp(*, email: str, purpose: str) -> EmailOTPRequest:
 
     send_email(
         email=normalized_email,
-        subject="Your Sarocchi Luxe Designs Verification Code",
+        subject="Your Saavi By Neethu Verification Code",
         message=f"Your verification code is: {otp_code}. It is valid for 5 minutes.",
     )
     return otp_request

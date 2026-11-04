@@ -21,7 +21,7 @@
           {% if forloop.first %}<link rel="preload" as="image" href="{{ slide.src }}" fetchpriority="high">{% endif %}
           <img src="{{ slide.src }}"
                class="jm-hero__img"
-               alt="{{ slide.title|default:'Sarocchi Luxe Designs' }}"
+               alt="{{ slide.title|default:'Saavi By Neethu' }}"
                width="1440"
                {% if forloop.first %}fetchpriority="high" loading="eager"{% else %}loading="lazy"{% endif %}>
           {% endif %}

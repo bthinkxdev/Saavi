@@ -90,7 +90,7 @@ def inquiry_detail(request: HttpRequest, pk: int) -> HttpResponse:
     
     from core.services import get_site_settings
     site_settings = get_site_settings()
-    site_name = site_settings.site_name or "Sarocchi Luxe Designs"
+    site_name = site_settings.site_name or "Saavi By Neethu"
     subject = inquiry.reply_subject or f"Re: Your inquiry to {site_name}"
     message_text = inquiry.reply_message or ""
     reply_sent = bool(inquiry.replied_at)

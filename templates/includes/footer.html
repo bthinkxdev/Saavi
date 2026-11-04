@@ -10,7 +10,7 @@
             {% else %}
               <img src="{% static 'dashboard/images/logo.png' %}" alt="" width="36" height="36">
             {% endif %}
-            <span>{{ site_settings.site_name|default:"Sarocchi Luxe Designs" }}</span>
+            <span>{{ site_settings.site_name|default:"Saavi By Neethu" }}</span>
           </a>
         </div>
         <p class="jm-footer__tagline">{% trans "Luxury Sarees & Fine Jewellery — Handcrafted Elegance for New Zealand" %}</p>
@@ -62,6 +62,6 @@
         {% endif %}
       </div>
     </div>
-    <p class="footer-copy text-center mb-0">&copy; {% now "Y" %} {{ site_settings.site_name|default:"SAROCCHI LUXE DESIGNS" }}. {% trans "All rights reserved." %}</p>
+    <p class="footer-copy text-center mb-0">&copy; {% now "Y" %} {{ site_settings.site_name|default:"SAAVI BY NEETHU" }}. {% trans "All rights reserved." %}</p>
   </div>
 </footer>

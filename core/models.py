@@ -1,4 +1,4 @@
-"""Abstract base model mixins and shared core domain models for sarocchi."""
+"""Abstract base model mixins and shared core domain models for saavi."""
 
 from __future__ import annotations
 
@@ -190,6 +190,12 @@ class Currency(TimeStampedModel):
         verbose_name="Is active",
         help_text="When False, this currency is hidden/inactive on the storefront.",
     )
+    auto_update_rate = models.BooleanField(
+        default=True,
+        verbose_name="Auto-update exchange rate",
+        help_text="Refresh the rate automatically once a day. Turn off to keep a fixed, manually set rate.",
+    )
+    rate_updated_at = models.DateTimeField(null=True, blank=True, verbose_name="Rate last updated")
 
     class Meta:
         verbose_name = "Currency"
@@ -210,7 +216,7 @@ class SiteSettings(TimeStampedModel):
     and template slugs are stored here.
     """
 
-    site_name = models.CharField(max_length=120, default="Sarocchi Luxe Designs")
+    site_name = models.CharField(max_length=120, default="Saavi By Neethu")
     logo = models.ImageField(upload_to="site/", blank=True, null=True, verbose_name="Logo")
     primary_color = models.CharField(max_length=7, default="#1B4D3E")
     secondary_color = models.CharField(max_length=7, default="#C5A059")
@@ -238,7 +244,19 @@ class SiteSettings(TimeStampedModel):
     facebook_url = models.URLField(blank=True)
     instagram_url = models.URLField(blank=True)
     twitter_url = models.URLField(blank=True)
-    whatsapp_number = models.CharField(max_length=20, blank=True)
+    whatsapp_number = models.CharField(
+        max_length=20, blank=True, help_text="Customer-facing WhatsApp chat number, with country code (e.g. 971509635106)."
+    )
+    gupshup_api_key = models.CharField(max_length=120, blank=True, verbose_name="Gupshup API key")
+    gupshup_app_name = models.CharField(max_length=80, blank=True, verbose_name="Gupshup app name")
+    gupshup_source_number = models.CharField(
+        max_length=20, blank=True, verbose_name="Gupshup WhatsApp sender number",
+        help_text="Registered WhatsApp Business number, with country code, digits only.",
+    )
+    whatsapp_order_alert_number = models.CharField(
+        max_length=20, blank=True, verbose_name="New-order WhatsApp alert number",
+        help_text="Saavi team number that receives a WhatsApp alert for every new order.",
+    )
     google_analytics_id = models.CharField(
         max_length=50, 
         blank=True,
@@ -328,83 +346,6 @@ class SiteSettings(TimeStampedModel):
     )
     order_email_template_slug = models.CharField(max_length=80, default="order-status")
     whatsapp_template_slug = models.CharField(max_length=80, default="order-whatsapp")
-    enable_razorpay = models.BooleanField(
-        default=True,
-        verbose_name="Enable Razorpay",
-        help_text="Enable or disable Razorpay online payment option at checkout.",
-    )
-    razorpay_key_id = models.CharField(
-        max_length=120,
-        blank=True,
-        verbose_name="Razorpay Key ID",
-        help_text="Razorpay Key ID / Test Key ID for payment processing.",
-    )
-    razorpay_key_secret = models.CharField(
-        max_length=120,
-        blank=True,
-        verbose_name="Razorpay Key Secret",
-        help_text="Razorpay Key Secret / Test Key Secret for payment signature verification.",
-    )
-    enable_cybersource = models.BooleanField(
-        default=True,
-        verbose_name="Enable CyberSource",
-        help_text="Enable or disable CyberSource payment option at checkout.",
-    )
-    cybersource_merchant_id = models.CharField(
-        max_length=120,
-        blank=True,
-        verbose_name="CyberSource Merchant ID",
-        help_text="CyberSource Merchant ID.",
-    )
-    cybersource_key_id = models.CharField(
-        max_length=120,
-        blank=True,
-        verbose_name="CyberSource Key ID",
-        help_text="CyberSource REST API Key ID.",
-    )
-    cybersource_secret_key = models.CharField(
-        max_length=255,
-        blank=True,
-        verbose_name="CyberSource Secret Key",
-        help_text="CyberSource Shared Secret Key.",
-    )
-    cybersource_run_environment = models.CharField(
-        max_length=50,
-        default="apitest.cybersource.com",
-        choices=[
-            ("apitest.cybersource.com", "Test"),
-            ("api.cybersource.com", "Live"),
-        ],
-        verbose_name="CyberSource Environment",
-        help_text="Run environment for CyberSource API requests.",
-    )
-    enable_afterpay = models.BooleanField(
-        default=True,
-        verbose_name="Enable Afterpay",
-        help_text="Enable or disable Afterpay payment option at checkout.",
-    )
-    afterpay_merchant_id = models.CharField(
-        max_length=120,
-        blank=True,
-        verbose_name="Afterpay Merchant ID",
-        help_text="Afterpay Merchant ID.",
-    )
-    afterpay_secret_key = models.CharField(
-        max_length=255,
-        blank=True,
-        verbose_name="Afterpay Secret Key",
-        help_text="Afterpay Secret Key.",
-    )
-    afterpay_environment = models.CharField(
-        max_length=50,
-        default="global-api-sandbox.afterpay.com",
-        choices=[
-            ("global-api-sandbox.afterpay.com", "Test"),
-            ("global-api.afterpay.com", "Live"),
-        ],
-        verbose_name="Afterpay Environment",
-        help_text="Run environment for Afterpay API requests.",
-    )
     enable_stripe = models.BooleanField(
         default=True,
         verbose_name="Enable Stripe",

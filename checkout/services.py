@@ -101,7 +101,7 @@ def _sync_checkout_pending_order(
             "line2": addr.line2,
             "city": addr.city,
             "state": getattr(addr, "state", "") or "",
-            "country": getattr(addr, "country", "") or "NZ",
+            "country": getattr(addr, "country", "") or "IN",
             "pincode": getattr(addr, "pincode", "") or "",
         }
 
@@ -111,8 +111,9 @@ def _sync_checkout_pending_order(
     order.total_amount = summary.grand_total
     order.idempotency_key = idempotency_key
     order.delivery_address_snapshot = address_snapshot
+    order.currency = session.cart.currency
     order.save(
-        update_fields=["subtotal", "coupon_discount", "delivery_charge", "total_amount", "idempotency_key", "delivery_address_snapshot", "updated_at"]
+        update_fields=["subtotal", "coupon_discount", "delivery_charge", "total_amount", "currency", "idempotency_key", "delivery_address_snapshot", "updated_at"]
     )
 
     if gateway_key == "cod":
@@ -243,7 +244,7 @@ def place_order(
             "line2": addr.line2,
             "city": addr.city,
             "state": getattr(addr, "state", "") or "",
-            "country": getattr(addr, "country", "") or "NZ",
+            "country": getattr(addr, "country", "") or "IN",
             "pincode": getattr(addr, "pincode", "") or "",
         }
         

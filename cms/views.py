@@ -27,8 +27,8 @@ def homepage_view(request: HttpRequest) -> HttpResponse:
     ]
     context = seo_context(
         request=request,
-        title="Sarocchi Luxe Designs | Premium Sarees & Jewellery NZ",
-        description="Discover luxury sarees, bridal collections, and handcrafted jewellery tailored for New Zealand by Sarocchi Luxe Designs.",
+        title="Saavi By Neethu | Premium Sarees & Jewellery NZ",
+        description="Discover luxury sarees, bridal collections, and handcrafted jewellery tailored for New Zealand by Saavi By Neethu.",
     )
     context["section_contexts"] = section_contexts
     response = render(request, "cms/homepage.html", context)

@@ -1,5 +1,5 @@
 """
-Base Django settings shared across all environments for sarocchi.
+Base Django settings shared across all environments for saavi.
 """
 
 from pathlib import Path
@@ -53,6 +53,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    "core.middleware.GeoCurrencyMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -60,7 +61,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-ROOT_URLCONF = "sarocchi.urls"
+ROOT_URLCONF = "saavi.urls"
 
 TEMPLATES = [
     {
@@ -82,8 +83,8 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = "sarocchi.wsgi.application"
-ASGI_APPLICATION = "sarocchi.asgi.application"
+WSGI_APPLICATION = "saavi.wsgi.application"
+ASGI_APPLICATION = "saavi.asgi.application"
 
 _database_url = env(
     "DATABASE_URL",
@@ -134,6 +135,10 @@ CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = "Asia/Kolkata"
 CELERY_BEAT_SCHEDULE = {
+    "update-exchange-rates-daily": {
+        "task": "core.tasks.update_exchange_rates",
+        "schedule": crontab(hour=3, minute=17),
+    },
     "celery-health-check-every-minute": {
         "task": "core.tasks.celery_health_check",
         "schedule": 60.0,
@@ -261,22 +266,6 @@ DELHIVERY_BASE_URL = env("DELHIVERY_BASE_URL", default="https://staging-express.
 DELHIVERY_WEBHOOK_TOKEN = env("DELHIVERY_WEBHOOK_TOKEN", default="")
 DELHIVERY_PICKUP_LOCATION = env("DELHIVERY_PICKUP_LOCATION", default="Primary")
 
-#razorpay webhook — separate from the razorpay_key_id/secret stored on SiteSettings,
-#this is deployment-only config for verifying payments.views.razorpay_webhook_view
-RAZORPAY_WEBHOOK_SECRET = env("RAZORPAY_WEBHOOK_SECRET", default="")
-
-#cybersource settings
-CYBERSOURCE_MERCHANT_ID = env("CYBERSOURCE_MERCHANT_ID", default="")
-CYBERSOURCE_KEY_ID = env("CYBERSOURCE_KEY_ID", default="")
-CYBERSOURCE_SECRET_KEY = env("CYBERSOURCE_SECRET_KEY", default="")
-CYBERSOURCE_RUN_ENVIRONMENT = env("CYBERSOURCE_RUN_ENVIRONMENT", default="apitest.cybersource.com")
-
-# Afterpay Direct settings
-AFTERPAY_MERCHANT_ID = env("AFTERPAY_MERCHANT_ID", default="")
-AFTERPAY_SECRET_KEY = env("AFTERPAY_SECRET_KEY", default="")
-AFTERPAY_ENVIRONMENT = env("AFTERPAY_ENVIRONMENT", default="global-api-sandbox.afterpay.com")
-AFTERPAY_CURRENCY = env("AFTERPAY_CURRENCY", default="NZD")
-AFTERPAY_COUNTRY_CODE = env("AFTERPAY_COUNTRY_CODE", default="NZ")
 
 # Stripe settings
 STRIPE_PUBLIC_KEY = env("STRIPE_PUBLIC_KEY", default="")

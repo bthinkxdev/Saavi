@@ -71,4 +71,4 @@ class StorefrontUser(HttpUser):
 
 
 if __name__ == "__main__":
-    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "sarocchi.settings.dev")
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "saavi.settings.dev")

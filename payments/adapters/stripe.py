@@ -176,7 +176,7 @@ class StripePaymentAdapter(PaymentGatewayAdapter):
         # timeout, double submit) returns the same intent instead of creating a second.
         request_options: dict[str, Any] = {"api_key": sec_key}
         if transaction_id:
-            request_options["idempotency_key"] = f"sarocchi-pi-tx-{transaction_id}"
+            request_options["idempotency_key"] = f"saavi-pi-tx-{transaction_id}"
 
         try:
             intent = stripe.PaymentIntent.create(**intent_params, **request_options)

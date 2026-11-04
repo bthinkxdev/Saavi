@@ -645,7 +645,7 @@ class PolicyDocumentForm(SlugAutoMixin):
 
 class SiteSettingsForm(forms.ModelForm):
     default_currency = forms.ModelChoiceField(
-        queryset=Currency.objects.exclude(code__in=["AED", "INR", "USD"]),
+        queryset=Currency.objects.filter(is_active=True),
         required=False,
         empty_label="--- Select Default Currency ---",
         help_text="Select the store's default currency."
@@ -661,6 +661,10 @@ class SiteSettingsForm(forms.ModelForm):
         "instagram_url",
         "twitter_url",
         "whatsapp_number",
+            "gupshup_api_key",
+            "gupshup_app_name",
+            "gupshup_source_number",
+            "whatsapp_order_alert_number",
         "default_currency",
         "vendor_email",
         "order_notification_email",
@@ -674,15 +678,6 @@ class SiteSettingsForm(forms.ModelForm):
         "default_estimated_delivery_text",
         "google_analytics_id",
         "meta_pixel_id",
-        "razorpay_key_id",
-        "razorpay_key_secret",
-        "cybersource_merchant_id",
-        "cybersource_key_id",
-        "cybersource_secret_key",
-        "cybersource_run_environment",
-        "afterpay_merchant_id",
-        "afterpay_secret_key",
-        "afterpay_environment",
         "stripe_publishable_key",
         "stripe_secret_key",
         "stripe_webhook_secret",
@@ -700,6 +695,10 @@ class SiteSettingsForm(forms.ModelForm):
             "instagram_url",
             "twitter_url",
             "whatsapp_number",
+            "gupshup_api_key",
+            "gupshup_app_name",
+            "gupshup_source_number",
+            "whatsapp_order_alert_number",
             "vendor_email",
             "order_notification_email",
             "notify_new_order",
@@ -712,22 +711,11 @@ class SiteSettingsForm(forms.ModelForm):
             "default_estimated_delivery_text",
             "google_analytics_id",
             "meta_pixel_id",
-            "razorpay_key_id",
-            "razorpay_key_secret",
-            "cybersource_merchant_id",
-            "cybersource_key_id",
-            "cybersource_secret_key",
-            "cybersource_run_environment",
-            "afterpay_merchant_id",
-            "afterpay_secret_key",
-            "afterpay_environment",
             "stripe_publishable_key",
             "stripe_secret_key",
             "stripe_webhook_secret",
         ]
         widgets = {
-            "cybersource_secret_key": forms.PasswordInput(render_value=True),
-            "afterpay_secret_key": forms.PasswordInput(render_value=True),
             # Stripe secrets are never echoed back into the page; blank on save keeps the stored value.
             "stripe_secret_key": forms.PasswordInput(render_value=False),
             "stripe_webhook_secret": forms.PasswordInput(render_value=False),
@@ -740,27 +728,13 @@ class SiteSettingsForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if "default_currency" in self.fields:
-            self.fields["default_currency"].queryset = Currency.objects.exclude(
-                code__in=["AED", "INR", "USD"]
-            )
+            self.fields["default_currency"].queryset = Currency.objects.filter(is_active=True)
         default_curr = Currency.objects.filter(is_default=True).first()
-        if default_curr and default_curr.code not in ["AED", "INR", "USD"]:
+        if default_curr:
             if "default_currency" in self.fields:
                 self.fields["default_currency"].initial = default_curr.pk
         if self.instance and not getattr(self.instance, "enable_cod", True):
             self.fields.pop("cod_delivery_charge", None)
-        if self.instance and not getattr(self.instance, "enable_razorpay", True):
-            self.fields.pop("razorpay_key_id", None)
-            self.fields.pop("razorpay_key_secret", None)
-        if self.instance and not getattr(self.instance, "enable_cybersource", True):
-            self.fields.pop("cybersource_merchant_id", None)
-            self.fields.pop("cybersource_key_id", None)
-            self.fields.pop("cybersource_secret_key", None)
-            self.fields.pop("cybersource_run_environment", None)
-        if self.instance and not getattr(self.instance, "enable_afterpay", True):
-            self.fields.pop("afterpay_merchant_id", None)
-            self.fields.pop("afterpay_secret_key", None)
-            self.fields.pop("afterpay_environment", None)
         if self.instance and not getattr(self.instance, "enable_stripe", True):
             self.fields.pop("stripe_publishable_key", None)
             self.fields.pop("stripe_secret_key", None)

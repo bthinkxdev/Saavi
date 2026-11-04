@@ -18,3 +18,11 @@ def refresh_sitemap_cache() -> int:
     response = client.get("/sitemap.xml")
     cache.set("seo:sitemap:last_refresh", response.status_code, timeout=86400 * 2)
     return response.status_code
+
+
+@shared_task(name="core.tasks.update_exchange_rates")
+def update_exchange_rates() -> dict:
+    """Daily refresh of storefront exchange rates (see core.currency)."""
+    from core.currency import update_exchange_rates as _update
+
+    return _update()

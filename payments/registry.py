@@ -4,19 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from payments.adapters.concrete import (
-    ApplePayAdapter,
-    CardGatewayAdapter,
-    GooglePayAdapter,
-    CashOnDeliveryAdapter,
-    RazorpayAdapter,
-    RazorpayUPIAdapter,
-    RazorpayCardAdapter,
-    RazorpayNetbankingAdapter,
-    RazorpayWalletAdapter,
-    AfterpayAdapter,
-)
-from payments.adapters.cybersource import CyberSourceCardAdapter
+from payments.adapters.concrete import CashOnDeliveryAdapter
 from payments.adapters.stripe import StripePaymentAdapter
 
 if TYPE_CHECKING:
@@ -24,19 +12,12 @@ if TYPE_CHECKING:
 
 PAYMENT_GATEWAYS: dict[str, PaymentGatewayAdapter] = {
     StripePaymentAdapter.key: StripePaymentAdapter(),
-    RazorpayUPIAdapter.key: RazorpayUPIAdapter(),
-    RazorpayCardAdapter.key: RazorpayCardAdapter(),
-    RazorpayNetbankingAdapter.key: RazorpayNetbankingAdapter(),
-    RazorpayWalletAdapter.key: RazorpayWalletAdapter(),
-    CyberSourceCardAdapter.key: CyberSourceCardAdapter(),
-    AfterpayAdapter.key: AfterpayAdapter(),
     CashOnDeliveryAdapter.key: CashOnDeliveryAdapter(),
 }
 
-# Gateways offered to customers at checkout. Razorpay and CyberSource adapters stay
-# registered (and their webhooks live) so orders already in flight still settle, but
-# they can no longer be selected for a new order.
-CHECKOUT_GATEWAY_KEYS: frozenset[str] = frozenset({"stripe", "afterpay", "cod"})
+# Saavi sells internationally (India, UAE, Europe, USA): Stripe is the only
+# gateway offered at checkout. COD stays registered for manual admin orders.
+CHECKOUT_GATEWAY_KEYS: frozenset[str] = frozenset({"stripe"})
 
 
 def get_payment_adapter(*, gateway_key: str) -> PaymentGatewayAdapter:
@@ -48,9 +29,5 @@ def get_payment_adapter(*, gateway_key: str) -> PaymentGatewayAdapter:
 
 
 def register_payment_adapter(*, adapter: PaymentGatewayAdapter) -> None:
-    """
-    Register an adapter at runtime (used by tests and future plugins).
-
-    Adding a gateway requires only registry registration — zero checkout view edits.
-    """
+    """Register an adapter at runtime (used by tests and future plugins)."""
     PAYMENT_GATEWAYS[adapter.key] = adapter

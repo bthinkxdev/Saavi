@@ -22,23 +22,9 @@
               <h5 class="border-bottom pb-2 fw-semibold text-dark">Analytics</h5>
             </div>
             {% endif %}
-            {% if field.name == 'razorpay_key_id' %}
+            {% if field.name == 'enable_stripe' %}
             <div class="col-12 mt-3 mb-2">
               <h5 class="border-bottom pb-2 fw-semibold text-dark">Payment Integration</h5>
-            </div>
-            {% endif %}
-            {% if field.name == 'cybersource_merchant_id' %}
-            <div class="col-12 mt-3 mb-2">
-              <h5 class="border-bottom pb-2 fw-semibold text-dark">CyberSource Payment Integration</h5>
-            </div>
-            {% endif %}
-            {% if field.name == 'afterpay_merchant_id' %}
-            <div class="col-12 mt-4 mb-2">
-              <h5 class="border-bottom pb-2 fw-semibold text-dark d-flex align-items-center gap-2">
-                <span>Afterpay Payment Integration</span>
-                <span class="badge rounded-pill fw-semibold" style="background: #b2fce4; color: #000; font-size: 0.75rem;">Pay in 4</span>
-              </h5>
-              <p class="text-muted small mb-1">Enter your Afterpay Merchant ID and Secret Key from the Afterpay Portal to process 4 interest-free installments.</p>
             </div>
             {% endif %}
             {% if field.name == 'stripe_publishable_key' %}
@@ -115,16 +101,6 @@
               {% endif %}
               {% for error in field.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
             </div>
-            {% if field.name == 'cybersource_run_environment' %}
-            <div class="col-12 mb-3">
-              <label class="form-label fw-medium text-dark">CyberSource Webhook URL</label>
-              <div class="input-group">
-                <input type="text" id="cybersource-webhook-url" class="form-control bg-light" readonly value="{{ request.scheme }}://{{ request.get_host }}{% url 'payments:cybersource-webhook' %}">
-                <button class="btn btn-outline-secondary" type="button" onclick="navigator.clipboard.writeText(document.getElementById('cybersource-webhook-url').value); var b=this; b.innerText='Copied!'; setTimeout(function(){ b.innerText='Copy URL'; }, 2000);">Copy URL</button>
-              </div>
-              <div class="text-muted small mt-1">Copy and paste this URL into your CyberSource Business Center under Webhooks.</div>
-            </div>
-            {% endif %}
             {% endfor %}
           </div>
           <button type="submit" class="btn btn-primary">Save settings</button>

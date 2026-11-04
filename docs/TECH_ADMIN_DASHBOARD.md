@@ -57,10 +57,10 @@ dashboard/
 
 | Location | Change |
 |----------|--------|
-| `sarocchi/settings/base.py` → `INSTALLED_APPS` | `"dashboard"` added. |
-| `sarocchi/settings/base.py` → `TEMPLATES` context processors | `"dashboard.context_processors.dashboard_chrome"` added. |
-| `sarocchi/settings/base.py` → `MESSAGE_TAGS` | Maps Django `ERROR` → Bootstrap `danger`. |
-| `sarocchi/urls.py` | `path("dashboard/", include("dashboard.urls"))` (non-i18n prefix). |
+| `saavi/settings/base.py` → `INSTALLED_APPS` | `"dashboard"` added. |
+| `saavi/settings/base.py` → `TEMPLATES` context processors | `"dashboard.context_processors.dashboard_chrome"` added. |
+| `saavi/settings/base.py` → `MESSAGE_TAGS` | Maps Django `ERROR` → Bootstrap `danger`. |
+| `saavi/urls.py` | `path("dashboard/", include("dashboard.urls"))` (non-i18n prefix). |
 
 `dashboard/apps.py` defines `DashboardConfig` (`name="dashboard"`, `verbose_name="Dashboard"`, `default_auto_field=BigAutoField`).
 

@@ -2,9 +2,9 @@
 <aside id="sidebar" class="sidebar">
   <div class="logo-area">
     <a href="{% url 'dashboard:home' %}" class="d-inline-flex align-items-center">
-      <img src="{% if site_settings.logo %}{{ site_settings.logo.url }}{% else %}{% static 'dashboard/images/logo.png' %}{% endif %}" alt="{{ site_settings.site_name|default:'Sarocchi Luxe Designs' }} Admin" width="28" height="28"
+      <img src="{% if site_settings.logo %}{{ site_settings.logo.url }}{% else %}{% static 'dashboard/images/logo.png' %}{% endif %}" alt="{{ site_settings.site_name|default:'Saavi By Neethu' }} Admin" width="28" height="28"
         style="border-radius: 50%; object-fit: contain;" />
-      <span class="logo-text ms-2 fw-semibold">{{ site_settings.site_name|default:'Sarocchi Luxe Designs' }} Admin</span>
+      <span class="logo-text ms-2 fw-semibold">{{ site_settings.site_name|default:'Saavi By Neethu' }} Admin</span>
     </a>
   </div>
   <ul class="nav flex-column">

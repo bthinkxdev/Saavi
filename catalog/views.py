@@ -149,14 +149,14 @@ def plp_view(request: HttpRequest, category_slug: str | None = None) -> HttpResp
         description = "Shop limited-time festive offers and exclusive discounts on luxury sarees and jewellery."
     else:
         title = (
-            resolve_meta_title(obj=active_cat, fallback="Shop All | Sarocchi Luxe Designs")
+            resolve_meta_title(obj=active_cat, fallback="Shop All | Saavi By Neethu")
             if active_cat
-            else "Shop All | Sarocchi Luxe Designs"
+            else "Shop All | Saavi By Neethu"
         )
         description = (
             f"Browse {active_cat.name} — luxury sarees and handcrafted jewellery."
             if active_cat
-            else "Browse Premium Sarees & Handcrafted Jewellery - Sarocchi Luxe Designs."
+            else "Browse Premium Sarees & Handcrafted Jewellery - Saavi By Neethu."
         )
 
 
@@ -164,7 +164,7 @@ def plp_view(request: HttpRequest, category_slug: str | None = None) -> HttpResp
     context = seo_context(
         request=request,
         obj=active_cat,
-        title=f"{title} | Sarocchi Luxe Designs",
+        title=f"{title} | Saavi By Neethu",
         description=description,
         canonical_url=build_plp_canonical_url(request=request, category_slug=category_slug),
     )
@@ -261,8 +261,8 @@ def pdp_view(request: HttpRequest, slug: str) -> HttpResponse:
     context = seo_context(
         request=request,
         obj=product,
-        title=f"{product.name} | Sarocchi Luxe Designs",
-        description=f"{product.name} — Luxury Sarees & Fine Jewellery from Sarocchi Luxe Designs",
+        title=f"{product.name} | Saavi By Neethu",
+        description=f"{product.name} — Luxury Sarees & Fine Jewellery from Saavi By Neethu",
     )
     context.update(
         {

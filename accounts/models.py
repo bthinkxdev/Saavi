@@ -143,7 +143,7 @@ class Address(TimeStampedModel):
     country = models.CharField(
         max_length=120,
         blank=True,
-        default="New Zealand",
+        default="India",
         verbose_name="Country",
     )
     pincode = models.CharField(

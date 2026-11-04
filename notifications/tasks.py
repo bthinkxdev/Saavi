@@ -59,7 +59,7 @@ def dispatch_order_status_notification(
     }
     
     body = status_messages.get(new_status, f"Your order status changed from {old_status} to {new_status}.")
-    body += "\n\nBest regards,\nSarocchi Luxe Designs Team"
+    body += "\n\nBest regards,\nSaavi By Neethu Team"
 
     if profile.notify_via_email and user.email:
         send_email(email=user.email, subject=title, message=body)
@@ -84,7 +84,10 @@ def dispatch_new_order_admin_notification(*, order_id: int) -> None:
     from orders.models import Order
 
     site_settings = get_site_settings()
-    if not site_settings.order_notification_email or not getattr(site_settings, "notify_new_order", True):
+    alert_number = getattr(site_settings, "whatsapp_order_alert_number", "")
+    if not getattr(site_settings, "notify_new_order", True):
+        return
+    if not site_settings.order_notification_email and not alert_number:
         return
 
     order = (
@@ -113,12 +116,26 @@ def dispatch_new_order_admin_notification(*, order_id: int) -> None:
         f"Order: {order.order_number}\n"
         f"Status: {order.get_order_status_display()}\n"
         f"Customer: {order.customer_display_name}\n"
-        f"Total: {currency_code} {order.total_amount}\n\n"
+        f"Total: {currency_code} {_charged(order)}\n\n"
         f"Items:\n{lines_text}\n\n"
         f"View in dashboard for full details."
     )
 
-    send_email(email=site_settings.order_notification_email, subject=subject, message=body)
+    if site_settings.order_notification_email:
+        send_email(email=site_settings.order_notification_email, subject=subject, message=body)
+    if alert_number:
+        from core.currency import convert_from_base
+
+        charged = convert_from_base(order.total_amount, order.currency)
+        send_whatsapp(
+            phone=alert_number,
+            message=(
+                f"New Saavi order {order.order_number}\n"
+                f"Customer: {order.customer_display_name}\n"
+                f"Total: {currency_code} {charged}\n"
+                f"Items:\n{lines_text}"
+            ),
+        )
 
 
 @shared_task(name="notifications.tasks.dispatch_order_confirmation_notification")
@@ -159,14 +176,14 @@ def dispatch_order_confirmation_notification(*, order_id: int) -> None:
     customer_name = user.first_name or user.username
     body = (
         f"Hi {customer_name},\n\n"
-        f"Thank you for placing your order with Sarocchi Luxe Designs.\n\n"
+        f"Thank you for placing your order with Saavi By Neethu.\n\n"
         f"Order ID: {order.order_number}\n\n"
         f"Your order has been received successfully.\n\n"
         f"{payment_text}\n\n"
         f"We’ll keep you updated with the shipping and tracking details once your order is dispatched.\n\n"
-        f"Thank you for choosing Sarocchi Luxe Designs ❤️\n\n"
+        f"Thank you for choosing Saavi By Neethu ❤️\n\n"
         f"Best regards,\n"
-        f"Sarocchi Luxe Designs Team"
+        f"Saavi By Neethu Team"
     )
 
     if profile.notify_via_email and user.email:
@@ -174,7 +191,7 @@ def dispatch_order_confirmation_notification(*, order_id: int) -> None:
 
     if profile.phone:
         if profile.notify_via_sms:
-            send_sms(phone=profile.phone, message=f"Sarocchi Luxe Designs: Order {order.order_number} has been {status_word}. Thank you!")
+            send_sms(phone=profile.phone, message=f"Saavi By Neethu: Order {order.order_number} has been {status_word}. Thank you!")
         if profile.notify_via_whatsapp:
             send_whatsapp(phone=profile.phone, message=body)
 
@@ -201,3 +218,10 @@ def dispatch_low_stock_admin_notification(*, product_name: str, sku: str, curren
     )
 
     send_email(email=site_settings.order_notification_email, subject=subject, message=body)
+
+
+def _charged(order) -> str:
+    """Order total in the currency the customer paid in."""
+    from core.currency import convert_from_base
+
+    return str(convert_from_base(order.total_amount, order.currency))

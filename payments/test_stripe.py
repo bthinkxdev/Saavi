@@ -364,7 +364,7 @@ class ProcessPaymentTests(StripeBase):
         second = process_payment(order=order, gateway_key="stripe", payment_data={})
 
         kwargs = create.call_args_list[0].kwargs
-        self.assertEqual(kwargs["idempotency_key"], f"sarocchi-pi-tx-{first.pk}")
+        self.assertEqual(kwargs["idempotency_key"], f"saavi-pi-tx-{first.pk}")
         self.assertEqual(kwargs["metadata"]["payment_transaction_id"], str(first.pk))
         self.assertNotIn("pi_secret_zzz", json.dumps(first.metadata))
         self.assertNotIn("pi_secret_zzz", json.dumps(second.metadata))

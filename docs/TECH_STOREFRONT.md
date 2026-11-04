@@ -32,7 +32,7 @@ app/
 
 ```
 Browser / HTMX request
-  → sarocchi/urls.py (routing, i18n_patterns, sitemaps)
+  → saavi/urls.py (routing, i18n_patterns, sitemaps)
   → LocaleMiddleware (activate en/ar) + session + CSRF + auth
   → app view (thin)
       → selectors.py  (reads)  and/or  services.py (writes)
@@ -64,19 +64,19 @@ Browser / HTMX request
 
 ---
 
-## 2. Project Configuration — `sarocchi/`
+## 2. Project Configuration — `saavi/`
 
 | File | Purpose |
 |------|---------|
-| `sarocchi/__init__.py` | Loads the Celery app at Django startup (`celery_app`). |
-| `sarocchi/settings/__init__.py` | Package marker; environments imported explicitly. |
-| `sarocchi/settings/base.py` | Shared settings (apps, middleware, DB, cache, Celery, i18n, static/media, auth). |
-| `sarocchi/settings/dev.py` | Development: `DEBUG=True`, LocMem cache, console email, eager Celery, optional debug toolbar. |
-| `sarocchi/settings/staging.py` | Staging: production-like, secure cookies, no HSTS/SSL redirect. |
-| `sarocchi/settings/prod.py` | Production: hardened security (HSTS, SSL redirect, secure cookies), optional Sentry. |
-| `sarocchi/urls.py` | Root URL config: admin, sitemaps, i18n_patterns, app includes, dev static/media. |
-| `sarocchi/celery.py` | Creates `Celery("sarocchi")`, reads `CELERY_*` settings, autodiscovers tasks. |
-| `sarocchi/asgi.py` / `wsgi.py` | ASGI/WSGI entrypoints (default settings module = prod). |
+| `saavi/__init__.py` | Loads the Celery app at Django startup (`celery_app`). |
+| `saavi/settings/__init__.py` | Package marker; environments imported explicitly. |
+| `saavi/settings/base.py` | Shared settings (apps, middleware, DB, cache, Celery, i18n, static/media, auth). |
+| `saavi/settings/dev.py` | Development: `DEBUG=True`, LocMem cache, console email, eager Celery, optional debug toolbar. |
+| `saavi/settings/staging.py` | Staging: production-like, secure cookies, no HSTS/SSL redirect. |
+| `saavi/settings/prod.py` | Production: hardened security (HSTS, SSL redirect, secure cookies), optional Sentry. |
+| `saavi/urls.py` | Root URL config: admin, sitemaps, i18n_patterns, app includes, dev static/media. |
+| `saavi/celery.py` | Creates `Celery("saavi")`, reads `CELERY_*` settings, autodiscovers tasks. |
+| `saavi/asgi.py` / `wsgi.py` | ASGI/WSGI entrypoints (default settings module = prod). |
 
 ### 2.1 `settings/base.py` highlights
 - **Env loading** via `django-environ` from `BASE_DIR/.env`.
@@ -102,7 +102,7 @@ Browser / HTMX request
 | `scan-abandoned-carts-hourly` | `marketing.tasks.scan_abandoned_carts` | 3600s |
 | `refresh-sitemap-daily` | `core.tasks.refresh_sitemap_cache` | 86400s |
 
-### 2.3 Root URL map (`sarocchi/urls.py`)
+### 2.3 Root URL map (`saavi/urls.py`)
 
 **Non-i18n (no language prefix):**
 | Route | Include |
@@ -824,8 +824,8 @@ Serving strategy is **no-build**: CDN for Bootstrap/HTMX/icons, committed CSS/JS
 |------|---------|
 | `scripts/scaffold_apps.py` | One-off generator that scaffolds the layered file set for all business apps (origin of the stub docstrings). |
 | `deploy/gunicorn/gunicorn.conf.py` | Gunicorn config (unix socket, `(2*CPU)+1` workers, timeout 120s, request recycling). |
-| `deploy/nginx/sarocchi.conf` | Nginx site (gunicorn upstream socket, gzip, static/media aliases, proxy headers). |
-| `deploy/systemd/sarocchi.service` | systemd unit running Gunicorn (`www-data`, EnvironmentFile, prod settings, auto-restart). |
+| `deploy/nginx/saavi.conf` | Nginx site (gunicorn upstream socket, gzip, static/media aliases, proxy headers). |
+| `deploy/systemd/saavi.service` | systemd unit running Gunicorn (`www-data`, EnvironmentFile, prod settings, auto-restart). |
 | `deploy/docs/BACKUP_RESTORE.md` | DB/media backup & restore runbook. |
 | `loadtests/locustfile.py` | Locust load test (`StorefrontUser`: weighted homepage/PLP/PDP/checkout tasks). |
 | `manage.py` | Django CLI (default settings = dev). |

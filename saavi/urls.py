@@ -1,4 +1,4 @@
-"""Root URL configuration for sarocchi."""
+"""Root URL configuration for saavi."""
 
 from django.conf import settings
 from django.conf.urls.static import static

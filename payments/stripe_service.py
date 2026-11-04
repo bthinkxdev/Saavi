@@ -11,6 +11,7 @@ intent ``succeeded`` AND its id, currency and amount match what we recorded.
 
 from __future__ import annotations
 
+from core.currency import convert_from_base
 import logging
 from dataclasses import dataclass
 from typing import Any
@@ -73,7 +74,7 @@ def _mismatch_reason(intent: dict[str, Any], payment_tx: PaymentTransaction) -> 
 
     order = payment_tx.order
     if order is not None and (
-        order.total_amount != payment_tx.amount
+        convert_from_base(order.total_amount, order.currency) != payment_tx.amount
         or (order.currency_id and order.currency_id != payment_tx.currency_id)
     ):
         return "order total/currency changed after the payment was initiated"

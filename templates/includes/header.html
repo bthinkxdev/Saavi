@@ -56,11 +56,11 @@
           </svg>
         </button>
 
-        <a class="jm-logo" href="{% url 'cms:homepage' %}" aria-label="{{ site_settings.site_name|default:'SAROCCHI LUXE DESIGNS' }}">
+        <a class="jm-logo" href="{% url 'cms:homepage' %}" aria-label="{{ site_settings.site_name|default:'SAAVI BY NEETHU' }}">
           <img
             src="{% if site_settings.logo %}{{ site_settings.logo.url }}{% else %}{% static 'dashboard/images/logo.png' %}{% endif %}"
             alt="" width="52" height="52" class="jm-logo__mark">
-          <span class="jm-logo__text">{{ site_settings.site_name|default:'SAROCCHI LUXE DESIGNS' }}</span>
+          <span class="jm-logo__text">{{ site_settings.site_name|default:'SAAVI BY NEETHU' }}</span>
         </a>
       </div>
 
@@ -238,7 +238,7 @@
 
 {% with wa=site_settings.whatsapp_number|default:"64220904112" %}
 <a class="jm-wa-float"
-  href="https://wa.me/{{ wa|cut:'+'|cut:' '|cut:'-' }}?text={{ 'Hi Sarocchi Luxe designs, I have an enquiry.'|urlencode }}"
+  href="https://wa.me/{{ wa|cut:'+'|cut:' '|cut:'-' }}?text={{ 'Hi Saavi By Neethu designs, I have an enquiry.'|urlencode }}"
   target="_blank" rel="noopener noreferrer" aria-label="{% trans 'WhatsApp enquiry' %}">
   <span class="jm-wa-float__pulse" aria-hidden="true"></span>
   <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">

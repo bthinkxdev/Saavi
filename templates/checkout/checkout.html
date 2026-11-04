@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load i18n %}
 
-{% block title %}{% trans "Checkout" %} | {{ site_settings.site_name|default:"Sarocchi Luxe Designs" }}{% endblock %}
+{% block title %}{% trans "Checkout" %} | {{ site_settings.site_name|default:"Saavi By Neethu" }}{% endblock %}
 
 {% block extra_head %}
 <link href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.bootstrap5.min.css" rel="stylesheet">
@@ -185,9 +185,6 @@
               {% if selected_gateway_key == key %}checked{% elif not selected_gateway_key and forloop.first %}checked{% endif %}>
             <label class="form-check-label small" for="gw-{{ key }}">
               {{ adapter.display_name }}
-              {% if key == 'afterpay' %}
-                <span class="badge rounded-pill ms-1" style="background-color: #b2fce4; color: #000; font-weight: 600; font-size: 0.72rem; letter-spacing: 0.3px;">Pay in 4</span>
-              {% endif %}
               {% if key == 'cod' and settings.cod_delivery_charge > 0 %}
                 ({{ display_currency.symbol|default:"₹" }}{{ settings.cod_delivery_charge|floatformat:0 }} {% trans "extra charge" %})
               {% endif %}

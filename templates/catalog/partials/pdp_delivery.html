@@ -37,7 +37,7 @@ document.addEventListener("DOMContentLoaded", function() {
     const textSpan = document.getElementById('pdp-delivery-text');
     
     //check for saved city in localStorage to pre-fill
-    const savedCityId = localStorage.getItem('sarocchi_delivery_city_id');
+    const savedCityId = localStorage.getItem('saavi_delivery_city_id');
     if (savedCityId) {
         const option = citySelect.querySelector(`option[value="${savedCityId}"]`);
         if (option) {
@@ -49,7 +49,7 @@ document.addEventListener("DOMContentLoaded", function() {
     citySelect.addEventListener('change', function() {
         const cityId = this.value;
         if (cityId) {
-            localStorage.setItem('sarocchi_delivery_city_id', cityId);
+            localStorage.setItem('saavi_delivery_city_id', cityId);
             fetchEstimate(cityId);
         }
     });

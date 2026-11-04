@@ -38,6 +38,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='sitesettings',
             name='site_name',
-            field=models.CharField(default='Sarocchi Luxe Designs', max_length=120),
+            field=models.CharField(default='Saavi By Neethu', max_length=120),
         ),
     ]

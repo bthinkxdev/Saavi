@@ -246,7 +246,6 @@ def checkout_view(request: HttpRequest) -> HttpResponse:
     from core.services import get_site_settings
     settings = get_site_settings()
     enable_cod = getattr(settings, "enable_cod", True)
-    enable_afterpay = getattr(settings, "enable_afterpay", True)
     enable_stripe = getattr(settings, "enable_stripe", True)
 
     from payments.adapters.stripe import stripe_is_configured
@@ -258,9 +257,6 @@ def checkout_view(request: HttpRequest) -> HttpResponse:
             continue
         if key == "cod" and not enable_cod:
             continue
-        if key == "afterpay":
-            if not enable_afterpay:
-                continue
         if key == "stripe":
             if not enable_stripe or not stripe_ready:
                 continue
@@ -534,14 +530,6 @@ def checkout_place_order_view(request: HttpRequest) -> HttpResponse:
             status=200,
         )
 
-    if gateway_key == "afterpay" and not getattr(settings, "enable_afterpay", True):
-        return render(
-            request,
-            "checkout/partials/errors.html",
-            {"errors": {"gateway_key": ["Afterpay payment is currently disabled."]}},
-            status=200,
-        )
-
     if gateway_key == "stripe":
         from payments.adapters.stripe import stripe_is_configured
         if not getattr(settings, "enable_stripe", True) or not stripe_is_configured():
@@ -584,6 +572,13 @@ def checkout_place_order_view(request: HttpRequest) -> HttpResponse:
 
     try:
         from catalog.exceptions import InsufficientStockError
+        # Lock the order to the visitor's display currency so Stripe charges in it.
+        from core.selectors import get_currency_by_code
+        _code = request.session.get("storefront_currency")
+        _currency = get_currency_by_code(code=_code) if _code else None
+        if _currency is not None and session.cart.currency_id != _currency.pk:
+            session.cart.currency = _currency
+            session.cart.save(update_fields=["currency"])
         order = place_order(
             checkout_session_id=session.pk,
             idempotency_key=form.cleaned_data["idempotency_key"],
@@ -610,30 +605,6 @@ def checkout_place_order_view(request: HttpRequest) -> HttpResponse:
         gateway_key=gateway_key,
         payment_data=payment_data,
     )
-
-    if gateway_key.startswith("razorpay"):
-        pay_url = reverse("checkout:razorpay-pay", kwargs={"order_id": order.pk})
-        if request.headers.get("HX-Request"):
-            response = HttpResponse()
-            response["HX-Redirect"] = pay_url
-            return response
-        return redirect(pay_url)
-
-    if gateway_key.startswith("cybersource"):
-        pay_url = reverse("checkout:cybersource-pay", kwargs={"order_id": order.pk})
-        if request.headers.get("HX-Request"):
-            response = HttpResponse()
-            response["HX-Redirect"] = pay_url
-            return response
-        return redirect(pay_url)
-
-    if gateway_key == "afterpay":
-        pay_url = reverse("checkout:afterpay-pay", kwargs={"order_id": order.pk})
-        if request.headers.get("HX-Request"):
-            response = HttpResponse()
-            response["HX-Redirect"] = pay_url
-            return response
-        return redirect(pay_url)
 
     if gateway_key == "stripe":
         pay_url = reverse("checkout:stripe-pay", kwargs={"order_id": order.pk})
@@ -686,162 +657,6 @@ def checkout_confirmation_view(request: HttpRequest, order_id: int) -> HttpRespo
     )
 
 
-@never_cache
-@require_GET
-def razorpay_pay_view(request: HttpRequest, order_id: int) -> HttpResponse:
-    """Render Razorpay checkout payment page."""
-    from orders.models import Order, OrderStatus
-    from payments.models import PaymentTransaction
-    from payments.adapters.concrete import _get_razorpay_credentials
-    from django.shortcuts import get_object_or_404
-
-    order = get_object_or_404(Order, pk=order_id)
-    
-    if order.order_status != OrderStatus.CHECKOUT_PENDING:
-        from django.shortcuts import redirect
-        return redirect("catalog:plp")
-
-    payment_tx = PaymentTransaction.objects.filter(order=order, gateway_key__startswith="razorpay").last()
-    key_id, _ = _get_razorpay_credentials()
-
-    customer_name = ""
-    customer_email = ""
-    customer_phone = ""
-    if order.customer_profile:
-        customer_name = f"{order.customer_profile.user.first_name} {order.customer_profile.user.last_name}".strip() or order.customer_profile.user.username
-        customer_email = order.customer_profile.user.email
-        customer_phone = order.customer_profile.phone
-    elif order.delivery_address_snapshot:
-        customer_name = order.delivery_address_snapshot.get("recipient_name", "")
-        customer_email = order.delivery_address_snapshot.get("email", "")
-        customer_phone = order.delivery_address_snapshot.get("phone", "")
-
-    amount_in_paise = int(order.total_amount * 100)
-    from core.selectors import get_default_currency
-    default_curr = get_default_currency()
-    currency_code = order.currency.code if order.currency else (default_curr.code if default_curr else "AED")
-    razorpay_order_id = payment_tx.external_intent_id if payment_tx else f"rzp_order_{order.pk}"
-
-    #determine prefill method based on gateway key
-    prefill_method = ""
-    payment_method_name = "Razorpay"
-    if payment_tx and payment_tx.gateway_key:
-        if payment_tx.gateway_key == "razorpay_upi":
-            prefill_method = "upi"
-            payment_method_name = "UPI"
-        elif payment_tx.gateway_key == "razorpay_card":
-            prefill_method = "card"
-            payment_method_name = "Credit/Debit Card"
-        elif payment_tx.gateway_key == "razorpay_netbanking":
-            prefill_method = "netbanking"
-            payment_method_name = "Net Banking"
-        elif payment_tx.gateway_key == "razorpay_wallet":
-            prefill_method = "wallet"
-            payment_method_name = "Wallet"
-
-    #store order_id in session so the callback can retrieve it
-    request.session["razorpay_order_pk"] = order.pk
-
-    #build absolute callback URL for Razorpay redirect
-    callback_url = request.build_absolute_uri(reverse("checkout:razorpay-callback"))
-    cancel_url = request.build_absolute_uri(reverse("checkout:checkout"))
-
-    return render(
-        request,
-        "checkout/razorpay_pay.html",
-        {
-            "order": order,
-            "razorpay_key_id": key_id or "rzp_test_mock",
-            "razorpay_order_id": razorpay_order_id,
-            "amount_in_paise": amount_in_paise,
-            "currency_code": currency_code,
-            "customer_name": customer_name,
-            "customer_email": customer_email,
-            "customer_phone": customer_phone,
-            "callback_url": callback_url,
-            "cancel_url": cancel_url,
-            "prefill_method": prefill_method,
-            "payment_method_name": payment_method_name,
-        },
-    )
-
-
-from django.views.decorators.csrf import csrf_exempt
-
-
-@csrf_exempt
-@require_http_methods(["POST"])
-def razorpay_callback_view(request: HttpRequest) -> HttpResponse:
-    """
-    Handle POST callback from Razorpay after payment.
-
-    Razorpay redirects the full browser here with razorpay_payment_id,
-    razorpay_order_id, and razorpay_signature as POST parameters.
-    """
-    from payments.models import PaymentTransaction
-    from payments.adapters.concrete import RazorpayAdapter
-    from payments.services import confirm_payment_success, confirm_payment_failed
-    from django.shortcuts import get_object_or_404
-    from orders.models import Order
-    from core.selectors import get_default_currency
-
-    razorpay_payment_id = request.POST.get("razorpay_payment_id", "")
-    razorpay_order_id = request.POST.get("razorpay_order_id", "")
-    razorpay_signature = request.POST.get("razorpay_signature", "")
-
-    #try order_id from POST (JS form submit) or session (Razorpay redirect)
-    order_id = request.POST.get("order_id") or request.session.get("razorpay_order_pk")
-
-    if not order_id:
-        #fallback: look up order via Razorpay order ID stored in PaymentTransaction
-        payment_tx = PaymentTransaction.objects.filter(
-            external_intent_id=razorpay_order_id,
-            gateway_key__startswith="razorpay",
-        ).last()
-        if payment_tx:
-            order_id = payment_tx.order_id
-        else:
-            return redirect("checkout:checkout")
-
-    order = get_object_or_404(Order, pk=order_id)
-    payment_tx = PaymentTransaction.objects.filter(order=order, gateway_key__startswith="razorpay").last()
-
-    #clean up session
-    request.session.pop("razorpay_order_pk", None)
-
-    adapter = RazorpayAdapter()
-    is_valid = adapter.verify_payment_signature(
-        razorpay_order_id=razorpay_order_id,
-        razorpay_payment_id=razorpay_payment_id,
-        razorpay_signature=razorpay_signature,
-    )
-
-    if is_valid and payment_tx:
-        if not payment_tx.currency:
-            default_curr = get_default_currency()
-        currency_code = payment_tx.currency.code if payment_tx.currency else (default_curr.code if default_curr else "AED")
-        capture_succeeded = adapter.capture_payment(
-            razorpay_payment_id=razorpay_payment_id,
-            amount=payment_tx.amount,
-            currency=currency_code,
-        )
-        if not capture_succeeded:
-            logger.error(
-                "Razorpay capture failed after valid signature: order_id=%s "
-                "razorpay_payment_id=%s razorpay_order_id=%s",
-                order.pk, razorpay_payment_id, razorpay_order_id,
-            )
-            confirm_payment_failed(payment_transaction=payment_tx)
-            return redirect("checkout:checkout")
-
-        confirm_payment_success(payment_transaction=payment_tx, external_transaction_id=razorpay_payment_id)
-        return redirect("checkout:confirmation", order_id=order.pk)
-    else:
-        if payment_tx:
-            confirm_payment_failed(payment_transaction=payment_tx)
-        return redirect("checkout:checkout")
-
-
 @require_POST
 def checkout_coupon_apply_view(request: HttpRequest) -> HttpResponse:
     """Validate and apply a coupon code from checkout."""
@@ -883,278 +698,6 @@ def checkout_coupon_remove_view(request: HttpRequest) -> HttpResponse:
         remove_coupon(cart=cart)
         messages.success(request, _("Coupon removed."))
     return redirect("checkout:checkout")
-
-
-@never_cache
-@require_GET
-def cybersource_pay_view(request: HttpRequest, order_id: int) -> HttpResponse:
-    """Render CyberSource hosted checkout form or redirect."""
-    from orders.models import Order, OrderStatus
-    from payments.models import PaymentTransaction
-    from django.shortcuts import get_object_or_404, redirect
-
-    order = get_object_or_404(Order, pk=order_id)
-    if order.order_status != OrderStatus.CHECKOUT_PENDING:
-        return redirect("catalog:plp")
-
-    payment_tx = PaymentTransaction.objects.filter(order=order, gateway_key__startswith="cybersource").last()
-    if not payment_tx:
-        return redirect("checkout:checkout")
-
-    #if it's an Afterpay redirect, just redirect there immediately
-    redirect_url = payment_tx.metadata.get("redirect_url")
-    if redirect_url:
-        if payment_tx.metadata.get("error"):
-            from django.contrib import messages
-            messages.error(request, "Failed to initialize payment with the provider. Please try another payment method.")
-            return redirect("checkout:checkout")
-        return redirect(redirect_url)
-
-    #otherwise, render a form for the hosted page
-    hosted_page_url = payment_tx.metadata.get("hosted_page_url", "")
-    
-    request.session["cybersource_order_pk"] = order.pk
-
-    return render(
-        request,
-        "checkout/cybersource_pay.html",
-        {
-            "order": order,
-            "hosted_page_url": hosted_page_url,
-            "metadata": payment_tx.metadata,
-        },
-    )
-
-@require_http_methods(["GET", "POST"])
-@csrf_exempt
-def cybersource_redirect_view(request: HttpRequest) -> HttpResponse:
-    """Handle browser return from CyberSource. Does not confirm payment."""
-    from orders.models import Order, OrderStatus
-    from payments.models import PaymentTransaction
-    from django.shortcuts import redirect
-    
-    #try to find the user's latest pending order, or use the one stored in session
-    order = None
-    order_id = request.session.get("cybersource_order_pk")
-    
-    if order_id:
-        order = Order.objects.filter(pk=order_id).first()
-    elif request.user.is_authenticated:
-        order = Order.objects.filter(user=request.user).last()
-        
-    if order:
-        #if the webhook already processed it (or we are simulating)
-        if order.order_status != OrderStatus.CHECKOUT_PENDING:
-            return redirect("checkout:confirmation", order_id=order.id)
-            
-        #synchronous verification (like Razorpay)
-        payment_tx = PaymentTransaction.objects.filter(order=order, gateway_key__startswith="cybersource").last()
-        if payment_tx and payment_tx.external_intent_id:
-            from payments.adapters.concrete import CyberSourceAdapter
-            from payments.services import confirm_payment_success
-            from django.conf import settings
-            
-            adapter = CyberSourceAdapter()
-            is_success = adapter.fetch_payment_status(payment_tx.external_intent_id)
-            
-            #in sandbox, if the TransactionDetailsApi isn't enabled, fallback to DEBUG auto-success
-            if is_success or settings.DEBUG:
-                confirm_payment_success(payment_transaction=payment_tx, external_transaction_id=payment_tx.external_intent_id)
-                request.session.pop("cybersource_order_pk", None)
-                return redirect("checkout:confirmation", order_id=order.id)
-
-    return render(request, "checkout/cybersource_redirect.html", {})
-
-@require_http_methods(["POST"])
-@csrf_exempt
-def cybersource_process_token_view(request: HttpRequest) -> HttpResponse:
-    """
-    Receives the transientToken from Flex Microform and processes the payment.
-    """
-    import json
-    from django.http import JsonResponse
-    from payments.models import PaymentTransaction
-    from payments.adapters.concrete import CyberSourceCardAdapter
-    from django.shortcuts import get_object_or_404
-    from orders.models import Order
-    import logging
-    
-    logger = logging.getLogger(__name__)
-    
-    try:
-        data = json.loads(request.body)
-        transient_token = data.get('transientToken')
-        order_id = data.get('order_id')
-        
-        if not transient_token or not order_id:
-            return JsonResponse({'success': False, 'error': 'Missing token or order_id'}, status=400)
-            
-        order = get_object_or_404(Order, pk=order_id)
-        
-        adapter = CyberSourceCardAdapter()
-        
-        #authorize with token
-        resp_dict = adapter.authorize_with_token(
-            token=transient_token,
-            order_id=order.pk,
-            amount=order.total_amount,
-            currency=order.currency.code
-        )
-        
-        status = resp_dict.get('status', '').upper()
-        
-        if status in ['AUTHORIZED', 'SETTLED', 'COMPLETED']:
-            #mark payment success synchronously
-            tx = PaymentTransaction.objects.filter(order=order).last()
-            if tx:
-                tx.external_transaction_id = resp_dict.get('id', '')
-                tx.save(update_fields=["external_transaction_id"])
-                from payments.services import confirm_payment_success
-                confirm_payment_success(payment_transaction=tx)
-                
-            return JsonResponse({
-                'success': True, 
-                'redirect_url': f"/checkout/confirmation/{order.pk}/"
-            })
-        else:
-            #payment failed
-            tx = PaymentTransaction.objects.filter(order=order).last()
-            if tx:
-                from payments.services import confirm_payment_failed
-                confirm_payment_failed(payment_transaction=tx)
-            
-            error_message = resp_dict.get('message', '') or resp_dict.get('reason', '')
-            details = resp_dict.get('details', [])
-            detail_str = ""
-            if details:
-                detail_str = " | " + ", ".join([f"{d.get('field')}: {d.get('reason')}" for d in details])
-                
-            return JsonResponse({
-                'success': False,
-                'error': f"Payment declined: {status}. {error_message}{detail_str}",
-                'redirect_url': "/checkout/"
-            }, status=400)
-            
-    except Exception as e:
-        logger.exception("Failed to process transient token")
-        return JsonResponse({'success': False, 'error': 'Internal processing error'}, status=500)
-
-
-@never_cache
-@require_GET
-def afterpay_pay_view(request: HttpRequest, order_id: int) -> HttpResponse:
-    """
-    Handle redirection to Afterpay hosted checkout or local sandbox simulator.
-    """
-    from decimal import Decimal
-    from orders.models import Order, OrderStatus
-    from payments.models import PaymentTransaction
-    from django.shortcuts import get_object_or_404, redirect
-
-    order = get_object_or_404(Order, pk=order_id)
-    if order.order_status != OrderStatus.CHECKOUT_PENDING:
-        return redirect("catalog:plp")
-
-    payment_tx = PaymentTransaction.objects.filter(order=order, gateway_key="afterpay").last()
-    if not payment_tx:
-        return redirect("checkout:checkout")
-
-    request.session["afterpay_order_pk"] = order.pk
-
-    redirect_url = payment_tx.metadata.get("redirect_url", "")
-    is_simulation = payment_tx.metadata.get("is_simulation", False)
-
-    #if it is a real external Afterpay checkout URL, redirect immediately
-    if redirect_url and not is_simulation and redirect_url.startswith("http"):
-        return redirect(redirect_url)
-
-    #render clean Afterpay payment & sandbox simulator page
-    installment_amount = round(order.total_amount / Decimal("4.0"), 2)
-    return render(
-        request,
-        "checkout/afterpay_pay.html",
-        {
-            "order": order,
-            "payment_tx": payment_tx,
-            "metadata": payment_tx.metadata,
-            "installment_amount": installment_amount,
-            "is_simulation": is_simulation,
-            "token": payment_tx.metadata.get("token") or payment_tx.external_intent_id,
-        },
-    )
-
-
-@require_http_methods(["GET", "POST"])
-@csrf_exempt
-def afterpay_callback_view(request: HttpRequest) -> HttpResponse:
-    """
-    Handle return from Afterpay (or Afterpay simulator).
-    """
-    from orders.models import Order, OrderStatus
-    from payments.models import PaymentTransaction
-    from payments.services import confirm_payment_success, confirm_payment_failed
-    from django.shortcuts import redirect
-    from django.contrib import messages
-
-    status = (request.GET.get("status") or request.POST.get("status") or "").upper()
-    order_token = request.GET.get("orderToken") or request.POST.get("orderToken") or ""
-    order_id = request.GET.get("order_id") or request.POST.get("order_id") or request.session.get("afterpay_order_pk")
-
-    order = None
-    if order_id:
-        order = Order.objects.filter(pk=order_id).first()
-    elif request.user.is_authenticated:
-        order = Order.objects.filter(user=request.user).last()
-
-    if not order:
-        return redirect("checkout:checkout")
-
-    payment_tx = PaymentTransaction.objects.filter(order=order, gateway_key="afterpay").last()
-    if not payment_tx:
-        return redirect("checkout:checkout")
-
-    if order.order_status != OrderStatus.CHECKOUT_PENDING:
-        request.session.pop("afterpay_order_pk", None)
-        return redirect("checkout:confirmation", order_id=order.id)
-
-    if status == "SUCCESS":
-        is_sim = (
-            payment_tx.metadata.get("is_simulation", False)
-            or order_token.startswith("afterpay_sim")
-            or order_token.startswith("sim_")
-        )
-        if is_sim:
-            #sandbox simulator instant approval
-            confirm_payment_success(payment_transaction=payment_tx, external_transaction_id=order_token or f"sim_tx_{order.pk}")
-            request.session.pop("afterpay_order_pk", None)
-            return redirect("checkout:confirmation", order_id=order.id)
-        else:
-            #live / sandbox Afterpay Direct API capture
-            from payments.adapters.concrete import AfterpayAdapter
-            adapter = AfterpayAdapter()
-            capture_resp = adapter.capture_order(order_token=order_token, order_id=str(order.pk))
-            capture_status = capture_resp.get("status", "").upper()
-
-            if capture_status in ("APPROVED", "CAPTURED"):
-                confirm_payment_success(
-                    payment_transaction=payment_tx,
-                    external_transaction_id=capture_resp.get("id", order_token),
-                )
-                request.session.pop("afterpay_order_pk", None)
-                return redirect("checkout:confirmation", order_id=order.id)
-            else:
-                confirm_payment_failed(payment_transaction=payment_tx)
-                err_msg = capture_resp.get("message") or "Afterpay payment authorization was declined."
-                messages.error(request, err_msg)
-                return redirect("checkout:checkout")
-
-    elif status == "CANCELLED":
-        messages.info(request, "Afterpay payment was cancelled. Please choose a payment method to complete your purchase.")
-        return redirect("checkout:checkout")
-    else:
-        confirm_payment_failed(payment_transaction=payment_tx)
-        messages.error(request, "Afterpay payment could not be completed.")
-        return redirect("checkout:checkout")
 
 
 @never_cache

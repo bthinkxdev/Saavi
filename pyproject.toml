@@ -16,7 +16,7 @@ profile = "black"
 line_length = 100
 skip = ["migrations", ".venv", "venv"]
 known_first_party = [
-    "sarocchi",
+    "saavi",
     "core",
     "accounts",
     "catalog",

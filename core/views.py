@@ -33,8 +33,8 @@ def about_us_view(request: HttpRequest) -> HttpResponse:
     """Render the static About Us page."""
     context = seo_context(
         request=request,
-        title=_("About Us | Sarocchi Luxe designs"),
-        description=_("Learn more about Sarocchi Luxe designs and our mission to deliver exquisite luxury sarees and handcrafted fine jewellery to New Zealand."),
+        title=_("About Us | Saavi By Neethu designs"),
+        description=_("Learn more about Saavi By Neethu designs and our mission to deliver exquisite luxury sarees and handcrafted fine jewellery to New Zealand."),
     )
     return render(request, "core/about_us.html", context)
 
@@ -44,8 +44,8 @@ def privacy_policy_view(request: HttpRequest) -> HttpResponse:
     """Render the static Privacy Policy page."""
     context = seo_context(
         request=request,
-        title=_("Privacy Policy | Sarocchi"),
-        description=_("Read Sarocchi privacy policy to learn how we collect, use, and protect your data."),
+        title=_("Privacy Policy | Saavi"),
+        description=_("Read Saavi privacy policy to learn how we collect, use, and protect your data."),
     )
     return render(request, "core/privacy_policy.html", context)
 
@@ -55,8 +55,8 @@ def shipping_policy_view(request: HttpRequest) -> HttpResponse:
     """Render the static Shipping Policy page."""
     context = seo_context(
         request=request,
-        title=_("Shipping Policy | Sarocchi"),
-        description=_("Read Sarocchi Luxe Designs shipping policy covering delivery rates, timeframes, and international shipping."),
+        title=_("Shipping Policy | Saavi"),
+        description=_("Read Saavi By Neethu shipping policy covering delivery rates, timeframes, and international shipping."),
     )
     return render(request, "core/shipping_policy.html", context)
 
@@ -66,8 +66,8 @@ def terms_of_service_view(request: HttpRequest) -> HttpResponse:
     """Render the static Terms and Conditions page."""
     context = seo_context(
         request=request,
-        title=_("Terms and Conditions | Sarocchi"),
-        description=_("Read Sarocchi Luxe Designs Terms and Conditions governing orders, purchases, and website use."),
+        title=_("Terms and Conditions | Saavi"),
+        description=_("Read Saavi By Neethu Terms and Conditions governing orders, purchases, and website use."),
     )
     return render(request, "core/terms_of_service.html", context)
 
@@ -77,8 +77,8 @@ def refund_policy_view(request: HttpRequest) -> HttpResponse:
     """Render the static Refund & Cancellation Policy page."""
     context = seo_context(
         request=request,
-        title=_("Refund & Cancellation Policy | Sarocchi"),
-        description=_("Read Sarocchi Luxe Designs refund and cancellation policy."),
+        title=_("Refund & Cancellation Policy | Saavi"),
+        description=_("Read Saavi By Neethu refund and cancellation policy."),
     )
     return render(request, "core/refund_policy.html", context)
 
@@ -95,8 +95,8 @@ def contact_us_view(request: HttpRequest) -> HttpResponse:
 
     context = seo_context(
         request=request,
-        title=_("Contact Us | Sarocchi Luxe Designs"),
-        description=_("Get in touch with Sarocchi Luxe Designs customer support in New Zealand."),
+        title=_("Contact Us | Saavi By Neethu"),
+        description=_("Get in touch with Saavi By Neethu customer support in New Zealand."),
     )
     context["form"] = form
     context["captcha_bust"] = int(time.time() * 1000)
@@ -166,8 +166,8 @@ def faq_view(request: HttpRequest) -> HttpResponse:
     """Render the static FAQ page."""
     context = seo_context(
         request=request,
-        title=_("FAQ | Sarocchi Luxe Designs"),
-        description=_("Frequently asked questions about ordering, delivery, and payments at Sarocchi Luxe Designs."),
+        title=_("FAQ | Saavi By Neethu"),
+        description=_("Frequently asked questions about ordering, delivery, and payments at Saavi By Neethu."),
     )
     
     from cms.models import FAQItem
@@ -181,8 +181,8 @@ def blog_view(request: HttpRequest) -> HttpResponse:
     """Render the storefront blog page."""
     context = seo_context(
         request=request,
-        title=_("Blog | Sarocchi Luxe Designs"),
-        description=_("Read our latest styling tips, saree draping guides, and jewellery trends from Sarocchi Luxe Designs."),
+        title=_("Blog | Saavi By Neethu"),
+        description=_("Read our latest styling tips, saree draping guides, and jewellery trends from Saavi By Neethu."),
     )
     from cms.models import BlogPost
     context["blogs"] = BlogPost.objects.filter(is_published=True)
@@ -198,7 +198,7 @@ def blog_detail_view(request: HttpRequest, slug: str) -> HttpResponse:
     context = seo_context(
         request=request,
         obj=post,
-        title=f"{post.title} | Sarocchi Luxe Designs",
+        title=f"{post.title} | Saavi By Neethu",
         description=post.meta_description or post.excerpt or post.title,
     )
     context["post"] = post
@@ -217,7 +217,7 @@ def page_view(request: HttpRequest, slug: str) -> HttpResponse:
     context = seo_context(
         request=request,
         obj=page,
-        title=f"{page.title} | Sarocchi Luxe Designs",
+        title=f"{page.title} | Saavi By Neethu",
         description=page.meta_description or page.title,
     )
     context["page"] = page
