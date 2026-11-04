@@ -4,8 +4,9 @@
 {% block title %}{% trans "Cart" %} | {{ site_settings.site_name|default:"Saavi By Neethu" }}{% endblock %}
 
 {% block content %}
-<div class="container page-container checkout-page jm-page">
-  <h1 class="section-title jm-page-title">{% trans "Cart" %}</h1>
+<div class="container sv-page">
+  <nav class="sv-crumbs" aria-label="{% trans 'Breadcrumb' %}"><a href="{% url 'cms:homepage' %}">{% trans "Home" %}</a><span aria-hidden="true">&rsaquo;</span><span>{% trans "Your Cart" %}</span></nav>
+  <h1 class="sv-h1">{% trans "Your Cart" %} {% if cart_count %}<small>({{ cart_count }} {% trans "Items" %})</small>{% endif %}</h1>
   {% include "cart/partials/page_body.html" %}
 </div>
 {% endblock %}

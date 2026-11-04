@@ -1,17 +1,113 @@
 {% extends "base.html" %}
-{% load i18n %}
+{% load i18n static %}
 
-{% block title %}{{ seo_title|default:"Saavi By Neethu | Premium Sarees & Jewellery NZ" }}{% endblock %}
+{% block title %}{{ seo_title|default:"Saavi By Neethu | Sarees & Ethnic Wear" }}{% endblock %}
 
 {% block content %}
-<div class="homepage-sections">
-  {% for block in section_contexts %}
-    {% include block.partial with section_context=block.context %}
-  {% empty %}
-  <div class="container py-5 text-center">
-    <p class="text-muted">{% trans "Homepage content is being prepared." %}</p>
-    <a href="{% url 'catalog:plp' %}" class="btn btn-floward mt-2">{% trans "Shop Now" %}</a>
-  </div>
-  {% endfor %}
+<div class="sv-home">
+
+  {# 1. Hero banner #}
+  <section class="sv-hero" aria-label="{% trans 'Featured' %}">
+    {% if hero_slides %}
+    <div id="svHero" class="carousel slide carousel-fade" data-bs-ride="carousel" data-bs-interval="6500">
+      <div class="carousel-inner">
+        {% for slide in hero_slides %}
+        <div class="carousel-item {% if forloop.first %}active{% endif %}">
+          {% if slide.type == 'video' %}
+          <video class="sv-hero__media" autoplay muted loop playsinline {% if slide.poster %}poster="{{ slide.poster }}"{% endif %}><source src="{{ slide.src }}"></video>
+          {% else %}
+          <img class="sv-hero__media" src="{{ slide.src }}" alt="{{ slide.title|default:'Saavi By Neethu' }}" {% if forloop.first %}fetchpriority="high"{% else %}loading="lazy"{% endif %}>
+          {% endif %}
+          <div class="sv-hero__caption">
+            <div class="container">
+              <p class="sv-eyebrow">SAAVI BY NEETHU</p>
+              <h1 class="sv-hero__title">{% if slide.title %}{{ slide.title }}{% else %}{% trans "Timeless" %}<br>{% trans "Traditions" %}{% endif %}</h1>
+              <p class="sv-hero__text">{% trans "Elegant Sarees & Stylish Kurtas" %}<br>{% trans "for Every Occasion" %}</p>
+              <a href="{% url 'catalog:plp' %}" class="sv-btn sv-btn--primary">{% trans "Shop Now" %} <span aria-hidden="true">&rarr;</span></a>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% if hero_slides|length > 1 %}
+      <div class="carousel-indicators sv-hero__dots">
+        {% for slide in hero_slides %}
+        <button type="button" data-bs-target="#svHero" data-bs-slide-to="{{ forloop.counter0 }}" {% if forloop.first %}class="active" aria-current="true"{% endif %} aria-label="{% trans 'Slide' %} {{ forloop.counter }}"></button>
+        {% endfor %}
+      </div>
+      <button class="sv-hero__nav sv-hero__nav--prev" type="button" data-bs-target="#svHero" data-bs-slide="prev" aria-label="{% trans 'Previous' %}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></button>
+      <button class="sv-hero__nav sv-hero__nav--next" type="button" data-bs-target="#svHero" data-bs-slide="next" aria-label="{% trans 'Next' %}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg></button>
+      {% endif %}
+    </div>
+    {% else %}
+    <div class="sv-hero__brand">
+      <img src="{% static 'img/saavi/brand-banner.jpg' %}" alt="Saavi — Sarees & Ethnic Wear. Rooted in tradition, woven with elegance." fetchpriority="high">
+      <a href="{% url 'catalog:plp' %}" class="sv-btn sv-btn--primary sv-hero__brand-cta">{% trans "Shop Now" %} <span aria-hidden="true">&rarr;</span></a>
+    </div>
+    {% endif %}
+  </section>
+
+  {# 2. Collection banners #}
+  {% if collections %}
+  <section class="container sv-section sv-section--tight">
+    <div class="sv-collections">
+      {% for cat in collections %}
+      <a class="sv-collection" href="{% url 'catalog:plp-category' category_slug=cat.slug %}">
+        <div class="sv-collection__text">
+          <h2 class="sv-collection__title">{{ cat.name }} {% trans "Collection" %}</h2>
+          <p>{% if forloop.first %}{% trans "A Curated Range of Traditional & Contemporary Sarees" %}{% else %}{% trans "Classic, Comfortable & Modern Styles for Every Occasion" %}{% endif %}</p>
+          <span class="sv-link">{% trans "Explore" %} {{ cat.name }} <span aria-hidden="true">&rarr;</span></span>
+        </div>
+        {% if cat.banner_image_url %}<img class="sv-collection__img" src="{{ cat.banner_image_url }}" alt="" loading="lazy">{% endif %}
+      </a>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+  {# 3. Trust indicators #}
+  <section class="container">
+    {% include "includes/sv_trust_strip.html" %}
+  </section>
+
+  {# 4. New arrivals #}
+  {% trans "New Arrivals" as new_title %}
+  {% include "includes/sv_product_tabs.html" with title=new_title tabs=new_arrival_tabs tab_id="new" view_all_query="new_arrival=1" %}
+
+  {# 5. Festive promo banner #}
+  <section class="container sv-section sv-section--tight">
+    <a class="sv-festive" href="{% url 'catalog:plp' %}?featured=1">
+      <div class="sv-festive__art" aria-hidden="true"></div>
+      <div class="sv-festive__text">
+        <h2 class="sv-festive__title">{% trans "Festive" %}<br>{% trans "Collection" %}</h2>
+        <p>{% trans "Handpicked Sarees & Kurtas" %}<br>{% trans "for the Festive Season" %}</p>
+        <span class="sv-btn sv-btn--primary sv-btn--sm">{% trans "Explore Collection" %} <span aria-hidden="true">&rarr;</span></span>
+      </div>
+    </a>
+  </section>
+
+  {# 6. Shop by category #}
+  {% if collections %}
+  <section class="container sv-section sv-section--tight">
+    <h2 class="sv-h2">{% trans "Shop by Category" %}</h2>
+    <div class="sv-catcards">
+      {% for cat in collections %}
+      <a class="sv-catcard" href="{% url 'catalog:plp-category' category_slug=cat.slug %}">
+        <span class="sv-catcard__img" {% if cat.banner_image_url %}style="background-image:url('{{ cat.banner_image_url }}')"{% endif %}></span>
+        <span class="sv-catcard__text">
+          <strong>{{ cat.name }}</strong>
+          <small>{% if forloop.first %}{% trans "Tradition Meets Modern Style" %}{% else %}{% trans "Classic Looks for Every Occasion" %}{% endif %}</small>
+        </span>
+        <span class="sv-catcard__arrow" aria-hidden="true">&rarr;</span>
+      </a>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+  {# 7. Bestsellers #}
+  {% trans "Bestsellers" as best_title %}
+  {% include "includes/sv_product_tabs.html" with title=best_title tabs=bestseller_tabs tab_id="best" view_all_query="bestseller=1" %}
+
 </div>
 {% endblock %}

@@ -98,13 +98,13 @@
             }
 
             if (elPriceValue) {
-              elPriceValue.textContent = symbol + ' ' + parseFloat(data.price).toFixed(2).replace(/\.00$/, '');
+              elPriceValue.textContent = symbol + window.svMoney(data.price);
             }
 
             var elMrp = document.getElementById('pdp-price-mrp');
             if (elMrp) {
               if (data.is_flash_sale !== 'true' && data.has_mrp_discount === 'true' && data.mrp) {
-                elMrp.textContent = symbol + ' ' + parseFloat(data.mrp).toFixed(2).replace(/\.00$/, '');
+                elMrp.textContent = symbol + window.svMoney(data.mrp);
                 elMrp.style.display = 'inline';
               } else {
                 elMrp.style.display = 'none';
@@ -118,7 +118,7 @@
                 retailContainer.classList.add("d-none");
               }
             }
-            if (elSticky) elSticky.textContent = symbol + ' ' + parseFloat(data.price).toFixed(2).replace(/\.00$/, '');
+            if (elSticky) elSticky.textContent = symbol + window.svMoney(data.price);
             
             var stickyVariantName = document.getElementById('pdp-sticky-variant-name');
             if (stickyVariantName) {
@@ -131,7 +131,7 @@
 
             var elRetail = document.getElementById('pdp-retail-price');
             if (elRetail && data.retail_price) {
-              elRetail.textContent = symbol + ' ' + parseFloat(data.retail_price).toFixed(2).replace(/\.00$/, '');
+              elRetail.textContent = symbol + window.svMoney(data.retail_price);
             }
             var elRetailVal = document.getElementById('pdp-retail-price-val');
             if (elRetailVal && data.retail_price) {

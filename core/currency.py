@@ -128,3 +128,13 @@ def update_exchange_rates() -> dict[str, str]:
         currency.save(update_fields=["exchange_rate_to_base", "rate_updated_at", "updated_at"])
         updated[currency.code] = str(currency.exchange_rate_to_base)
     return updated
+
+
+# Checkout country choices: primary markets first, then common international destinations.
+CHECKOUT_COUNTRIES = [
+    ("IN", "India"), ("AE", "United Arab Emirates"), ("SA", "Saudi Arabia"), ("QA", "Qatar"),
+    ("OM", "Oman"), ("KW", "Kuwait"), ("BH", "Bahrain"), ("US", "United States"),
+    ("GB", "United Kingdom"), ("CA", "Canada"), ("AU", "Australia"), ("NZ", "New Zealand"),
+    ("SG", "Singapore"), ("MY", "Malaysia"), ("DE", "Germany"), ("FR", "France"),
+    ("IE", "Ireland"), ("NL", "Netherlands"), ("IT", "Italy"), ("ES", "Spain"),
+]

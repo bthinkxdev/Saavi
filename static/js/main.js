@@ -808,7 +808,7 @@ document.addEventListener('DOMContentLoaded', () => {
               var match = priceEl.textContent.match(/^[^\d.,]+/);
               if (match) curSymbol = match[0].trim() + ' ';
             }
-            priceEl.textContent = curSymbol + parseFloat(data.price).toFixed(2).replace(/\.00$/, '');
+            priceEl.textContent = curSymbol + window.svMoney(data.price);
           }
         }
 
@@ -1015,10 +1015,10 @@ document.addEventListener('DOMContentLoaded', () => {
               if (match) curSymbol = match[0].trim() + ' ';
             }
             if (this.dataset.price && price) {
-              price.textContent = curSymbol + parseFloat(this.dataset.price).toFixed(2).replace(/\.00$/, '');
+              price.textContent = curSymbol + window.svMoney(this.dataset.price);
             }
             if (mrp && this.dataset.mrp) {
-              mrp.textContent = curSymbol + parseFloat(this.dataset.mrp).toFixed(2).replace(/\.00$/, '');
+              mrp.textContent = curSymbol + window.svMoney(this.dataset.mrp);
               mrp.classList.remove('d-none');
             } else if (mrp) {
               mrp.classList.add('d-none');
@@ -1371,8 +1371,8 @@ document.addEventListener('DOMContentLoaded', () => {
             var match = card.dataset.productPrice.match(/^[^\d.,]+/);
             if (match) curSymbol = match[0].trim() + ' ';
           }
-          var formattedPrice = curSymbol + parseFloat(v.price || 0).toFixed(2).replace(/\.00$/, '');
-          var formattedMrp = v.mrp ? (curSymbol + parseFloat(v.mrp).toFixed(2).replace(/\.00$/, '')) : '';
+          var formattedPrice = curSymbol + window.svMoney(v.price || 0);
+          var formattedMrp = v.mrp ? (curSymbol + window.svMoney(v.mrp)) : '';
 
           label.innerHTML = `
             <div class="fw-bold text-dark fs-6">${v.name}</div>
@@ -1395,10 +1395,10 @@ document.addEventListener('DOMContentLoaded', () => {
               selVariantName.textContent = 'Quantity: ' + v.name;
             }
             if (price) {
-              price.textContent = curSymbol + parseFloat(this.dataset.price).toFixed(2).replace(/\.00$/, '');
+              price.textContent = curSymbol + window.svMoney(this.dataset.price);
             }
             if (mrp && this.dataset.mrp) {
-              mrp.textContent = curSymbol + parseFloat(this.dataset.mrp).toFixed(2).replace(/\.00$/, '');
+              mrp.textContent = curSymbol + window.svMoney(this.dataset.mrp);
               mrp.classList.remove('d-none');
             } else if (mrp) {
               mrp.classList.add('d-none');

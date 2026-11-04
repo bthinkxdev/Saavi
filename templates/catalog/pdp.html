@@ -8,12 +8,10 @@
 
 {% block content %}
 <div class="container page-container product-detail jm-page jm-pdp" data-product-id="{{ product.pk }}">
-  <nav aria-label="breadcrumb" class="jm-breadcrumb mb-2 mb-md-3">
-    <ol class="breadcrumb small mb-0">
-      <li class="breadcrumb-item"><a href="{% url 'catalog:plp' %}">{% trans "Shop" %}</a></li>
-      <li class="breadcrumb-item"><a href="{% url 'catalog:plp-category' category_slug=product.category.slug %}">{{ product.category.name }}</a></li>
-      <li class="breadcrumb-item active d-none d-md-inline" aria-current="page">{{ product.name|truncatechars:40 }}</li>
-    </ol>
+  <nav class="sv-crumbs" aria-label="{% trans 'Breadcrumb' %}">
+    <a href="{% url 'cms:homepage' %}">{% trans "Home" %}</a><span aria-hidden="true">&rsaquo;</span>
+    <a href="{% url 'catalog:plp-category' category_slug=product.category.slug %}">{{ product.category.name }}</a><span aria-hidden="true">&rsaquo;</span>
+    <span>{{ product.name|truncatechars:40 }}</span>
   </nav>
 
   <div class="row g-3 g-lg-5 jm-pdp__hero">
@@ -22,11 +20,13 @@
     </div>
 
     <div class="col-lg-6 jm-pdp-buybox pdp-info">
-      <p class="jm-pdp-buybox__meta pdp-meta">
-        {{ product.category.name }}{% if site_settings.enable_brands %}{% if product.brand %} · {{ product.brand.name }}{% endif %}{% endif %}
-      </p>
-      <h1 class="jm-pdp-buybox__title">{{ product.name }}</h1>
-      <p class="text-muted small mb-3" id="pdp-sku-display">SKU: {% if product.variant_list %}{% if target_variant %}{{ target_variant.sku_suffix }}{% else %}{{ product.variant_list.0.sku_suffix }}{% endif %}{% else %}{{ product.sku }}{% endif %}</p>
+
+      <h1 class="jm-pdp-buybox__title sv-pdp__title">{{ product.name }}</h1>
+      {% if product.average_rating %}
+      <p class="sv-pdp__rating"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+        <strong>{{ product.average_rating|floatformat:1 }}</strong> <a href="#pdp-tabs" data-sv-open-tab="reviews">({{ product.review_count }} {% trans "Reviews" %})</a></p>
+      {% endif %}
+      <p class="sv-pdp__sku" id="pdp-sku-display">SKU: {% if product.variant_list %}{% if target_variant %}{{ target_variant.sku_suffix }}{% else %}{{ product.variant_list.0.sku_suffix }}{% endif %}{% else %}{{ product.sku }}{% endif %}</p>
 
       <div class="jm-pdp-buybox__price-row">
         <p class="pdp-price jm-pdp-buybox__price" id="pdp-price">
@@ -38,7 +38,10 @@
           <span class="was" id="pdp-price-mrp" style="text-decoration: line-through; margin-right: 8px; display: none;"></span>
           {% endif %}
           <span id="pdp-price-value">{% money_label price_data.price display_currency %}</span>
+          {% if price_data.is_flash_sale == "true" %}{% with pct=price_data.price|discount_percent:price_data.original_price %}{% if pct %}<span class="sv-price__off" id="pdp-price-off">({{ pct }}% {% trans "Off" %})</span>{% endif %}{% endwith %}
+          {% elif price_data.has_mrp_discount == "true" %}{% with pct=price_data.price|discount_percent:price_data.mrp %}{% if pct %}<span class="sv-price__off" id="pdp-price-off">({{ pct }}% {% trans "Off" %})</span>{% endif %}{% endwith %}{% endif %}
         </p>
+        {% if product.meta_description %}<p class="sv-pdp__lead">{{ product.meta_description }}</p>{% endif %}
         <p class="jm-pdp-buybox__stock {% if not price_data.is_in_stock %}is-out{% elif price_data.stock_quantity <= price_data.low_stock_threshold %}is-low{% else %}is-in{% endif %}"
           id="pdp-stock-text">
           {% if not price_data.is_in_stock %}
@@ -56,7 +59,7 @@
         {% if product.variant_list %}
         <div class="jm-pdp-field mb-3">
           <div class="d-flex justify-content-between align-items-end mb-2">
-            <label class="jm-pdp-field__label mb-0">{% trans "Size" %}</label>
+            <label class="jm-pdp-field__label mb-0">{% trans "Select Option" %}</label>
             {% if product.size_chart and product.size_chart.is_active %}
             <a href="#" data-bs-toggle="modal" data-bs-target="#sizeGuideModal" class="text-decoration-none text-dark small" style="font-weight: 500; text-underline-offset: 4px; text-decoration: underline !important;">
               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-grid me-1" viewBox="0 0 16 16" style="margin-top: -2px;">
@@ -96,6 +99,7 @@
           <div id="pdp-stock-error-msg" class="text-danger small mb-2 d-none"></div>
 
           <div id="pdp-add-to-cart-group" class="jm-pdp-buybox__row {% if is_in_cart %}d-none{% endif %}">
+            <span class="sv-pdp__qty-label">{% trans "Quantity" %}</span>
             <div class="qty-stepper jm-pdp-qty" aria-label="{% trans 'Quantity' %}" {% if not price_data.is_in_stock %}style="opacity: 0.5;" {% endif %}>
               <button class="qty-stepper__btn" type="button"
                 onclick="if(window.handlePdpQtyChange) window.handlePdpQtyChange(-1);"
@@ -117,6 +121,7 @@
               <button type="{% if price_data.is_in_stock %}submit{% else %}button{% endif %}"
                 class="btn btn-outline-floward w-100 jm-pdp-btn {% if not price_data.is_in_stock %}disabled{% endif %}" {% if not price_data.is_in_stock %}style="cursor: not-allowed; opacity: 0.6; pointer-events: auto;"
                 onclick="event.preventDefault(); return false;" {% endif %}>
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M2 3h3l2.6 12.2a1.6 1.6 0 0 0 1.6 1.3h8.6a1.6 1.6 0 0 0 1.6-1.2L21 8H6"/></svg>
                 {% if price_data.is_in_stock %}{% trans "Add to Cart" %}{% else %}{% trans "Sold out" %}{% endif %}
               </button>
             </form>
@@ -175,7 +180,13 @@
         </div>
       </div>
       
-      {% include "catalog/partials/pdp_delivery.html" %}
+      {% include "includes/sv_trust_strip.html" with trust_class="sv-trust--pdp" %}
+      {% if site_settings.whatsapp_number %}
+      <a class="sv-pdp__wa" target="_blank" rel="noopener" href="https://wa.me/{{ site_settings.whatsapp_number|cut:'+'|cut:' '|cut:'-' }}?text={% filter urlencode %}Hi Saavi, I'd like to know more about {{ product.name }} — {{ request.build_absolute_uri }}{% endfilter %}">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M12.04 0C5.5 0 .16 5.34.16 11.88c0 2.1.55 4.14 1.6 5.95L0 24l6.35-1.66a11.86 11.86 0 0 0 5.69 1.45c6.54 0 11.88-5.34 11.88-11.88S18.58 0 12.04 0zm5.07 14.19c-.28-.14-1.64-.81-1.9-.9-.25-.1-.44-.14-.62.14-.19.28-.72.9-.88 1.08-.16.19-.33.21-.61.07-.28-.14-1.18-.43-2.25-1.39-.83-.74-1.39-1.65-1.55-1.93-.16-.28-.02-.43.12-.57.13-.13.28-.33.42-.5.14-.16.19-.28.28-.47.1-.19.05-.35-.02-.5-.07-.14-.62-1.49-.85-2.04-.22-.53-.45-.46-.62-.47h-.53c-.19 0-.5.07-.76.35-.26.28-1 1-1 2.43s1.02 2.82 1.16 3.01c.14.19 2.01 3.07 4.87 4.31 2.38 1.03 2.87.82 3.39.77.55-.08 1.64-.67 1.87-1.32.23-.65.23-1.2.16-1.32-.07-.11-.25-.18-.53-.32z"/></svg>
+        {% trans "Ask on WhatsApp" %}
+      </a>
+      {% endif %}
       
     </div>
   </div>
@@ -240,93 +251,66 @@
     </div> <!-- close ms-auto -->
   </div> <!-- close jm-pdp-sticky -->
 
-  {% if product.specifications.all or product.care_instructions %}
-  <section class="jm-pdp-section mt-4 mt-lg-5 pt-4 border-top">
-    <div class="row g-4">
-      <div class="col-12">
-        <div class="accordion" id="productSpecsAccordion">
-          {% for spec in product.specifications.all %}
-          <div class="accordion-item mb-2 border rounded-3 overflow-hidden" style="background-color: #fafafa;">
-            <h2 class="accordion-header" id="headingSpec{{ forloop.counter }}">
-              <button class="accordion-button collapsed fw-bold text-dark" type="button" data-bs-toggle="collapse"
-                data-bs-target="#collapseSpec{{ forloop.counter }}" aria-expanded="false"
-                aria-controls="collapseSpec{{ forloop.counter }}"
-                style="background-color: transparent; box-shadow: none;">
-                {{ spec.name }}
-              </button>
-            </h2>
-            <div id="collapseSpec{{ forloop.counter }}" class="accordion-collapse collapse"
-              aria-labelledby="headingSpec{{ forloop.counter }}">
-              <div class="accordion-body text-muted pt-0 pb-3">
-                {{ spec.value|linebreaksbr }}
-              </div>
-            </div>
-          </div>
-          {% endfor %}
-          {% if product.care_instructions %}
-          <div class="accordion-item mb-2 border rounded-3 overflow-hidden" style="background-color: #fafafa;">
-            <h2 class="accordion-header" id="headingCareInstructions">
-              <button class="accordion-button collapsed fw-bold text-dark" type="button" data-bs-toggle="collapse"
-                data-bs-target="#collapseCareInstructions" aria-expanded="false"
-                aria-controls="collapseCareInstructions"
-                style="background-color: transparent; box-shadow: none;">
-                {% trans "Care Instructions" %}
-              </button>
-            </h2>
-            <div id="collapseCareInstructions" class="accordion-collapse collapse"
-              aria-labelledby="headingCareInstructions">
-              <div class="accordion-body text-muted pt-0 pb-3">
-                {{ product.care_instructions|linebreaksbr }}
-              </div>
-            </div>
-          </div>
+  <section class="sv-pdp-tabs" id="pdp-tabs" data-sv-tabs>
+    <div class="sv-pdp-tabs__nav" role="tablist">
+      <button type="button" class="sv-tab is-active" data-sv-tab="desc">{% trans "Description" %}</button>
+      <button type="button" class="sv-tab" data-sv-tab="specs">{% trans "Specifications" %}</button>
+      <button type="button" class="sv-tab" data-sv-tab="reviews">{% trans "Reviews" %} ({{ product.review_count|default:0 }})</button>
+      <button type="button" class="sv-tab" data-sv-tab="shipping">{% trans "Shipping & Returns" %}</button>
+    </div>
+    <div class="sv-pdp-tabs__grid">
+      <div>
+        <div data-sv-panel="desc">
+          <p>{% if product.meta_description %}{{ product.meta_description }}{% else %}{% blocktrans with name=product.name %}{{ name }} — crafted with care for weddings, festivals and special celebrations.{% endblocktrans %}{% endif %}</p>
+          {% if product.specifications.all %}
+          <ul class="sv-spec-list">
+            {% for spec in product.specifications.all|slice:":6" %}<li><strong>{{ spec.name }}:</strong> {{ spec.value|truncatechars:80 }}</li>{% endfor %}
+          </ul>
           {% endif %}
         </div>
-      </div>
-    </div>
-  </section>
-  {% endif %}
-
-  <section class="jm-pdp-section mt-4 mt-lg-5 pt-4 border-top" id="reviews">
-    <div
-      class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-2 mb-3">
-      <h2 class="section-title h5 mb-0">{% trans "Reviews" %}</h2>
-      {% if has_delivered_order %}
-      <p class="text-muted small mb-0">
-        {% trans "You can review this product from your" %}
-        <a href="{% url 'orders:list' %}" class="text-decoration-underline">{% trans "Order History" %}</a>.
-      </p>
-      {% endif %}
-    </div>
-
-    {% for review in product.approved_reviews %}
-    <div class="jm-pdp-review">
-      <div class="jm-pdp-review__head">
-        <div>
-          <strong>{{ review.title }}</strong>
-          <span class="jm-pdp-review__meta">
-            {{ review.customer.user.get_full_name|default:review.customer.user.username|default:"Customer" }}
-            · {{ review.created_at|date:"M d, Y" }}
-          </span>
+        <div data-sv-panel="specs" hidden>
+          {% if product.specifications.all %}
+          <table class="sv-spec-table"><tbody>
+            {% for spec in product.specifications.all %}<tr><th>{{ spec.name }}</th><td>{{ spec.value|linebreaksbr }}</td></tr>{% endfor %}
+          </tbody></table>
+          {% else %}<p class="sv-muted">{% trans "Specifications will be added soon." %}</p>{% endif %}
+          {% if product.care_instructions %}<h3 class="sv-h3 mt-4">{% trans "Care Instructions" %}</h3><p>{{ product.care_instructions|linebreaksbr }}</p>{% endif %}
         </div>
-        <span class="jm-pdp-review__rating">★ {{ review.rating }}</span>
+        <div data-sv-panel="reviews" id="reviews" hidden>
+          {% if has_delivered_order %}<p class="sv-muted small">{% trans "You can review this product from your" %} <a href="{% url 'orders:list' %}">{% trans "Order History" %}</a>.</p>{% endif %}
+          {% for review in product.approved_reviews %}
+          <div class="sv-review">
+            <div class="sv-review__head"><strong>{{ review.title }}</strong><span class="sv-review__stars">★ {{ review.rating }}</span></div>
+            <p class="sv-review__meta">{{ review.customer.user.get_full_name|default:"Customer" }} · {{ review.created_at|date:"d M Y" }}</p>
+            <p>{{ review.body }}</p>
+          </div>
+          {% empty %}<p class="sv-muted">{% trans "No reviews yet." %}</p>{% endfor %}
+        </div>
+        <div data-sv-panel="shipping" hidden>
+          <ul class="sv-spec-list sv-spec-list--single">
+            <li>{% trans "We ship across India, the UAE and internationally." %}</li>
+            <li>{% trans "Orders are packed within 1–2 business days; delivery times depend on your location." %}</li>
+            <li>{% trans "7-day hassle-free returns on unused items with original tags." %}</li>
+          </ul>
+          <p><a href="{% url 'core:shipping-policy' %}">{% trans "Shipping Policy" %}</a> · <a href="{% url 'core:refund-policy' %}">{% trans "Returns & Refunds" %}</a></p>
+        </div>
       </div>
-      <p class="jm-pdp-review__body">{{ review.body }}</p>
+      <aside class="sv-sizefit">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><ellipse cx="9" cy="10" rx="7" ry="4"/><path d="M2 10v4c0 2.2 3.1 4 7 4h13v-4H16M9 14h0"/></svg>
+        <div>
+          <strong>{% trans "Size & Fit" %}</strong>
+          <p>{% for spec in product.specifications.all %}{% if "length" in spec.name|lower or "blouse" in spec.name|lower or "size" in spec.name|lower or "fit" in spec.name|lower %}{{ spec.name }}: {{ spec.value|truncatechars:40 }}{% if not forloop.last %} | {% endif %}{% endif %}{% empty %}{% trans "See the size guide for measurements." %}{% endfor %}</p>
+        </div>
+        {% if product.size_chart and product.size_chart.is_active %}<a href="#" data-bs-toggle="modal" data-bs-target="#sizeGuideModal" aria-label="{% trans 'Size Guide' %}">&rarr;</a>{% endif %}
+      </aside>
     </div>
-    {% empty %}
-    <p class="text-muted small mb-0">{% trans "No reviews yet." %}</p>
-    {% endfor %}
   </section>
-
   {% if related_products %}
-  <section class="jm-pdp-section mt-4 mt-lg-5 pt-4 border-top">
-    <h2 class="section-title h5 mb-3">{% trans "Related Products" %}</h2>
-    <div class="row row-cols-2 row-cols-md-3 row-cols-lg-4 g-4" role="list">
-      {% for related_product in related_products %}
-      <div class="col" role="listitem">
-        {% include "catalog/partials/product_card.html" with product=related_product %}
-      </div>
-      {% endfor %}
+  <section class="sv-section">
+    <div class="sv-section__head"><h2 class="sv-h2">{% trans "You May Also Like" %}</h2>
+      <a class="sv-link sv-link--sm" href="{% url 'catalog:plp-category' category_slug=product.category.slug %}">{% trans "View All" %} &rarr;</a></div>
+    <div class="sv-grid sv-grid--5">
+      {% for related_product in related_products %}{% include "catalog/partials/product_card.html" with product=related_product %}{% endfor %}
     </div>
   </section>
   {% endif %}

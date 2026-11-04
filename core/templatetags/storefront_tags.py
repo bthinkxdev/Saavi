@@ -13,9 +13,8 @@ def _format_money_amount(value: Decimal) -> str:
     """Format money without trailing .00; keep decimals only when needed."""
     quantized = value.quantize(Decimal("0.01"), ROUND_HALF_UP)
     if quantized == quantized.to_integral_value():
-        return f"{int(quantized)}"
-    text = f"{quantized:.2f}".rstrip("0").rstrip(".")
-    return text
+        return f"{int(quantized):,}"
+    return f"{quantized:,.2f}"
 
 
 @register.filter
@@ -41,4 +40,26 @@ def money_label(amount, currency) -> str:
     """Format amount with currency symbol for templates."""
     symbol = getattr(currency, "symbol", "")
     value = in_display_currency(amount, currency)
-    return f"{symbol} {value}".strip()
+    sep = " " if symbol[-1:].isalpha() else ""
+    return f"{symbol}{sep}{value}".strip()
+
+
+@register.filter
+def discount_percent(price, mrp) -> int:
+    """Whole-number % saved going from ``mrp`` down to ``price`` (0 when no discount)."""
+    try:
+        price, mrp = Decimal(str(price)), Decimal(str(mrp))
+    except Exception:
+        return 0
+    if not mrp or mrp <= price:
+        return 0
+    return int(((mrp - price) / mrp * 100).quantize(Decimal("1"), ROUND_HALF_UP))
+
+
+@register.filter
+def times(value, factor):
+    """Multiply two numbers (Decimal-safe) for line totals in templates."""
+    try:
+        return Decimal(str(value)) * Decimal(str(factor))
+    except Exception:
+        return value

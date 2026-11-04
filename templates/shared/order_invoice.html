@@ -314,7 +314,7 @@
                         </td>
                         <td>{% money_label item.unit_price order.currency %}</td>
                         <td>{{ item.quantity }}</td>
-                        <td>{{ order.currency.symbol }} {% widthratio item.unit_price 1 item.quantity %}</td>
+                        <td>{% money_label item.unit_price|times:item.quantity order.currency %}</td>
                     </tr>
                     {% endfor %}
                 </tbody>

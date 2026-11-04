@@ -1,6 +1,6 @@
 {% load i18n %}
-<div class="jm-pdp-gallery" data-jm-pdp-gallery>
-  <div class="jm-pdp-gallery__stage ratio ratio-1x1" data-bs-toggle="modal" data-bs-target="#pdpGalleryModal" style="cursor: pointer;">
+<div class="jm-pdp-gallery sv-gallery" data-jm-pdp-gallery>
+  <div class="jm-pdp-gallery__stage sv-gallery__stage" data-bs-toggle="modal" data-bs-target="#pdpGalleryModal" style="cursor: pointer;">
     {% with primary=product.images.first %}
     {% if primary %}
     <img id="main-pdp-image"
@@ -13,21 +13,16 @@
     {% endif %}
     {% endwith %}
     <video id="main-pdp-video" class="jm-pdp-gallery__video object-fit-contain d-none" controls width="800" height="800" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; background: #fff;"></video>
-    <div class="position-absolute" style="top: 16px !important; bottom: auto !important; left: 16px !important; width: auto !important; height: auto !important; z-index: 20 !important; pointer-events: none;">
-      {% if product.average_rating %}
-      <span class="jm-product-card__rating shadow-sm d-inline-flex" aria-label="{% trans 'Rating' %} {{ product.average_rating|floatformat:1 }}" style="font-size: 0.85rem; padding: 0.25rem 0.6rem; background-color: rgba(247, 248, 250, 0.95); backdrop-filter: blur(4px); pointer-events: auto; width: auto;">
-        <span class="jm-product-card__rating-badge" style="font-size: 0.85rem;">
-          <span class="jm-product-card__rating-score">{{ product.average_rating|floatformat:1 }}</span>
-          <svg viewBox="0 0 24 24" aria-hidden="true" style="width: 13px; height: 13px;">
-            <path fill="currentColor" d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-          </svg>
-        </span>
-        {% if product.review_count %}<span class="jm-product-card__rating-count" style="font-size: 0.85rem;">| {{ product.review_count }}</span>{% endif %}
-      </span>
-      {% else %}
-      <span class="jm-product-card__rating jm-product-card__rating--muted shadow-sm d-inline-flex" style="font-size: 0.85rem; padding: 0.25rem 0.6rem; background-color: rgba(247, 248, 250, 0.95); backdrop-filter: blur(4px); pointer-events: auto; width: auto;">{% trans "New" %}</span>
-      {% endif %}
+    <div class="sv-card__badges">
+      {% if product.is_bestseller %}<span class="sv-badge sv-badge--bestseller">{% trans "Bestseller" %}</span>{% elif product.is_new_arrival %}<span class="sv-badge sv-badge--new">{% trans "New" %}</span>{% elif product.is_flash_sale %}<span class="sv-badge sv-badge--sale">{% trans "Sale" %}</span>{% endif %}
     </div>
+    <form class="sv-gallery__wish" method="post" action="{% url 'cart:wishlist-toggle' %}" hx-post="{% url 'cart:wishlist-toggle' %}" hx-swap="none" onclick="event.stopPropagation()">
+      {% csrf_token %}<input type="hidden" name="product_id" value="{{ product.pk }}">
+      <button type="submit" class="jm-wish-btn {% if is_in_wishlist %}is-active{% endif %}" data-jm-wish-btn data-product-id="{{ product.pk }}" aria-label="{% trans 'Wishlist' %}" aria-pressed="{% if is_in_wishlist %}true{% else %}false{% endif %}">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="{% if is_in_wishlist %}currentColor{% else %}none{% endif %}" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+      </button>
+    </form>
+    <span class="sv-gallery__zoom" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/></svg></span>
   </div>
 
   {% if product.images.all|length > 1 or product.videos.all|length > 0 %}

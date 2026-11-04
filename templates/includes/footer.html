@@ -1,19 +1,12 @@
 {% load i18n static %}
-<footer class="site-footer jm-footer">
+<footer class="site-footer jm-footer sv-footer">
   <div class="container">
     <div class="jm-footer__grid">
       <div class="jm-footer__brand">
-        <div class="jm-footer__logo">
-          <a href="{% url 'cms:homepage' %}" style="display: contents; color: inherit !important; text-decoration: none;">
-            {% if site_settings.logo %}
-              <img src="{{ site_settings.logo.url }}" alt="" width="36" height="36">
-            {% else %}
-              <img src="{% static 'dashboard/images/logo.png' %}" alt="" width="36" height="36">
-            {% endif %}
-            <span>{{ site_settings.site_name|default:"Saavi By Neethu" }}</span>
-          </a>
-        </div>
-        <p class="jm-footer__tagline">{% trans "Luxury Sarees & Fine Jewellery — Handcrafted Elegance for New Zealand" %}</p>
+        <a class="sv-logo sv-logo--footer" href="{% url 'cms:homepage' %}" aria-label="Saavi By Neethu">
+          <span class="sv-logo__name">Saavi</span><span class="sv-logo__sub">BY NEETHU</span>
+        </a>
+        <p class="jm-footer__tagline">{% trans "Sarees & Ethnic Wear — Rooted in Tradition, Woven with Elegance." %}</p>
         <div class="jm-footer__social">
           {% if site_settings.facebook_url %}<a href="{{ site_settings.facebook_url }}" aria-label="Facebook" rel="noopener">Facebook</a>{% endif %}
           {% if site_settings.instagram_url %}<a href="{{ site_settings.instagram_url }}" aria-label="Instagram" rel="noopener">Instagram</a>{% endif %}
@@ -54,7 +47,8 @@
 
       <div class="jm-footer__contact">
         <h6>{% trans "Contact" %}</h6>
-        {% include "includes/jm_locations.html" with compact=1 %}
+        <p class="mb-1">{% trans "India &amp; UAE" %}</p>
+        {% if site_settings.whatsapp_number %}<p class="mb-1"><a href="https://wa.me/{{ site_settings.whatsapp_number|cut:'+'|cut:' ' }}" target="_blank" rel="noopener">WhatsApp: +{{ site_settings.whatsapp_number|cut:'+' }}</a></p>{% endif %}
         {% if site_settings.vendor_email %}
         <p class="mb-0">
           <a href="mailto:{{ site_settings.vendor_email }}">{{ site_settings.vendor_email }}</a>

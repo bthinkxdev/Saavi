@@ -3,19 +3,19 @@
   --jm-white: #ffffff;
   --jm-ivory: #FAF7F0;
   --jm-ivory-light: #FCFAF6;
-  --jm-green-deep: #122B20;
-  --jm-green: #1B4D3E;
-  --jm-green-dark: #13392D;
-  --jm-green-soft: #EBF3EE;
+  --jm-green-deep: #2F3A1A;
+  --jm-green: #4B5A2A;
+  --jm-green-dark: #3A4520;
+  --jm-green-soft: #EEF0E2;
   --jm-gold: #C5A059;
   --jm-gold-dark: #AF8B44;
   --jm-gold-soft: #F9F5EA;
   --jm-gold-border: #DFD3BC;
 
-  --jm-ink: #14241C;
-  --jm-accent: #1B4D3E;
-  --jm-accent-dark: #13392D;
-  --jm-accent-soft: #EBF3EE;
+  --jm-ink: #2B2A1F;
+  --jm-accent: #4B5A2A;
+  --jm-accent-dark: #3A4520;
+  --jm-accent-soft: #EEF0E2;
   --jm-surface: #F8F5EE;
   --jm-slate: #5E6D64;
   --jm-muted: #8E9C93;
@@ -27,9 +27,9 @@
   --jm-radius: 10px;
   --jm-radius-lg: 14px;
   --jm-max: 1440px;
-  --jm-shadow-sm: 0 1px 2px rgba(18, 43, 32, 0.05);
-  --jm-shadow: 0 4px 16px rgba(18, 43, 32, 0.08);
-  --jm-shadow-lg: 0 12px 40px rgba(18, 43, 32, 0.12);
+  --jm-shadow-sm: 0 1px 2px rgba(47, 58, 26, 0.05);
+  --jm-shadow: 0 4px 16px rgba(47, 58, 26, 0.08);
+  --jm-shadow-lg: 0 12px 40px rgba(47, 58, 26, 0.12);
   --jm-transition: 0.22s cubic-bezier(0.4, 0, 0.2, 1);
 
   /* Legacy aliases (single palette — no parallel colors) */
@@ -1191,7 +1191,7 @@ body.mobile-search-open {
   color: #ffffff;
   border-color: var(--jm-accent);
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(27, 77, 62, 0.3);
+  box-shadow: 0 8px 24px rgba(75, 90, 42, 0.3);
 }
 
 .jm-promo-banner__icon {
@@ -1607,7 +1607,7 @@ body.mobile-search-open {
 #jm-qv-variants-group .btn-outline-dark {
   background-color: var(--jm-surface, #F8F5EE) !important;
   border: 1.5px solid var(--jm-border, #E6DFD1) !important;
-  color: var(--jm-ink, #14241C) !important;
+  color: var(--jm-ink, #2B2A1F) !important;
   font-weight: 600;
   font-size: 0.875rem;
   letter-spacing: 0.01em;
@@ -1620,7 +1620,7 @@ body.mobile-search-open {
 #jm-qv-variants-group .btn-outline-dark:hover {
   background-color: var(--jm-gold-soft, #F9F5EA) !important;
   border-color: var(--jm-gold, #C5A059) !important;
-  color: var(--jm-accent, #1B4D3E) !important;
+  color: var(--jm-accent, #4B5A2A) !important;
   transform: translateY(-1px);
 }
 
@@ -1628,10 +1628,10 @@ body.mobile-search-open {
 #jm-qv-variants-group .btn-check:checked + .btn-outline-dark,
 #variant-select-group .btn-check:checked + label,
 #jm-qv-variants-group .btn-check:checked + label {
-  background-color: var(--jm-accent, #1B4D3E) !important;
-  border-color: var(--jm-accent, #1B4D3E) !important;
+  background-color: var(--jm-accent, #4B5A2A) !important;
+  border-color: var(--jm-accent, #4B5A2A) !important;
   color: #ffffff !important;
-  box-shadow: 0 4px 14px rgba(27, 77, 62, 0.3) !important;
+  box-shadow: 0 4px 14px rgba(75, 90, 42, 0.3) !important;
   transform: translateY(-1px);
 }
 
@@ -4000,7 +4000,7 @@ body.mobile-search-open .jm-search-nudge__tip {
   background: var(--jm-accent);
   color: #fff;
   text-decoration: none;
-  box-shadow: 0 8px 22px rgba(27, 77, 62, 0.35);
+  box-shadow: 0 8px 22px rgba(75, 90, 42, 0.35);
   transition: transform var(--jm-transition), box-shadow var(--jm-transition), background var(--jm-transition);
 }
 
@@ -4009,7 +4009,7 @@ body.mobile-search-open .jm-search-nudge__tip {
   color: #fff;
   background: var(--jm-accent-dark);
   transform: scale(1.06);
-  box-shadow: 0 10px 26px rgba(27, 77, 62, 0.5);
+  box-shadow: 0 10px 26px rgba(75, 90, 42, 0.5);
 }
 
 .jm-wa-float svg {
@@ -4151,7 +4151,7 @@ body.mobile-search-open .jm-wa-float {
 .jm-hero__fallback {
   min-height: 220px;
   background:
-    linear-gradient(135deg, rgba(18, 43, 32, 0.45), rgba(197, 160, 89, 0.35)),
+    linear-gradient(135deg, rgba(47, 58, 26, 0.45), rgba(197, 160, 89, 0.35)),
     radial-gradient(circle at 70% 40%, #4a7aa8 0%, #0B1220 70%);
 }
 
@@ -4306,7 +4306,7 @@ body.mobile-search-open .jm-wa-float {
   display: grid;
   place-items: center;
   flex-shrink: 0;
-  box-shadow: 0 2px 8px rgba(18, 43, 32, 0.06);
+  box-shadow: 0 2px 8px rgba(47, 58, 26, 0.06);
   border: 1px solid var(--jm-border-light);
   transition: transform var(--jm-transition), color var(--jm-transition);
 }
@@ -5198,7 +5198,7 @@ button.jm-product-card__atc--in-cart:hover {
 
 /* ----- Footer ----- */
 .jm-footer {
-  background: var(--jm-green-deep, #122B20) !important;
+  background: var(--jm-green-deep, #2F3A1A) !important;
   color: rgba(255, 255, 255, 0.78) !important;
   border-top: 2px solid var(--jm-gold);
   margin-top: 0 !important;

@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load i18n %}
+{% load i18n storefront_tags %}
 
 {% block title %}{% trans "Checkout" %} | {{ site_settings.site_name|default:"Saavi By Neethu" }}{% endblock %}
 
@@ -21,7 +21,7 @@
 {% endblock %}
 
 {% block content %}
-<div class="container page-container checkout-page jm-page">
+<div class="container sv-page sv-checkout checkout-page">
   {% if not summary.lines %}
   <div class="text-center py-5 mt-5">
     <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="1.5" class="mb-3 mx-auto"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
@@ -30,16 +30,24 @@
     <a href="{% url 'catalog:plp' %}" class="btn btn-floward px-4">{% trans "Continue Shopping" %}</a>
   </div>
   {% else %}
-  <h1 class="section-title jm-page-title">{% trans "Checkout" %}</h1>
+  <nav class="sv-crumbs" aria-label="{% trans 'Breadcrumb' %}"><a href="{% url 'cms:homepage' %}">{% trans "Home" %}</a><span aria-hidden="true">&rsaquo;</span><span>{% trans "Checkout" %}</span></nav>
+  <div class="sv-checkout__head">
+    <h1 class="sv-h1 mb-0">{% trans "Checkout" %}</h1>
+    <ol class="sv-steps" aria-label="{% trans 'Progress' %}">
+      <li class="is-done"><span>&#10003;</span>{% trans "Cart" %}</li>
+      <li class="is-current"><span>2</span>{% trans "Checkout" %}</li>
+      <li><span>3</span>{% trans "Order Complete" %}</li>
+    </ol>
+  </div>
   <div class="row g-4">
-    <div class="col-lg-7">
+    <div class="col-lg-7 sv-checkout__steps">
       <form id="checkout-form" method="post" action="{% url 'checkout:place-order' %}"
         hx-post="{% url 'checkout:place-order' %}" hx-target="#checkout-result" hx-swap="innerHTML" novalidate>
         {% csrf_token %}
         <input type="hidden" name="idempotency_key" value="{{ checkout_session.pk }}-{{ summary.grand_total }}-{{ summary.lines|length }}-{{ request.user.pk|default:'guest' }}">
 
         <div class="checkout-step mb-4">
-          <h2>{% trans "Contact Information" %}</h2>
+          <h2>{% trans "Contact Information" %}</h2><p class="sv-step__sub">{% trans "We'll use this to send your order updates." %}</p>
           <div class="row g-2 mb-3">
             <div class="col-md-6">
               <label class="form-label small">{% trans "Full Name" %} <span class="text-danger">*</span></label>
@@ -60,7 +68,7 @@
         </div>
 
         <div class="checkout-step mb-4">
-          <h2>{% trans "Delivery Address" %}</h2>
+          <h2>{% trans "Shipping Address" %}</h2><p class="sv-step__sub">{% trans "Where should we deliver your order?" %}</p>
 
           {% if addresses %}
           <div class="mb-4">
@@ -156,8 +164,12 @@
                 <div id="error-guest_state" class="text-danger small mt-1"></div>
               </div>
               <div class="col-md-6">
-                <label class="form-label small">{% trans "Country Code (e.g. NZ)" %} <span class="text-danger">*</span></label>
-                <input type="text" name="guest_country" id="guest_country" class="form-control form-control-sm" value="{% if not addresses %}{{ checkout_session.address.country|default:'NZ' }}{% endif %}" placeholder="e.g. NZ, AU">
+                <label class="form-label small">{% trans "Country" %} <span class="text-danger">*</span></label>
+                {% with cur_country=checkout_session.address.country|default:request.session.visitor_country|default:"IN" %}
+                <select name="guest_country" id="guest_country" class="form-select form-select-sm">
+                  {% for code, label in sv_countries %}<option value="{{ code }}" {% if cur_country|upper == code %}selected{% endif %}>{{ label }}</option>{% endfor %}
+                </select>
+                {% endwith %}
                 <div id="error-guest_country" class="text-danger small mt-1"></div>
               </div>
             </div>
@@ -173,7 +185,7 @@
 
 
         <div class="checkout-step">
-          <h2>{% trans "Payment Method" %}</h2>
+          <h2>{% trans "Payment Method" %}</h2><p class="sv-step__sub">{% trans "Pay securely by card, Apple Pay or Google Pay via Stripe." %}</p>
           {% for key, adapter in payment_gateways.items %}
           <div class="form-check mb-2">
             <input class="form-check-input" type="radio" name="gateway_key" value="{{ key }}" id="gw-{{ key }}" 
@@ -186,10 +198,12 @@
             <label class="form-check-label small" for="gw-{{ key }}">
               {{ adapter.display_name }}
               {% if key == 'cod' and settings.cod_delivery_charge > 0 %}
-                ({{ display_currency.symbol|default:"₹" }}{{ settings.cod_delivery_charge|floatformat:0 }} {% trans "extra charge" %})
+                ({% money_label settings.cod_delivery_charge display_currency %} {% trans "extra charge" %})
               {% endif %}
             </label>
           </div>
+          {% empty %}
+          <p class="sv-cart__err">{% trans "Online payment is not configured yet. Add your Stripe keys in Dashboard → Settings." %}</p>
           {% endfor %}
           <div id="error-gateway_key" class="text-danger small mt-1"></div>
 
@@ -200,9 +214,9 @@
     </div>
 
     <div class="col-lg-5">
-      <div class="checkout-step sticky-top" style="top: 100px;" id="order-summary-container" hx-get="{% url 'checkout:checkout' %}" hx-trigger="stockChanged from:body, cartUpdated from:body" hx-select="#order-summary-container" hx-swap="outerHTML">
+      <div class="checkout-step sv-checkout__summary" id="order-summary-container" hx-get="{% url 'checkout:checkout' %}" hx-trigger="stockChanged from:body, cartUpdated from:body" hx-select="#order-summary-container" hx-swap="outerHTML">
         <div class="d-flex justify-content-between align-items-center mb-3">
-          <h2 class="mb-0">{% trans "Order Summary" %}</h2>
+          <h2 class="mb-0">{% trans "Order Summary" %} <small>({{ summary.lines|length }} {% trans "Items" %})</small></h2>
           {% if is_buy_now and summary.lines %}
             {% with first_line=summary.lines|first %}
             <a href="{% url 'catalog:pdp' slug=first_line.product.slug %}{% if first_line.variant %}?variant_id={{ first_line.variant.pk }}{% endif %}" class="text-decoration-none small text-floward fw-semibold">{% trans "Edit Item" %}</a>
@@ -250,7 +264,7 @@
               {% if line.variant %}
               <div class="text-muted" style="font-size: 0.75rem;">{{ line.variant.display_name }}</div>
               {% endif %}
-              <div class="text-muted" style="font-size: 0.75rem;">{% trans "Qty:" %} {{ line.quantity }} &times; {{ display_currency.symbol }} {{ line.unit_price_at_add }}</div>
+              <div class="text-muted" style="font-size: 0.75rem;">{% trans "Qty:" %} {{ line.quantity }} &times; {% money_label line.unit_price_at_add display_currency %}</div>
               
               {% if line.is_out_of_stock %}
               <div class="text-danger fw-semibold mt-1" style="font-size: 0.75rem;">{% trans "Out of stock" %}</div>
@@ -259,14 +273,14 @@
               {% endif %}
             </div>
           </div>
-          <span class="flex-shrink-0 fw-semibold" style="font-size: 0.875rem;">{{ display_currency.symbol }} {{ line.line_subtotal }}</span>
+          <span class="flex-shrink-0 fw-semibold" style="font-size: 0.875rem;">{% money_label line.line_subtotal display_currency %}</span>
         </div>
         {% endfor %}
 
         {% if summary.delivery_charge > 0 or selected_city or checkout_session.address %}
         <div class="d-flex justify-content-between py-2 border-bottom text-muted" style="font-size: 0.875rem;">
           <span>{% trans "Delivery Charge" %}{% if selected_gateway_key == 'cod' and settings.cod_delivery_charge > 0 %} <small class="text-muted">({% trans "incl. COD fee" %})</small>{% endif %}</span>
-          <span>{% if summary.delivery_charge > 0 %}{{ display_currency.symbol }} {{ summary.delivery_charge }}{% else %}<span class="text-success fw-semibold">{% trans "FREE" %}</span>{% endif %}</span>
+          <span>{% if summary.delivery_charge > 0 %}{% money_label summary.delivery_charge display_currency %}{% else %}<span class="text-success fw-semibold">{% trans "FREE" %}</span>{% endif %}</span>
         </div>
         {% endif %}
 
@@ -295,9 +309,9 @@
           <button type="submit" class="btn btn-dark btn-sm px-3">{% trans "Apply" %}</button>
         </form>
         {% endif %}
-        <div class="d-flex justify-content-between fw-semibold mt-3 pt-2 border-top">
+        <div class="sv-summary__total">
           <span>{% trans "Total" %}</span>
-          <span class="text-floward">{{ display_currency.symbol }} {{ summary.grand_total }}</span>
+          <span>{% money_label summary.grand_total display_currency %}</span>
         </div>
         {% if summary.has_stock_issues %}
           <button type="button" class="btn btn-floward w-100 py-2 mt-3" disabled style="cursor: not-allowed;">{% trans "Place Order & Pay" %}</button>
@@ -328,8 +342,15 @@
             {% endif %}
           {% endif %}
         {% else %}
-          <button type="submit" form="checkout-form" class="btn btn-floward w-100 py-2 mt-3">{% trans "Place Order & Pay" %}</button>
+          <button type="submit" form="checkout-form" class="sv-btn sv-btn--block sv-btn--lg">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+            {% trans "Place Order" %}
+          </button>
         {% endif %}
+        <div class="sv-secure">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M8.5 12l2.5 2.5 4.5-5"/></svg>
+          <div><strong>{% trans "100% Secure Payment" %}</strong><span>{% trans "Your payment information is safe with us." %}</span></div>
+        </div>
       </div>
 
     </div>
@@ -513,7 +534,7 @@
             document.getElementById('error-guest_country').innerText = 'Country Code is required.';
             isValid = false;
           } else if (!/^[a-zA-Z]{2}$/.test(country)) {
-            document.getElementById('error-guest_country').innerText = 'Country must be exactly a 2-letter code (e.g. NZ).';
+            document.getElementById('error-guest_country').innerText = 'Please choose your country.';
             isValid = false;
           }
 

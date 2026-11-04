@@ -1,18 +1,21 @@
-{% load i18n %}
-{% load static %}
+{% load i18n static storefront_tags %}
 <div id="cart-page-body" hx-get="{% url 'cart:page' %}" hx-trigger="cartUpdated from:body" hx-select="#cart-page-body" hx-swap="outerHTML">
 {% if error and not error_item_id %}
 <div class="alert alert-danger py-2 small mb-3" role="alert">{{ error }}</div>
 {% endif %}
 
 {% if summary and summary.lines %}
-<div class="row g-4">
-  <div class="col-lg-7">
-    <div class="checkout-step p-0 overflow-hidden">
-      <ul class="list-unstyled mb-0">
-        {% for line in summary.lines %}
-        <li class="cart-page-line d-flex gap-3 p-3{% if not forloop.last %} border-bottom{% endif %}">
-          <div class="cart-line__img-wrap" style="width:80px;height:80px;">
+<div class="sv-cart">
+  <div>
+    <div class="sv-panel sv-cart__table">
+      <div class="sv-cart__row sv-cart__row--head d-none d-md-grid">
+        <span>{% trans "Product" %}</span><span>{% trans "Price" %}</span><span>{% trans "Quantity" %}</span><span>{% trans "Total" %}</span><span></span>
+      </div>
+      {% for line in summary.lines %}
+      {% with max_stock=line.max_stock mrp=line.variant.mrp|default:line.product.mrp %}
+      <div class="sv-cart__row">
+        <div class="sv-cart__product">
+          <a class="sv-cart__thumb" href="{% url 'catalog:pdp' slug=line.product.slug %}">
             {% with variant_image=line.variant.variant_images|first %}
             {% if variant_image %}
             <img src="{{ variant_image.image.url }}" alt="{{ line.product.name }}" class="cart-line__img" loading="lazy">
@@ -32,111 +35,86 @@
             {% endwith %}
             {% endif %}
             {% endwith %}
+          </a>
+          <div class="min-w-0">
+            <a href="{% url 'catalog:pdp' slug=line.product.slug %}{% if line.variant %}?variant_id={{ line.variant.pk }}{% endif %}" class="sv-cart__name">{{ line.product.name }}</a>
+            {% if line.variant %}<p class="sv-cart__meta">{{ line.variant.display_name }}</p>{% endif %}
+            {% if not line.product.is_in_stock or max_stock <= 0 %}<p class="sv-cart__err">{% trans "Out of stock" %}</p>
+            {% elif error_item_id == line.item.pk and error %}<p class="sv-cart__err">{{ error }}</p>
+            {% elif line.quantity >= max_stock %}<p class="sv-cart__err">{% trans "Only" %} {{ max_stock }} {% trans "items available in stock." %}</p>{% endif %}
           </div>
-          <div class="flex-grow-1 min-w-0">
-            <div class="cart-line__header d-flex justify-content-between align-items-start gap-2 w-100 min-w-0">
-              <a href="{% url 'catalog:pdp' slug=line.product.slug %}{% if line.variant %}?variant_id={{ line.variant.pk }}{% endif %}" class="cart-line__name text-dark text-truncate">{{ line.product.name }}</a>
-              <span class="cart-line__price fw-semibold flex-shrink-0 text-nowrap ms-auto">{{ display_currency.symbol }} {{ line.line_subtotal }}</span>
-            </div>
-            {% if line.variant %}<div class="cart-line__meta">{{ line.variant.display_name }}</div>{% endif %}
-            {% with max_stock=line.max_stock %}
-            {% if not line.product.is_in_stock or max_stock <= 0 %}
-            <div class="text-danger small mt-1">{% trans "Out of stock" %}</div>
-            {% elif error_item_id == line.item.pk and error %}
-            <div class="text-danger small mt-1">{{ error }}</div>
-            {% elif line.quantity >= max_stock %}
-            <div class="text-danger small mt-1">{% trans "Only" %} {{ max_stock }} {% trans "items available in stock." %}</div>
-            {% endif %}
-            {% if line.gift_snapshot %}<div class="small text-floward mb-1">{% trans "Gift customized" %}</div>{% endif %}
-
-            <div class="d-flex align-items-center justify-content-between mt-2 w-100">
-              <div class="qty-stepper d-flex align-items-center border rounded-pill overflow-hidden" style="width: fit-content;">
-                <form method="post" action="{% url 'cart:quantity' %}">
-                  {% csrf_token %}
-                  <input type="hidden" name="cart_item_id" value="{{ line.item.pk }}">
-                  <input type="hidden" name="delta" value="-1">
-                  <button class="qty-stepper__btn" type="button" hx-post="{% url 'cart:quantity' %}" hx-target="#cart-page-body" hx-swap="outerHTML" hx-include="closest form" aria-label="{% trans 'Decrease quantity' %}" {% if line.quantity <= 1 %}disabled{% endif %}>
-                    &minus;
-                  </button>
-                </form>
-                <span class="qty-stepper__value">{{ line.quantity }}</span>
-                <form method="post" action="{% url 'cart:quantity' %}">
-                  {% csrf_token %}
-                  <input type="hidden" name="cart_item_id" value="{{ line.item.pk }}">
-                  <input type="hidden" name="delta" value="1">
-                  <button class="qty-stepper__btn" type="button" hx-post="{% url 'cart:quantity' %}" hx-target="#cart-page-body" hx-swap="outerHTML" hx-include="closest form" aria-label="{% trans 'Increase quantity' %}" {% if line.quantity >= max_stock %}disabled{% endif %} style="padding: 2px 8px; font-size: 14px; border: none; background: transparent;">&plus;</button>
-                </form>
-              </div>
-              {% endwith %}
-
-              <form method="post" action="{% url 'cart:page-remove' %}" class="m-0 d-inline-flex align-items-center">
-                {% csrf_token %}
-                <input type="hidden" name="cart_item_id" value="{{ line.item.pk }}">
-                <button class="btn btn-sm btn-ghost text-danger cart-line__remove-btn p-1" type="button" hx-post="{% url 'cart:page-remove' %}" hx-target="#cart-page-body" hx-swap="outerHTML" hx-include="closest form" aria-label="{% trans 'Delete item' %}" title="{% trans 'Delete item' %}">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <polyline points="3 6 5 6 21 6"></polyline>
-                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                    <line x1="10" y1="11" x2="10" y2="17"></line>
-                    <line x1="14" y1="11" x2="14" y2="17"></line>
-                  </svg>
-                </button>
-              </form>
-            </div>
-          </div>
-        </li>
-        {% endfor %}
-      </ul>
-    </div>
-  </div>
-
-  <div class="col-lg-5">
-    {% if summary.coupon_code or has_active_coupons %}
-    <div class="checkout-step">
-      <h2>{% trans "Promo code" %}</h2>
-      {% if summary.coupon_code %}
-      <div class="d-flex justify-content-between align-items-center bg-light rounded-3 px-3 py-2">
-        <span class="small fw-semibold text-floward">{{ summary.coupon_code }}</span>
-        <form method="post" action="{% url 'cart:coupon-remove' %}">
-          {% csrf_token %}
-          <button class="btn btn-sm btn-ghost text-danger" type="button" hx-post="{% url 'cart:coupon-remove' %}" hx-target="#cart-page-body" hx-swap="outerHTML" hx-include="closest form">{% trans "Remove" %}</button>
+          <form method="post" action="{% url 'cart:wishlist-toggle' %}" hx-post="{% url 'cart:wishlist-toggle' %}" hx-swap="none" class="m-0">
+            {% csrf_token %}<input type="hidden" name="product_id" value="{{ line.product.pk }}">
+            <button type="submit" class="sv-icon-btn sv-icon-btn--sm {% if wishlist_product_ids and line.product.pk in wishlist_product_ids %}is-active{% endif %}" aria-label="{% trans 'Move to wishlist' %}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></button>
+          </form>
+        </div>
+        <div class="sv-cart__price">
+          <strong>{% money_label line.unit_price_at_add display_currency %}</strong>
+          {% if mrp and mrp > line.unit_price_at_add %}
+          <span class="sv-price__was">{% money_label mrp display_currency %}</span>
+          {% with pct=line.unit_price_at_add|discount_percent:mrp %}{% if pct %}<span class="sv-pill-off">{{ pct }}% {% trans "Off" %}</span>{% endif %}{% endwith %}
+          {% endif %}
+        </div>
+        <div class="sv-qty">
+          <form method="post" action="{% url 'cart:quantity' %}" class="m-0">
+            {% csrf_token %}<input type="hidden" name="cart_item_id" value="{{ line.item.pk }}"><input type="hidden" name="delta" value="-1">
+            <button type="button" hx-post="{% url 'cart:quantity' %}" hx-target="#cart-page-body" hx-swap="outerHTML" hx-include="closest form" aria-label="{% trans 'Decrease quantity' %}" {% if line.quantity <= 1 %}disabled{% endif %}>&minus;</button>
+          </form>
+          <span>{{ line.quantity }}</span>
+          <form method="post" action="{% url 'cart:quantity' %}" class="m-0">
+            {% csrf_token %}<input type="hidden" name="cart_item_id" value="{{ line.item.pk }}"><input type="hidden" name="delta" value="1">
+            <button type="button" hx-post="{% url 'cart:quantity' %}" hx-target="#cart-page-body" hx-swap="outerHTML" hx-include="closest form" aria-label="{% trans 'Increase quantity' %}" {% if line.quantity >= max_stock %}disabled{% endif %}>&plus;</button>
+          </form>
+        </div>
+        <strong class="sv-cart__total">{% money_label line.line_subtotal display_currency %}</strong>
+        <form method="post" action="{% url 'cart:page-remove' %}" class="m-0">
+          {% csrf_token %}<input type="hidden" name="cart_item_id" value="{{ line.item.pk }}">
+          <button class="sv-icon-btn sv-icon-btn--sm" type="button" hx-post="{% url 'cart:page-remove' %}" hx-target="#cart-page-body" hx-swap="outerHTML" hx-include="closest form" aria-label="{% trans 'Remove item' %}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"/></svg>
+          </button>
         </form>
       </div>
-      {% elif has_active_coupons %}
-      <form method="post" action="{% url 'cart:coupon-apply' %}" class="d-flex gap-2">
+      {% endwith %}
+      {% endfor %}
+    </div>
+    <a href="{% url 'catalog:plp' %}" class="sv-link sv-cart__continue"><span aria-hidden="true">&larr;</span> {% trans "Continue Shopping" %}</a>
+  </div>
+
+  <aside>
+    <div class="sv-panel sv-panel--cream sv-summary">
+      <h2 class="sv-h3">{% trans "Order Summary" %}</h2>
+      <div class="sv-summary__row"><span>{% trans "Subtotal" %} ({{ summary.lines|length }} {% trans "Items" %})</span><span>{% money_label summary.subtotal display_currency %}</span></div>
+      {% if summary.coupon_discount %}<div class="sv-summary__row"><span>{% trans "Discount" %}</span><span class="sv-green">&minus; {% money_label summary.coupon_discount display_currency %}</span></div>{% endif %}
+      <div class="sv-summary__row"><span>{% trans "Shipping" %}</span><span>{% if summary.delivery_charge and summary.delivery_charge > 0 %}{% money_label summary.delivery_charge display_currency %}{% else %}<span class="sv-green">{% trans "Calculated at checkout" %}</span>{% endif %}</span></div>
+      <div class="sv-summary__total"><span>{% trans "Total" %}</span><span>{% money_label summary.grand_total display_currency %}</span></div>
+      {% if summary.has_stock_issues %}
+      <button class="sv-btn sv-btn--block sv-btn--lg" disabled>{% trans "Proceed to Checkout" %}</button>
+      <p class="sv-cart__err text-center mt-2">{% trans "Some items are out of stock. Please remove them to checkout." %}</p>
+      {% else %}
+      <a href="{% url 'checkout:checkout' %}?mode=cart" class="sv-btn sv-btn--block sv-btn--lg">{% trans "Proceed to Checkout" %} <span aria-hidden="true">&rarr;</span></a>
+      {% endif %}
+    </div>
+
+    <div class="sv-panel sv-panel--cream sv-coupon">
+      <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 8l15-4 1 4a2 2 0 0 0 0 4l1 4-15 4-1-4a2 2 0 0 0 0-4z"/></svg>{% trans "Have a Coupon Code?" %}</h3>
+      {% if summary.coupon_code %}
+      <div class="sv-coupon__applied">
+        <span>{{ summary.coupon_code }}</span>
+        <form method="post" action="{% url 'cart:coupon-remove' %}" class="m-0">{% csrf_token %}
+          <button class="sv-link sv-link--sm border-0 bg-transparent" type="button" hx-post="{% url 'cart:coupon-remove' %}" hx-target="#cart-page-body" hx-swap="outerHTML" hx-include="closest form">{% trans "Remove" %}</button>
+        </form>
+      </div>
+      {% else %}
+      <form method="post" action="{% url 'cart:coupon-apply' %}" class="sv-coupon__form">
         {% csrf_token %}
-        <input type="text" name="code" class="form-control form-control-sm" placeholder="{% trans 'Enter coupon code' %}">
-        <button type="button" class="btn btn-outline-floward btn-sm text-nowrap" hx-post="{% url 'cart:coupon-apply' %}" hx-target="#cart-page-body" hx-swap="outerHTML" hx-include="closest form">{% trans "Apply" %}</button>
+        <input type="text" name="code" placeholder="{% trans 'Enter coupon code' %}" aria-label="{% trans 'Coupon code' %}">
+        <button type="button" class="sv-btn" hx-post="{% url 'cart:coupon-apply' %}" hx-target="#cart-page-body" hx-swap="outerHTML" hx-include="closest form">{% trans "Apply" %}</button>
       </form>
       {% endif %}
     </div>
-    {% endif %}
-
-    <div class="checkout-step">
-      <h2>{% trans "Order Summary" %}</h2>
-      <div class="cart-summary-row"><span>{% trans "Subtotal" %}</span><span>{{ display_currency.symbol }} {{ summary.subtotal }}</span></div>
-      {% if summary.coupon_discount %}
-      <div class="cart-summary-row text-success"><span>{% trans "Coupon" %}</span><span>-{{ display_currency.symbol }} {{ summary.coupon_discount }}</span></div>
-      {% endif %}
-      <div class="cart-summary-row">
-        <span>{% trans "Delivery charges" %}</span>
-        <span>{% if summary.delivery_charge and summary.delivery_charge > 0 %}{{ display_currency.symbol }} {{ summary.delivery_charge }}{% else %}{% trans "Calculated at checkout" %}{% endif %}</span>
-      </div>
-      <div class="cart-summary-row cart-summary-total"><span>{% trans "Total" %}</span><span class="text-floward">{{ display_currency.symbol }} {{ summary.grand_total }}</span></div>
-      {% if summary.has_stock_issues %}
-      <button class="btn btn-floward w-100 py-2 mt-3 d-flex justify-content-between align-items-center px-3" disabled style="cursor: not-allowed;" onclick="event.preventDefault();">
-        <span>{% trans "Proceed to Checkout" %}</span>
-        <span>{{ display_currency.symbol }} {{ summary.grand_total }}</span>
-      </button>
-      <div class="text-danger small mt-2 text-center">{% trans "Some items are out of stock. Please remove them to checkout." %}</div>
-      {% else %}
-      <a href="{% url 'checkout:checkout' %}?mode=cart" class="btn btn-floward w-100 py-2 mt-3 d-flex justify-content-between align-items-center px-3">
-        <span>{% trans "Proceed to Checkout" %}</span>
-        <span>{{ display_currency.symbol }} {{ summary.grand_total }}</span>
-      </a>
-      {% endif %}
-    </div>
-  </div>
+  </aside>
 </div>
+{% include "includes/sv_trust_strip.html" with trust_class="sv-trust--panel" %}
 {% else %}
 <div class="text-center py-5">
   <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="1.5" class="mb-3 mx-auto"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>

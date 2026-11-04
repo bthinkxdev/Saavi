@@ -1,4 +1,4 @@
-{% load i18n %}
+{% load i18n storefront_tags %}
 {% load static %}
 {% if summary and summary.lines %}
 {% if error and not error_item_id %}
@@ -36,7 +36,7 @@
       {% if line.variant %}
       <div class="cart-line__meta text-muted small mt-1 mb-1">{{ line.variant.display_name }}</div>
       {% endif %}
-      <div class="cart-line__meta">{{ display_currency.symbol }} {{ line.unit_price_at_add }}</div>
+      <div class="cart-line__meta">{% money_label line.unit_price_at_add display_currency %}</div>
       {% with max_stock=line.max_stock %}
       {% if not line.product.is_in_stock or max_stock <= 0 %}
       <div class="text-danger small mt-1">{% trans "Out of stock" %}</div>
@@ -78,10 +78,10 @@
   </ul>
 </div>
 <div class="cart-drawer-footer">
-  <div class="cart-summary-row"><span>{% trans "Subtotal" %}</span><span>{{ display_currency.symbol }} {{ summary.subtotal }}</span></div>
-  {% if summary.coupon_discount %}<div class="cart-summary-row text-success"><span>{% trans "Coupon" %}</span><span>-{{ display_currency.symbol }} {{ summary.coupon_discount }}</span></div>{% endif %}
-  <div class="cart-summary-row"><span>{% trans "Delivery" %}</span><span>{% if summary.delivery_charge and summary.delivery_charge > 0 %}{{ display_currency.symbol }} {{ summary.delivery_charge }}{% else %}{% trans "Calculated at checkout" %}{% endif %}</span></div>
-  <div class="cart-summary-row cart-summary-total"><span>{% trans "Total" %}</span><span class="text-floward">{{ display_currency.symbol }} {{ summary.grand_total }}</span></div>
+  <div class="cart-summary-row"><span>{% trans "Subtotal" %}</span><span>{% money_label summary.subtotal display_currency %}</span></div>
+  {% if summary.coupon_discount %}<div class="cart-summary-row text-success"><span>{% trans "Coupon" %}</span><span>-{% money_label summary.coupon_discount display_currency %}</span></div>{% endif %}
+  <div class="cart-summary-row"><span>{% trans "Delivery" %}</span><span>{% if summary.delivery_charge and summary.delivery_charge > 0 %}{% money_label summary.delivery_charge display_currency %}{% else %}{% trans "Calculated at checkout" %}{% endif %}</span></div>
+  <div class="cart-summary-row cart-summary-total"><span>{% trans "Total" %}</span><span class="text-floward">{% money_label summary.grand_total display_currency %}</span></div>
   <a href="{% url 'cart:page' %}" class="btn btn-outline-floward w-100 py-2 mt-2">{% trans "View Cart" %}</a>
   {% if summary.has_stock_issues %}
   <button class="btn btn-floward w-100 py-2 mt-2" disabled style="cursor: not-allowed;" onclick="event.preventDefault();">{% trans "Checkout" %}</button>

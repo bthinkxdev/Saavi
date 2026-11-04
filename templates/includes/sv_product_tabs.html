@@ -1,0 +1,25 @@
+{% load i18n %}
+{% if tabs %}
+<section class="container sv-section" data-sv-tabs>
+  <div class="sv-section__head">
+    <h2 class="sv-h2">{{ title }}</h2>
+    {% if tabs|length > 1 %}
+    <div class="sv-tabs" role="tablist">
+      {% for tab in tabs %}
+      <button type="button" class="sv-tab {% if forloop.first %}is-active{% endif %}" role="tab" data-sv-tab="{{ tab_id }}-{{ forloop.counter }}" aria-selected="{% if forloop.first %}true{% else %}false{% endif %}">{{ tab.category.name }}</button>
+      {% endfor %}
+    </div>
+    {% endif %}
+    <a class="sv-link sv-link--sm" href="{% url 'catalog:plp' %}?{{ view_all_query }}">{% trans "View All" %} <span aria-hidden="true">&rarr;</span></a>
+  </div>
+  {% for tab in tabs %}
+  <div class="sv-grid sv-grid--5" data-sv-panel="{{ tab_id }}-{{ forloop.counter }}" {% if not forloop.first %}hidden{% endif %}>
+    {% for product in tab.products %}
+      {% include "catalog/partials/product_card.html" with product=product force_badge=force_badge %}
+    {% empty %}
+      <p class="sv-muted">{% trans "New pieces are on their way." %}</p>
+    {% endfor %}
+  </div>
+  {% endfor %}
+</section>
+{% endif %}

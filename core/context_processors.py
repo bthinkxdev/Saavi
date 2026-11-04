@@ -65,6 +65,8 @@ def storefront(request: HttpRequest) -> dict[str, Any]:
         "wishlist_product_ids": wishlist_product_ids,
         "default_currency": default_currency,
         "display_currency": display_currency,
+        "active_currencies": _active_currencies(),
+        "sv_countries": __import__("core.currency", fromlist=["x"]).CHECKOUT_COUNTRIES,
         "session_language": request.session.get("django_language", ""),
         "session_currency": session_currency,
 
@@ -76,3 +78,10 @@ def storefront(request: HttpRequest) -> dict[str, Any]:
             else Page.objects.none()
         ),
     }
+
+
+def _active_currencies():
+    from core.models import Currency
+
+    order = {"INR": 0, "AED": 1, "USD": 2, "EUR": 3}
+    return sorted(Currency.objects.filter(is_active=True), key=lambda c: order.get(c.code, 9))
