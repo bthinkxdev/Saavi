@@ -1,0 +1,11 @@
+{% load i18n %}
+{% if section_context.title or fallback_key %}
+<div class="section-header">
+  <h2 class="section-title">
+    {% if section_context.title %}{{ section_context.title }}{% else %}{% trans fallback_key %}{% endif %}
+  </h2>
+  {% if show_cta|default_if_none:True %}
+  <a href="{{ cta_url|default:'/shop/' }}" class="section-cta">{{ cta_label|default:_("View All") }}</a>
+  {% endif %}
+</div>
+{% endif %}

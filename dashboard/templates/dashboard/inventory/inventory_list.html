@@ -1,0 +1,501 @@
+{% extends "dashboard/base.html" %}
+{% load dashboard_extras %}
+
+{% block title %}Inventory{% endblock %}
+{% block page_title %}Inventory{% endblock %}
+{% block breadcrumbs %}
+<p class="mb-0 text-secondary">{{ paginator.count }} product{{ paginator.count|pluralize }} in stock list</p>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+  .table tr.collapse:not(.show),
+  .table tbody tr.collapse:not(.show),
+  tr.collapse:not(.show),
+  .inventory-table tbody tr.collapse:not(.show) {
+    display: none !important;
+  }
+
+  .variant-toggle-btn::after,
+  .dropdown-toggle::after {
+    transition: transform 0.2s ease-in-out;
+    vertical-align: 0.15em;
+  }
+  .variant-toggle-btn[aria-expanded="true"]::after,
+  .dropdown-toggle[aria-expanded="true"]::after {
+    transform: rotate(180deg);
+  }
+
+  .variant-toggle-btn {
+    font-size: 0.62rem !important;
+    padding: 1px 7px !important;
+    line-height: 1.25 !important;
+    font-weight: 500 !important;
+  }
+  .variant-toggle-btn::after {
+    border-top-width: 0.28em !important;
+    border-right-width: 0.28em !important;
+    border-left-width: 0.28em !important;
+    margin-left: 3px !important;
+  }
+  .simple-product-badge {
+    font-size: 0.62rem !important;
+    padding: 1px 7px !important;
+    line-height: 1.25 !important;
+    font-weight: 500 !important;
+  }
+
+  @media (min-width: 992.02px) {
+    .inventory-table tbody tr.collapse.show {
+      display: table-row !important;
+      background: #fafbfc;
+    }
+    .inventory-table tbody tr.collapsing {
+      display: table-row !important;
+      height: auto !important;
+      transition: none !important;
+    }
+  }
+
+  @media (max-width: 992px) {
+    .inventory-card,
+    .inventory-responsive {
+      overflow-x: hidden !important;
+      width: 100% !important;
+    }
+
+    .inventory-table tbody tr:not(.variant-row) {
+      width: 100% !important;
+    }
+
+    .inventory-table tbody tr.variants-expanded {
+      border-bottom-left-radius: 0 !important;
+      border-bottom-right-radius: 0 !important;
+      margin-bottom: 0 !important;
+      border-bottom: 1px dashed #e2e8f0 !important;
+    }
+
+    .inventory-table tbody tr.variant-row {
+      display: block;
+      width: calc(100% - 0.5rem) !important;
+      background: #f8fafc !important;
+      border: 1px solid #e2e8f0 !important;
+      border-top: none !important;
+      border-left: 3.5px solid #ff6b4a !important;
+      border-radius: 0 !important;
+      margin-top: 0 !important;
+      margin-bottom: 0 !important;
+      margin-left: 0.5rem !important;
+      box-shadow: none !important;
+      transition: none !important;
+      overflow: hidden;
+    }
+
+    .inventory-table tbody tr.variant-row.collapse:not(.show) {
+      display: none !important;
+    }
+
+    .inventory-table tbody tr.variant-row.collapse.show {
+      display: block !important;
+    }
+
+    .inventory-table tbody tr.variant-row.variant-row-last {
+      border-bottom-left-radius: 10px !important;
+      border-bottom-right-radius: 10px !important;
+      margin-bottom: 0.75rem !important;
+      border-bottom: 1px solid #e2e8f0 !important;
+    }
+
+    .inventory-table tbody tr.variant-row td[data-label="Category"],
+    .inventory-table tbody tr.variant-row td[data-label="Action"] {
+      display: none !important;
+    }
+
+    .inventory-table tbody tr.variant-row td[data-label="Variant"] {
+      background: #f1f5f9 !important;
+      border-bottom: 1px solid #e2e8f0 !important;
+      padding: 0.45rem 0.75rem !important;
+      justify-content: flex-start !important;
+      font-size: 0.84rem !important;
+      font-weight: 600 !important;
+      color: #1e293b !important;
+      padding-left: 0.75rem !important;
+      word-break: break-word;
+    }
+    .inventory-table tbody tr.variant-row td[data-label="Variant"]::before {
+      display: none !important;
+    }
+
+    .inventory-table tbody tr.variant-row td[data-label="Variant SKU"],
+    .inventory-table tbody tr.variant-row td[data-label="Status"] {
+      padding: 0.32rem 0.75rem !important;
+      border-bottom: 1px dashed #f1f5f9 !important;
+      font-size: 0.8rem !important;
+    }
+
+    .inventory-table tbody tr.variant-row td[data-label="Stock"] {
+      padding: 0.45rem 0.75rem 0.55rem !important;
+      border-bottom: none !important;
+      font-size: 0.8rem !important;
+    }
+    .inventory-table tbody td[data-label="Stock"] form {
+      display: inline-flex !important;
+      align-items: center;
+      gap: 0.4rem;
+      margin: 0;
+    }
+    .inventory-table tbody tr.variant-row td[data-label="Stock"] input {
+      width: 70px !important;
+      height: 32px !important;
+      font-size: 0.82rem !important;
+    }
+    .inventory-table tbody tr.variant-row td[data-label="Stock"] button {
+      height: 32px !important;
+      padding: 0 10px !important;
+      font-size: 0.8rem !important;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="card mb-3">
+  <div class="card-body">
+    <form method="get" class="row g-2 align-items-center">
+      <div class="col-12 col-md-4">
+        <div class="input-group">
+          <input type="text" id="searchInput" name="q" value="{{ search_query }}" class="form-control border-end-0"
+            placeholder="Search by product name or SKU..." />
+          <button type="button" class="input-group-text bg-transparent border-start-0 {% if search_query %}border-end-0{% endif %} text-secondary"
+            onclick="if(document.getElementById('searchInput').value.trim() !== '') { this.form.submit(); }" title="Search">
+            <i class="ti ti-search"></i>
+          </button>
+          {% if search_query %}
+          <button type="button" class="input-group-text bg-transparent border-start-0 text-secondary"
+            onclick="document.getElementById('searchInput').value=''; this.form.submit();" title="Clear search">
+            <i class="ti ti-x"></i>
+          </button>
+          {% endif %}
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <select name="category" class="form-select">
+          <option value="">All categories</option>
+          {% for cat in categories %}
+          <option value="{{ cat.pk }}" {% if category_filter == cat.pk|stringformat:"s" %}selected{% endif %}>{{ cat.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-6 col-md-2">
+        <select name="type" class="form-select">
+          <option value="">All product types</option>
+          <option value="variant" {% if type_filter == "variant" %}selected{% endif %}>Variant Product</option>
+          <option value="simple" {% if type_filter == "simple" %}selected{% endif %}>Simple Product</option>
+        </select>
+      </div>
+      <div class="col-6 col-md-2">
+        <select name="status" class="form-select">
+          <option value="">All stock status</option>
+          <option value="low" {% if status_filter == "low" %}selected{% endif %}>Low stock</option>
+          <option value="out" {% if status_filter == "out" %}selected{% endif %}>Out of stock</option>
+          <option value="in" {% if status_filter == "in" %}selected{% endif %}>In stock</option>
+        </select>
+      </div>
+      <div class="col-6 col-md-1 d-flex align-items-center gap-1">
+        <button type="submit" class="btn btn-outline-secondary w-100">Filter</button>
+        {% if search_query or category_filter or status_filter or type_filter %}
+        <a href="{% url 'dashboard:inventory-list' %}" class="btn btn-outline-secondary" title="Reset filters">
+          <i class="ti ti-x"></i>
+        </a>
+        {% endif %}
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="card table-responsive inventory-card inventory-responsive">
+  <table class="table data-table align-middle mb-0 inventory-table">
+    <thead>
+      <tr>
+        <th style="min-width: 280px;">Product</th>
+        <th>SKU</th>
+        <th>Category</th>
+        <th>Status</th>
+        <th style="width: 210px;">Stock</th>
+        <th class="text-end">Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for product in page_obj %}
+      <!-- main product row -->
+      <tr id="row-prod-{{ product.pk }}">
+        <td data-label="Product">
+          <div class="d-flex align-items-center gap-3">
+            {% with img=product|primary_image %}
+            {% if img %}
+            <img src="{{ img }}" class="thumb" alt="" style="width: 38px; height: 38px; object-fit: cover; border-radius: 6px;" />
+            {% else %}
+            <span class="thumb thumb-fallback" style="width: 38px; height: 38px; border-radius: 6px;">{{ product.name|first|upper }}</span>
+            {% endif %}
+            {% endwith %}
+            <div class="d-flex flex-column align-items-start">
+              <span class="fw-semibold text-dark">{{ product.name }}</span>
+              <div style="margin-top: 3px;">
+                {% if product.is_variant_product %}
+                <!-- dropdown toggle button showing variant product (count) below main product name -->
+                <button class="btn btn-sm btn-outline-primary rounded-pill d-inline-flex align-items-center dropdown-toggle variant-toggle-btn"
+                        type="button"
+                        data-bs-toggle="collapse"
+                        data-bs-target=".variant-row-{{ product.pk }}"
+                        aria-expanded="false">
+                  Variant Product ({{ product.variant_list|length }})
+                </button>
+                {% else %}
+                <span class="badge bg-secondary-subtle text-secondary border rounded-pill simple-product-badge">Simple Product</span>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        </td>
+        <td data-label="SKU">
+          <span class="font-monospace text-secondary">{{ product.sku }}</span>
+        </td>
+        <td data-label="Category">
+          <span class="pill pill-gray">{{ product.category.name|default:"—" }}</span>
+        </td>
+        <td data-label="Status">
+          <span class="pill {{ product.status_pill }}" id="product-pill-{{ product.pk }}">{{ product.status_label }}</span>
+        </td>
+        <td data-label="Stock">
+          {% if product.is_variant_product %}
+          <div>
+            <span class="fw-bold fs-6" id="product-total-stock-{{ product.pk }}">{{ product.stock_quantity }}</span>
+            <span class="text-secondary small">total units</span>
+          </div>
+          {% else %}
+          <form method="post" action="{% url 'dashboard:inventory-adjust' %}" data-no-loader="true" class="d-flex align-items-center gap-2 no-loader"
+                onsubmit="return handleInlineAdjust(event, 'product', {{ product.pk }}, {{ product.pk }})">
+            {% csrf_token %}
+            <input type="hidden" name="item_type" value="product">
+            <input type="hidden" name="item_id" value="{{ product.pk }}">
+            <input type="number" min="0" name="stock_quantity" id="input-product-{{ product.pk }}"
+                   value="{{ product.stock_quantity }}" class="form-control form-control-sm"
+                   style="width: 80px; text-align: center;">
+            <button type="submit" class="btn btn-sm btn-outline-primary" id="btn-product-{{ product.pk }}" disabled>
+              Save
+            </button>
+          </form>
+          {% endif %}
+        </td>
+        <td data-label="Action" class="text-end">
+          <a href="{% url 'dashboard:product-update' product.pk %}?next={{ request.get_full_path|urlencode }}" class="btn btn-icon btn-sm btn-light" title="Edit Product">
+            <i class="ti ti-edit"></i>
+          </a>
+        </td>
+      </tr>
+
+      {% if product.is_variant_product %}
+      {% for v in product.variant_list %}
+      <tr class="collapse variant-row variant-row-{{ product.pk }} {% if forloop.last %}variant-row-last{% endif %}" style="background: #fafbfc;">
+        <td data-label="Variant" class="py-2" style="padding-left: 3.5rem !important;">
+          <div class="d-flex align-items-center gap-2">
+            <span class="text-secondary" style="font-size: 0.85rem;">↳</span>
+            <span class="fw-medium text-dark" style="font-size: 0.85rem;">{{ v.display_name|default:v.name }}</span>
+          </div>
+        </td>
+        <td data-label="Variant SKU" class="py-2">
+          <span class="font-monospace text-secondary" style="font-size: 0.82rem;">{{ v.sku_suffix|default:product.sku }}</span>
+        </td>
+        <td data-label="Category" class="py-2">
+          <span class="text-muted" style="font-size: 0.82rem;">—</span>
+        </td>
+        <td data-label="Status" class="py-2">
+          <span class="pill {{ v.status_pill }}" id="pill-variant-{{ v.pk }}">{{ v.status_label }}</span>
+        </td>
+        <td data-label="Stock" class="py-2">
+          <form method="post" action="{% url 'dashboard:inventory-adjust' %}" data-no-loader="true" class="d-flex align-items-center gap-2 no-loader"
+                onsubmit="return handleInlineAdjust(event, 'variant', {{ v.pk }}, {{ product.pk }})">
+            {% csrf_token %}
+            <input type="hidden" name="item_type" value="variant">
+            <input type="hidden" name="item_id" value="{{ v.pk }}">
+            <input type="number" min="0" name="stock_quantity" id="input-variant-{{ v.pk }}"
+                   value="{{ v.stock_quantity }}" class="form-control form-control-sm"
+                   style="width: 80px; height: 30px; text-align: center;">
+            <button type="submit" class="btn btn-sm btn-outline-primary" style="height: 30px; padding: 0 10px;" id="btn-variant-{{ v.pk }}" disabled>
+              Save
+            </button>
+          </form>
+        </td>
+        <td data-label="Action" class="py-2 text-end"></td>
+      </tr>
+      {% endfor %}
+      {% endif %}
+
+      {% empty %}
+      <tr>
+        <td colspan="6">
+          <div class="empty-state text-center py-4">
+            <i class="ti ti-packages fs-1 d-block mb-2 text-secondary"></i>
+            No inventory items found. Try adjusting your filters.
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% if page_obj.has_other_pages %}
+<div class="d-flex justify-content-between align-items-center mt-3 flex-wrap gap-2">
+  <small class="text-secondary">
+    Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ paginator.count }} products
+  </small>
+  <ul class="pagination pagination-sm mb-0">
+    {% if page_obj.has_previous %}
+    <li class="page-item">
+      <a class="page-link" href="?page={{ page_obj.previous_page_number }}&q={{ search_query }}&category={{ category_filter }}&type={{ type_filter }}&status={{ status_filter }}">Previous</a>
+    </li>
+    {% else %}
+    <li class="page-item disabled"><span class="page-link">Previous</span></li>
+    {% endif %}
+
+    {% for num in paginator.page_range %}
+      {% if num == page_obj.number %}
+      <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+      {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+      <li class="page-item">
+        <a class="page-link" href="?page={{ num }}&q={{ search_query }}&category={{ category_filter }}&type={{ type_filter }}&status={{ status_filter }}">{{ num }}</a>
+      </li>
+      {% endif %}
+    {% endfor %}
+
+    {% if page_obj.has_next %}
+    <li class="page-item">
+      <a class="page-link" href="?page={{ page_obj.next_page_number }}&q={{ search_query }}&category={{ category_filter }}&type={{ type_filter }}&status={{ status_filter }}">Next</a>
+    </li>
+    {% else %}
+    <li class="page-item disabled"><span class="page-link">Next</span></li>
+    {% endif %}
+  </ul>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function handleInlineAdjust(event, itemType, itemId, parentProductId) {
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+  const btn = document.getElementById(`btn-${itemType}-${itemId}`);
+  const form = (event && event.target && event.target.tagName === 'FORM')
+    ? event.target
+    : (btn ? btn.closest('form') : document.getElementById(`btn-${itemType}-${itemId}`)?.closest('form'));
+
+  if (!form || !btn) return false;
+
+  const input = form.querySelector('[name=stock_quantity]');
+  if (!input || input.value === input.defaultValue) return false;
+
+  delete form.dataset.loaderActive;
+  form.removeAttribute('data-loader-active');
+
+  const origText = 'Save';
+
+  btn.disabled = true;
+  btn.textContent = '...';
+
+  const formData = new FormData(form);
+  const csrf = form.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
+
+  fetch(form.action, {
+    method: 'POST',
+    headers: {
+      'X-Requested-With': 'XMLHttpRequest',
+      'X-CSRFToken': csrf,
+    },
+    body: formData,
+  })
+  .then(res => {
+    if (!res.ok) {
+      throw new Error(`Server returned ${res.status}`);
+    }
+    return res.json();
+  })
+  .then(data => {
+    delete form.dataset.loaderActive;
+    form.removeAttribute('data-loader-active');
+
+    if (data.success) {
+      input.defaultValue = data.new_stock;
+      btn.textContent = 'Saved!';
+      setTimeout(() => { btn.textContent = origText; btn.disabled = true; }, 1500);
+
+      const pill = document.getElementById(itemType === 'variant' ? `pill-variant-${itemId}` : `product-pill-${itemId}`);
+      if (pill) {
+        pill.className = `pill ${data.status_pill}`;
+        pill.textContent = data.status_label;
+      }
+
+      if (itemType === 'variant' && parentProductId) {
+        const totalStockEl = document.getElementById(`product-total-stock-${parentProductId}`);
+        if (totalStockEl && data.parent_stock !== undefined) {
+          totalStockEl.textContent = data.parent_stock;
+        }
+        if (data.parent_status_label && data.parent_status_pill) {
+          const parentPill = document.getElementById(`product-pill-${parentProductId}`);
+          if (parentPill) {
+            parentPill.className = `pill ${data.parent_status_pill}`;
+            parentPill.textContent = data.parent_status_label;
+          }
+        }
+      }
+
+      if (data.low_stock_count !== undefined) {
+        document.querySelectorAll('#sidebar-inventory-badge, .sidebar-inventory-badge').forEach(badge => {
+          badge.textContent = data.low_stock_count;
+          badge.style.display = data.low_stock_count > 0 ? '' : 'none';
+        });
+      }
+    } else {
+      btn.textContent = origText;
+      if (data.error) alert(data.error);
+    }
+  })
+  .catch((err) => {
+    console.error('Inventory adjust error:', err);
+    btn.disabled = false;
+    btn.textContent = origText;
+    delete form.dataset.loaderActive;
+    form.removeAttribute('data-loader-active');
+  });
+
+  return false;
+}
+
+document.addEventListener('input', function(e) {
+  if (e.target && e.target.name === 'stock_quantity') {
+    const btn = e.target.form ? e.target.form.querySelector('button[type="submit"]') : null;
+    if (btn) btn.disabled = (e.target.value === e.target.defaultValue || e.target.value === '');
+  }
+});
+
+document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('.variant-toggle-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      const mainRow = this.closest('tr');
+      if (!mainRow) return;
+      setTimeout(function() {
+        const isExpanded = btn.getAttribute('aria-expanded') === 'true';
+        if (isExpanded) {
+          mainRow.classList.add('variants-expanded');
+        } else {
+          mainRow.classList.remove('variants-expanded');
+        }
+      }, 50);
+    });
+  });
+});
+</script>
+{% endblock %}

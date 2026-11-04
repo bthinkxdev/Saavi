@@ -1,0 +1,106 @@
+{% load i18n %}
+<div class="jm-pdp-gallery" data-jm-pdp-gallery>
+  <div class="jm-pdp-gallery__stage ratio ratio-1x1" data-bs-toggle="modal" data-bs-target="#pdpGalleryModal" style="cursor: pointer;">
+    {% with primary=product.images.first %}
+    {% if primary %}
+    <img id="main-pdp-image"
+         class="jm-pdp-gallery__image object-fit-contain"
+         src="{{ primary.image.url }}"
+         alt="{{ primary.alt_text|default:product.name }}"
+         width="800"
+         height="800"
+         fetchpriority="high">
+    {% endif %}
+    {% endwith %}
+    <video id="main-pdp-video" class="jm-pdp-gallery__video object-fit-contain d-none" controls width="800" height="800" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; background: #fff;"></video>
+    <div class="position-absolute" style="top: 16px !important; bottom: auto !important; left: 16px !important; width: auto !important; height: auto !important; z-index: 20 !important; pointer-events: none;">
+      {% if product.average_rating %}
+      <span class="jm-product-card__rating shadow-sm d-inline-flex" aria-label="{% trans 'Rating' %} {{ product.average_rating|floatformat:1 }}" style="font-size: 0.85rem; padding: 0.25rem 0.6rem; background-color: rgba(247, 248, 250, 0.95); backdrop-filter: blur(4px); pointer-events: auto; width: auto;">
+        <span class="jm-product-card__rating-badge" style="font-size: 0.85rem;">
+          <span class="jm-product-card__rating-score">{{ product.average_rating|floatformat:1 }}</span>
+          <svg viewBox="0 0 24 24" aria-hidden="true" style="width: 13px; height: 13px;">
+            <path fill="currentColor" d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+          </svg>
+        </span>
+        {% if product.review_count %}<span class="jm-product-card__rating-count" style="font-size: 0.85rem;">| {{ product.review_count }}</span>{% endif %}
+      </span>
+      {% else %}
+      <span class="jm-product-card__rating jm-product-card__rating--muted shadow-sm d-inline-flex" style="font-size: 0.85rem; padding: 0.25rem 0.6rem; background-color: rgba(247, 248, 250, 0.95); backdrop-filter: blur(4px); pointer-events: auto; width: auto;">{% trans "New" %}</span>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if product.images.all|length > 1 or product.videos.all|length > 0 %}
+  <div class="jm-pdp-gallery__thumbs" role="list">
+    {% for image in product.images.all %}
+    <button type="button"
+            class="jm-pdp-gallery__thumb thumb-btn{% if forloop.first %} is-active active{% endif %}"
+            data-full="{{ image.image.url }}"
+            {% if image.variant_id %}data-variant-id="{{ image.variant_id }}"{% endif %}
+            aria-label="{% trans 'View image' %} {{ forloop.counter }}"
+            role="listitem">
+      <img src="{{ image.image.url }}" alt="{{ image.alt_text|default:product.name }}" width="72" height="72" class="object-fit-cover" loading="lazy">
+    </button>
+    {% endfor %}
+    {% for video in product.videos.all %}
+    <button type="button"
+            class="jm-pdp-gallery__thumb thumb-btn"
+            data-video="{{ video.video_file.url }}"
+            {% if video.variant_id %}data-variant-id="{{ video.variant_id }}"{% endif %}
+            aria-label="{% trans 'View video' %} {{ forloop.counter }}"
+            role="listitem">
+      {% if video.thumbnail %}
+        <img src="{{ video.thumbnail.url }}" alt="" width="72" height="72" class="object-fit-cover" loading="lazy">
+      {% else %}
+        <div style="width: 72px; height: 72px; background: #f1f5f9; display: flex; align-items: center; justify-content: center; position: relative;">
+          <svg width="32" height="32" fill="#94a3b8" viewBox="0 0 16 16"><path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/><path d="M6.271 5.055a.5.5 0 0 1 .52.038l3.5 2.5a.5.5 0 0 1 0 .814l-3.5 2.5A.5.5 0 0 1 6 10.5v-5a.5.5 0 0 1 .271-.445z"/></svg>
+        </div>
+      {% endif %}
+    </button>
+    {% endfor %}
+  </div>
+  {% endif %}
+</div>
+
+<!-- fullscreen gallery viewer modal with zoom -->
+<div class="modal fade" id="pdpGalleryModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-fullscreen m-0 p-0">
+    <div class="modal-content bg-black border-0 d-flex flex-column h-100">
+      
+      <div class="d-flex align-items-center justify-content-between p-3 position-absolute top-0 start-0 end-0" style="z-index: 1060; background: linear-gradient(180deg, rgba(0,0,0,0.7) 0%, transparent 100%);">
+        <span id="pdp-modal-counter" class="text-white fw-semibold px-3 py-1 rounded-pill" style="font-size: 0.85rem; background: rgba(255,255,255,0.2);">1 / {{ product.images.all|length|default:1 }}</span>
+        <button type="button" class="btn btn-dark rounded-circle d-flex align-items-center justify-content-center shadow" data-bs-dismiss="modal" aria-label="Close" style="width: 40px; height: 40px; opacity: 0.9;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+            <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8 2.146 2.854Z"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="flex-grow-1 position-relative d-flex align-items-center justify-content-center overflow-hidden" id="pdp-modal-viewport" style="touch-action: none; cursor: default;">
+        <div id="pdp-modal-container" style="will-change: transform; transform-origin: center center; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%;">
+          <img id="pdp-modal-img" src="{{ product.images.first.image.url }}" alt="{{ product.name }}" style="max-height: 80vh; max-width: 95vw; object-fit: contain; pointer-events: none; user-select: none;">
+        </div>
+
+        {% if product.images.all|length > 1 %}
+        <button type="button" class="btn btn-dark rounded-circle position-absolute start-0 ms-3 d-none d-md-flex align-items-center justify-content-center" id="pdp-modal-prev" style="width: 44px; height: 44px; z-index: 1050; opacity: 0.85;">
+          &#10094;
+        </button>
+        <button type="button" class="btn btn-dark rounded-circle position-absolute end-0 me-3 d-none d-md-flex align-items-center justify-content-center" id="pdp-modal-next" style="width: 44px; height: 44px; z-index: 1050; opacity: 0.85;">
+          &#10095;
+        </button>
+        {% endif %}
+      </div>
+
+      {% if product.images.all|length > 1 %}
+      <div class="p-2 d-flex justify-content-center align-items-center gap-2 overflow-auto" id="pdp-modal-thumbs" style="background: rgba(0,0,0,0.85); z-index: 1060;">
+        {% for image in product.images.all %}
+        <button type="button" class="btn p-0 border rounded-2 overflow-hidden pdp-modal-thumb-btn{% if forloop.first %} border-primary border-2{% else %} border-secondary opacity-50{% endif %}" data-src="{{ image.image.url }}" data-idx="{{ forloop.counter0 }}" style="width: 48px; height: 48px; flex-shrink: 0;">
+          <img src="{{ image.image.url }}" alt="" width="48" height="48" class="object-fit-cover">
+        </button>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+    </div>
+  </div>
+</div>

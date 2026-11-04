@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Secure Payment" %} | {{ site_settings.site_name|default:"Sarocchi Luxe Designs" }}{% endblock %}
+
+{% block content %}
+<div class="container page-container py-5">
+  <div class="row justify-content-center">
+    <div class="col-md-6 text-center">
+      <div class="card shadow-sm p-4 border-0 rounded-3">
+        <div class="mb-3">
+          <i class="ti ti-lock text-success fs-1"></i>
+        </div>
+        <h3 class="fw-bold mb-2">{% trans "Complete Your Payment" %}</h3>
+        <p class="text-muted mb-4">{% trans "Order Reference:" %} <strong>{{ order.order_number }}</strong></p>
+
+        <div class="bg-light p-3 rounded mb-4 text-start">
+          <div class="d-flex justify-content-between mb-2">
+            <span>{% trans "Payment Method:" %}</span>
+            <span class="fw-semibold">Credit/Debit Card</span>
+          </div>
+          <div class="d-flex justify-content-between">
+            <span>{% trans "Total Amount:" %}</span>
+            <span class="fw-bold fs-5 text-success">{{ order.currency.symbol }} {{ order.total_amount }}</span>
+          </div>
+        </div>
+
+        {% if metadata.capture_context %}
+        <div id="payment-errors" class="alert alert-danger d-none text-start"></div>
+        
+        <form id="cybersource-form" class="text-start">
+            <div class="mb-3">
+                <label class="form-label">Card Number</label>
+                <!-- this div will be replaced by the Microform iframe -->
+                <div id="number-container" class="form-control" style="height: 40px; padding-top: 8px;"></div>
+            </div>
+            
+            <div class="row mb-4">
+                <div class="col-4">
+                    <label class="form-label">Exp Month</label>
+                    <input type="text" id="expMonth" class="form-control" placeholder="MM" maxlength="2">
+                </div>
+                <div class="col-4">
+                    <label class="form-label">Exp Year</label>
+                    <input type="text" id="expYear" class="form-control" placeholder="YYYY" maxlength="4">
+                </div>
+                <div class="col-4">
+                    <label class="form-label">CVV</label>
+                    <div id="securityCode-container" class="form-control" style="height: 40px; padding-top: 8px;"></div>
+                </div>
+            </div>
+
+            <button type="button" id="pay-button" class="btn btn-floward btn-lg w-100 py-3">
+                {% trans "Pay Now" %} ({{ order.currency.symbol }} {{ order.total_amount }})
+            </button>
+        </form>
+        
+        {% if metadata.microform_script_url %}
+        <script src="{{ metadata.microform_script_url }}"></script>
+        {% else %}
+        <script src="https://flex.cybersource.com/cybersource/assets/microform/0.11/flex-microform.min.js"></script>
+        {% endif %}
+        <script>
+            var captureContext = "{{ metadata.capture_context }}";
+            
+            var flex = new Flex(captureContext);
+            var microform = flex.microform({ styles: {
+                'input': {
+                    'font-family': 'system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial',
+                    'font-size': '1rem',
+                    'color': '#495057'
+                }
+            }});
+            
+            var number = microform.createField('number', { placeholder: 'Enter card number' });
+            number.load('#number-container');
+            
+            var securityCode = microform.createField('securityCode', { placeholder: 'CVV' });
+            securityCode.load('#securityCode-container');
+
+            document.getElementById('pay-button').addEventListener('click', function() {
+                var btn = this;
+                var errorDiv = document.getElementById('payment-errors');
+                
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> {% trans "Processing..." %}';
+                btn.classList.add("disabled");
+                errorDiv.classList.add('d-none');
+                
+                var options = {
+                    expirationMonth: document.getElementById('expMonth').value,
+                    expirationYear: document.getElementById('expYear').value
+                };
+
+                microform.createToken(options, function (err, token) {
+                    if (err) {
+                        console.error(err);
+                        errorDiv.textContent = 'Invalid card details. Please check and try again.';
+                        errorDiv.classList.remove('d-none');
+                        btn.innerHTML = '{% trans "Pay Now" %} ({{ order.currency.symbol }} {{ order.total_amount }})';
+                        btn.classList.remove("disabled");
+                        return;
+                    }
+                    
+                    //send token to our server
+                    fetch("{% url 'checkout:cybersource-process-token' %}", {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            transientToken: token,
+                            order_id: "{{ order.pk }}"
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            window.location.href = data.redirect_url;
+                        } else {
+                            errorDiv.textContent = data.error || 'Payment failed.';
+                            errorDiv.classList.remove('d-none');
+                            btn.innerHTML = '{% trans "Pay Now" %} ({{ order.currency.symbol }} {{ order.total_amount }})';
+                            btn.classList.remove("disabled");
+                        }
+                    })
+                    .catch(err => {
+                        errorDiv.textContent = 'Network error. Please try again.';
+                        errorDiv.classList.remove('d-none');
+                        btn.innerHTML = '{% trans "Pay Now" %} ({{ order.currency.symbol }} {{ order.total_amount }})';
+                        btn.classList.remove("disabled");
+                    });
+                });
+            });
+        </script>
+        {% else %}
+        <div class="alert alert-danger">
+          {% trans "Payment gateway initialization failed. Please cancel and try again." %}
+        </div>
+        {% endif %}
+        
+        <div class="mt-4">
+            <a href="{% url 'checkout:checkout' %}" class="btn btn-link text-muted small">{% trans "Cancel and return to checkout" %}</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

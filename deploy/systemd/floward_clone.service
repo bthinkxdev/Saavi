@@ -1,0 +1,24 @@
+[Unit]
+Description=sarocchi Gunicorn daemon
+After=network.target
+
+[Service]
+User=www-data
+Group=www-data
+RuntimeDirectory=sarocchi
+RuntimeDirectoryMode=0755
+WorkingDirectory=/var/www/sarocchi
+EnvironmentFile=/var/www/sarocchi/.env
+Environment=DJANGO_SETTINGS_MODULE=sarocchi.settings.prod
+ExecStart=/var/www/sarocchi/.venv/bin/gunicorn \
+    -c deploy/gunicorn/gunicorn.conf.py \
+    sarocchi.wsgi:application
+ExecReload=/bin/kill -s HUP $MAINPID
+KillMode=mixed
+TimeoutStopSec=5
+PrivateTmp=true
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

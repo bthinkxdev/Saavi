@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{{ seo_title }}{% endblock %}
+
+{% block content %}
+<div class="container page-container py-4">
+  <h1 class="section-title mb-4">{% trans "Shipping Policy" %}</h1>
+
+  <div class="card p-4" style="text-align: justify; text-justify: inter-word; hyphens: auto;">
+    <p class="text-muted small text-start">{% trans "Last updated" %}: {% now "F Y" %}</p>
+
+    <p>{% trans "Sarocchi Luxe Designs is a home-based boutique based in Hamilton, New Zealand. We carefully pack every order to ensure your sarees, clothing, and jewellery arrive safely." %}</p>
+
+    <h6 class="mt-4">{% trans "New Zealand Shipping" %}</h6>
+    <p class="fw-semibold mb-1">{% trans "Free NZ Shipping" %}</p>
+    <p>{% trans "Orders of $100 NZD or more qualify for Free Standard Courier Delivery nationwide." %}</p>
+    <p class="fw-semibold mb-1">{% trans "Orders Under $100 NZD" %}</p>
+    <p class="mb-1">{% trans "A flat rate shipping fee applies at checkout for orders under $100 NZD:" %}</p>
+    <ul class="mb-3">
+      <li>{% trans "Standard Urban Delivery: $7.00 NZD" %}</li>
+      <li>{% trans "Rural Delivery: $12.00 NZD" %}</li>
+    </ul>
+
+    <h6 class="mt-4">{% trans "Processing and Delivery Timeframes" %}</h6>
+    <p>{% trans "Orders are processed within 1 to 3 business days after payment is confirmed. Tracking information will be emailed to you once your order has been dispatched." %}</p>
+    <p class="mb-1">{% trans "Estimated delivery targets:" %}</p>
+    <ul class="mb-2">
+      <li>{% trans "Standard Urban Delivery: 1 to 3 working days after dispatch" %}</li>
+      <li>{% trans "Rural Delivery: 3 to 5 working days after dispatch" %}</li>
+    </ul>
+    <p>{% trans "Delivery timeframes are estimates and may take longer during busy periods, public holidays, or severe weather conditions." %}</p>
+
+    <h6 class="mt-4">{% trans "International Shipping" %}</h6>
+    <p>{% trans "We offer international shipping to selected destinations. Shipping charges are calculated based on parcel weight, size, and destination, and will be displayed at checkout." %}</p>
+    <p class="mb-1">{% trans "Estimated international delivery targets:" %}</p>
+    <ul class="mb-2">
+      <li>{% trans "Express: 1 to 5 working days" %}</li>
+      <li>{% trans "Courier: 2 to 6 working days" %}</li>
+      <li>{% trans "Economy: 3 to 13 working days" %}</li>
+    </ul>
+    <p>{% trans "Customs duties, import taxes, and local clearances are the responsibility of the customer." %}</p>
+
+    <h6 class="mt-4">{% trans "Incorrect Address Details" %}</h6>
+    <p>{% trans "Please recheck your delivery details before completing your purchase. Additional reshipping charges will apply if a parcel needs to be redirected or reshipped due to an incorrect or incomplete address provided at checkout." %}</p>
+
+    <h6 class="mt-4">{% trans "Delayed, Lost, or Damaged Items" %}</h6>
+    <p>{% trans "Once an order is handed to the courier, delivery timing is outside our direct control. If your parcel is delayed, contact us and we will help track it down." %}</p>
+    <p>{% trans "If your parcel arrives damaged, please take photographs of the packaging and the affected items immediately and contact us so we can investigate with the carrier." %}</p>
+    <p class="text-muted small">{% trans "Nothing in this shipping policy limits your rights under New Zealand consumer law." %}</p>
+
+    <h6 class="mt-4">{% trans "Order Changes and Cancellations" %}</h6>
+    <p class="mb-0">{% trans "Contact us immediately if you need to update your shipping details or cancel an order. Changes cannot be made once an order has been processed or dispatched." %}</p>
+  </div>
+
+  <div class="card p-4 mt-4">
+    <h6 class="mb-3">{% trans "Contact Us" %}</h6>
+    <p class="mb-2">{% trans "If you have questions about shipping rates or delivery options, please reach out to Sarocchi Luxe Designs through our website, social media, or WhatsApp." %}</p>
+    <p class="mb-1"><strong>{% trans "Email" %}:</strong> <a href="mailto:miriyamgrace21@gmail.com">miriyamgrace21@gmail.com</a></p>
+    <p class="mb-1"><strong>{% trans "Location" %}:</strong> {% trans "Sarocchi Luxe Designs, Hamilton, New Zealand" %}</p>
+    <p class="text-muted small mt-3 mb-0"><em>{% trans "Thank you for supporting our home boutique." %}</em></p>
+  </div>
+</div>
+{% endblock %}

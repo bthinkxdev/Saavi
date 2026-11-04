@@ -1,0 +1,1067 @@
+{% extends "dashboard/base.html" %}
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+<style>
+  .select2-container--bootstrap-5 .select2-selection {
+    border-color: #e4e7ec !important;
+    border-radius: 10px !important;
+  }
+  .select2-container--bootstrap-5.select2-container--focus .select2-selection {
+    border-color: #f15a24 !important; 
+    box-shadow: 0 0 0 0.25rem rgba(241, 90, 36, 0.25) !important;
+  }
+</style>
+{% endblock %}
+
+{% block title %}{% if form_mode == "edit" %}Edit{% else %}Add{% endif %} Product{% endblock %}
+{% block page_title %}{% if form_mode == "edit" %}Edit Product{% else %}Add Product{% endif %}{% endblock %}
+{% block breadcrumbs %}<p class="mb-0 text-secondary">{% if form_mode == "edit" %}Update product details, variants and
+  images{% else %}Create a new product for your catalog{% endif %}</p>{% endblock %}
+
+{% block content %}
+<style>
+  [data-formset="variants"] thead { display: none; }
+  [data-formset="variants"] .table-responsive, [data-formset="variants"] .table { overflow: visible; background: transparent; border: none; padding: 0; margin: 0; }
+  
+  /* --- MOBILE RESPONSIVE CARDS FOR OTHER TABLES --- */
+  @media (max-width: 991.98px) {
+    [data-formset="images"] thead,
+    [data-formset="videos"] thead,
+    [data-formset="specifications"] thead,
+    [data-formset="documents"] thead { display: none; }
+
+    [data-formset="images"] .table-responsive, [data-formset="images"] .table,
+    [data-formset="videos"] .table-responsive, [data-formset="videos"] .table,
+    [data-formset="specifications"] .table-responsive, [data-formset="specifications"] .table,
+    [data-formset="documents"] .table-responsive, [data-formset="documents"] .table { 
+      overflow: visible; background: transparent; border: none; padding: 0; margin: 0; min-width: 0 !important; 
+    }
+    
+    [data-formset="images"] tbody[data-formset-body] tr,
+    [data-formset="videos"] tbody[data-formset-body] tr,
+    [data-formset="specifications"] tbody[data-formset-body] tr,
+    [data-formset="documents"] tbody[data-formset-body] tr {
+      display: flex; flex-wrap: wrap; background: #fdfdfd; border: 1px solid #e2e8f0; border-radius: 12px;
+      padding: 24px 8px 8px 24px; margin-bottom: 24px; position: relative; box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    }
+    
+    [data-formset="images"] tbody[data-formset-body] td,
+    [data-formset="videos"] tbody[data-formset-body] td,
+    [data-formset="specifications"] tbody[data-formset-body] td,
+    [data-formset="documents"] tbody[data-formset-body] td { 
+      display: block; border: none; padding: 0 16px 16px 0; margin: 0; width: 100%; box-sizing: border-box; 
+    }
+    
+    [data-formset="images"] tbody[data-formset-body] td.d-none,
+    [data-formset="videos"] tbody[data-formset-body] td.d-none,
+    [data-formset="specifications"] tbody[data-formset-body] td.d-none,
+    [data-formset="documents"] tbody[data-formset-body] td.d-none { display: none; }
+    
+    [data-formset="images"] tbody[data-formset-body] td:nth-child(2) { width: 35%; }
+    [data-formset="images"] tbody[data-formset-body] td:nth-child(3) { width: 65%; }
+    [data-formset="images"] tbody[data-formset-body] td:nth-child(5) { width: 25%; }
+    [data-formset="images"] tbody[data-formset-body] td:nth-child(6) { width: 25%; }
+    [data-formset="images"] tbody[data-formset-body] td:nth-child(6) input[type="checkbox"] { margin-top: 8px; }
+    [data-formset="images"] tbody[data-formset-body] td:nth-child(7) { width: 50%; }
+    
+    [data-formset="images"] tbody[data-formset-body] td:last-child,
+    [data-formset="videos"] tbody[data-formset-body] td:last-child,
+    [data-formset="specifications"] tbody[data-formset-body] td:last-child,
+    [data-formset="documents"] tbody[data-formset-body] td:last-child { 
+      position: absolute; top: 16px; right: 16px; padding: 0; width: auto; z-index: 5; 
+    }
+    [data-formset="images"] tbody[data-formset-body] td:last-child .btn-icon,
+    [data-formset="videos"] tbody[data-formset-body] td:last-child .btn-icon,
+    [data-formset="specifications"] tbody[data-formset-body] td:last-child .btn-icon,
+    [data-formset="documents"] tbody[data-formset-body] td:last-child .btn-icon {
+      border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
+      background: #fff; border: 1px solid #e2e8f0; box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    [data-formset="images"] tbody[data-formset-body] td:last-child .btn-icon:hover,
+    [data-formset="videos"] tbody[data-formset-body] td:last-child .btn-icon:hover,
+    [data-formset="specifications"] tbody[data-formset-body] td:last-child .btn-icon:hover,
+    [data-formset="documents"] tbody[data-formset-body] td:last-child .btn-icon:hover { 
+      background: #fee2e2; color: #ef4444 !important; border-color: #fca5a5; 
+    }
+
+    [data-formset="images"] tbody[data-formset-body] td::before,
+    [data-formset="videos"] tbody[data-formset-body] td::before,
+    [data-formset="specifications"] tbody[data-formset-body] td::before,
+    [data-formset="documents"] tbody[data-formset-body] td::before { 
+      display: block; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: #64748b; margin-bottom: 6px; 
+    }
+
+    [data-formset="images"] tbody[data-formset-body] td:nth-child(2)::before { content: "Preview"; }
+    [data-formset="images"] tbody[data-formset-body] td:nth-child(3)::before { content: "Image file"; }
+    [data-formset="images"] tbody[data-formset-body] td:nth-child(4)::before { content: "Alt text"; }
+    [data-formset="images"] tbody[data-formset-body] td:nth-child(5)::before { content: "Order"; }
+    [data-formset="images"] tbody[data-formset-body] td:nth-child(6)::before { content: "Primary"; }
+    [data-formset="images"] tbody[data-formset-body] td:nth-child(7)::before { content: "Variant"; }
+
+    [data-formset="videos"] tbody[data-formset-body] td:nth-child(2)::before { content: "Video File"; }
+    [data-formset="videos"] tbody[data-formset-body] td:nth-child(3)::before { content: "Thumbnail"; }
+    [data-formset="videos"] tbody[data-formset-body] td:nth-child(4)::before { content: "Variant"; }
+
+    [data-formset="specifications"] tbody[data-formset-body] td:nth-child(2)::before { content: "Specification Name"; }
+    [data-formset="specifications"] tbody[data-formset-body] td:nth-child(3)::before { content: "Value"; }
+    [data-formset="specifications"] tbody[data-formset-body] td:nth-child(4)::before { content: "Display Order"; }
+
+    [data-formset="documents"] tbody[data-formset-body] td:nth-child(2)::before { content: "Document Title"; }
+    [data-formset="documents"] tbody[data-formset-body] td:nth-child(3)::before { content: "PDF/Document File"; }
+    [data-formset="documents"] tbody[data-formset-body] td:nth-child(4)::before { content: "Display Order"; }
+    [data-formset="documents"] tbody[data-formset-body] td:nth-child(5)::before { content: "View"; }
+    
+    [data-formset="documents"] tbody[data-formset-body] td:nth-child(5) { position: absolute; top: 16px; right: 56px; width: auto; padding: 0; }
+    [data-formset="documents"] tbody[data-formset-body] td:nth-child(5)::before { display: none; }
+    [data-formset="documents"] tbody[data-formset-body] td:nth-child(5) a {
+      border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
+      background: #fff; border: 1px solid #e2e8f0; box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+  }
+  
+  /* transform tr into flex-cards */
+  [data-formset="variants"] tbody[data-formset-body] tr {
+    display: flex;
+    flex-wrap: wrap;
+    background: #fdfdfd;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 24px 8px 8px 24px;
+    margin-bottom: 24px;
+    position: relative;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+  }
+  [data-formset="variants"] tbody[data-formset-body] td {
+    display: block;
+    border: none;
+    padding: 0 16px 16px 0;
+    margin: 0;
+    box-sizing: border-box;
+  }
+  
+  [data-formset="variants"] tbody[data-formset-body] td.d-none { display: none; }
+  [data-formset="variants"] tbody[data-formset-body] td:nth-child(2) { width: 50%; } /* Type */
+  [data-formset="variants"] tbody[data-formset-body] td:nth-child(3) { width: 50%; } /* Name */
+  [data-formset="variants"] tbody[data-formset-body] td:nth-child(4) { width: 33.33%; } /* Base Price */
+  [data-formset="variants"] tbody[data-formset-body] td:nth-child(5) { width: 33.33%; } /* MRP */
+  [data-formset="variants"] tbody[data-formset-body] td:nth-child(6) { width: 33.33%; } /* Purchase Price */
+  [data-formset="variants"] tbody[data-formset-body] td:nth-child(7) { width: 33.33%; } /* SKU */
+  [data-formset="variants"] tbody[data-formset-body] td:nth-child(8) { width: 33.33%; } /* Stock */
+  [data-formset="variants"] tbody[data-formset-body] td:nth-child(9) { width: 33.33%; } /* Threshold */
+  
+  /* floating remove button */
+  [data-formset="variants"] tbody[data-formset-body] td:last-child {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    padding: 0;
+    width: auto;
+    z-index: 5;
+  }
+  
+  [data-formset="variants"] tbody[data-formset-body] td:last-child .btn-icon {
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  }
+  [data-formset="variants"] tbody[data-formset-body] td:last-child .btn-icon:hover {
+    background: #fee2e2;
+    color: #ef4444 !important;
+    border-color: #fca5a5;
+  }
+  
+  /* re-add labels */
+  [data-formset="variants"] tbody[data-formset-body] td:nth-child(2)::before { content: "Variant Type"; display: block; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: #64748b; margin-bottom: 6px; }
+  [data-formset="variants"] tbody[data-formset-body] td:nth-child(3)::before { content: "Variant Name"; display: block; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: #64748b; margin-bottom: 6px; }
+  [data-formset="variants"] tbody[data-formset-body] td:nth-child(4)::before { content: "Base Price"; display: block; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: #64748b; margin-bottom: 6px; }
+  [data-formset="variants"] tbody[data-formset-body] td:nth-child(5)::before { content: "MRP"; display: block; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: #64748b; margin-bottom: 6px; }
+  [data-formset="variants"] tbody[data-formset-body] td:nth-child(6)::before { content: "Purchase Price"; display: block; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: #64748b; margin-bottom: 6px; }
+  [data-formset="variants"] tbody[data-formset-body] td:nth-child(7)::before { content: "SKU Suffix"; display: block; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: #64748b; margin-bottom: 6px; }
+  [data-formset="variants"] tbody[data-formset-body] td:nth-child(8)::before { content: "Stock Quantity"; display: block; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: #64748b; margin-bottom: 6px; }
+  [data-formset="variants"] tbody[data-formset-body] td:nth-child(9)::before { content: "Low Stock Threshold"; display: block; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: #64748b; margin-bottom: 6px; }
+
+  @media (min-width: 992px) {
+    .repeater td input[type="file"] {
+      max-width: 180px;
+    }
+  }
+
+  @media (max-width: 991.98px) {
+    #variants_table td:last-child {
+      display: none !important;
+    }
+    
+    #variants_table td[data-label]::before {
+      flex: 0 0 40%;
+      max-width: 40%;
+    }
+    #variants_table td[data-label] input {
+      flex: 1;
+      max-width: 60%;
+    }
+  }
+
+  .form-control.is-valid, .form-select.is-valid,
+  .was-validated .form-control:valid, .was-validated .form-select:valid {
+    border-color: #e4e7ec !important;
+    background-image: none !important;
+    box-shadow: none !important;
+  }
+</style>
+<form method="post" enctype="multipart/form-data" novalidate id="product-form">
+  {% csrf_token %}
+  {% if request.GET.next %}
+  <input type="hidden" name="next" value="{{ request.GET.next }}">
+  {% elif request.POST.next %}
+  <input type="hidden" name="next" value="{{ request.POST.next }}">
+  {% endif %}
+  {% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors }}</div>{% endif %}
+
+  <div class="row g-3">
+    <div class="col-12 col-xl-8">
+      <div class="card mb-3">
+        <div class="card-header panel-header">
+          <h3 class="panel-title">Product details</h3>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-12">{% include "dashboard/partials/_field.html" with field=form.name %}</div>
+            <div class="col-md-6">{% include "dashboard/partials/_field.html" with field=form.sku %}</div>
+            <div class="col-md-6">{% include "dashboard/partials/_field.html" with field=form.slug %}</div>
+            <div class="col-md-4">{% include "dashboard/partials/_field.html" with field=form.category %}</div>
+            {% if site_settings.enable_brands %}
+            <div class="col-md-4">{% include "dashboard/partials/_field.html" with field=form.brand %}</div>
+            {% endif %}
+            <div class="col-md-4">{% include "dashboard/partials/_field.html" with field=form.size_chart %}</div>
+            <div class="col-md-3">{% include "dashboard/partials/_field.html" with field=form.base_price %}</div>
+            <div class="col-md-3">{% include "dashboard/partials/_field.html" with field=form.mrp %}</div>
+            <div class="col-md-3">{% include "dashboard/partials/_field.html" with field=form.purchase_price %}</div>
+            <div class="col-md-3">{% include "dashboard/partials/_field.html" with field=form.color %}</div>
+            <div class="col-md-4 mt-3">{% include "dashboard/partials/_field.html" with field=form.collections %}</div>
+            <div class="col-md-4 mt-3">{% include "dashboard/partials/_field.html" with field=form.tags %}</div>
+            <div class="col-md-4 mt-3">{% include "dashboard/partials/_field.html" with field=form.labels %}</div>
+            <div class="col-12 mt-3">{% include "dashboard/partials/_field.html" with field=form.care_instructions %}</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card mb-3" id="variants-section">
+        <div class="card-header panel-header d-flex justify-content-between align-items-center">
+          <div>
+            <h3 class="panel-title">Variants</h3>
+            <p class="panel-sub">Generate variants dynamically using product attributes</p>
+          </div>
+          <div class="form-check form-switch d-flex align-items-center m-0">
+            <input class="form-check-input m-0" type="checkbox" id="has_variants_toggle" name="has_variants" {% if has_existing_variants %}checked{% endif %} style="cursor:pointer; width: 2.5em; height: 1.25em;">
+            <label class="form-check-label fs-6 ms-3 mb-0" for="has_variants_toggle" style="cursor:pointer; font-weight:500;">Has Variants</label>
+          </div>
+        </div>
+        
+        <div class="card-body" id="variants_body" style="{% if not has_existing_variants %}display: none;{% endif %}">
+          <div class="mb-4">
+            <h5 class="mb-3">Define Options</h5>
+            <datalist id="global-attr-list">
+              {% for attr in attributes %}
+              <option value="{{ attr.name }}">
+              {% endfor %}
+            </datalist>
+            <div id="dynamic-attributes-container">
+              {% for opt in dynamic_options_list %}
+              <div class="row gx-2 mb-2 align-items-center attr-dynamic-row">
+                <div class="col-12 col-md-3 mb-2 mb-md-0">
+                  <input type="text" class="form-control attr-name-input" name="dynamic_attr_name[]" placeholder="e.g. Size, Color, Material" list="global-attr-list" value="{{ opt.name }}">
+                </div>
+                <div class="col-10 col-md-8">
+                  <input type="text" class="form-control attr-values-input" name="dynamic_attr_values[]" placeholder="e.g. S, M, L (comma separated)" value="{{ opt.values }}">
+                </div>
+                <div class="col-2 col-md-1 text-end">
+                  <button type="button" class="btn btn-icon btn-sm btn-light text-danger remove-attr-row-btn w-100"><i class="ti ti-trash"></i></button>
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+            <button type="button" class="btn btn-outline-secondary btn-sm mt-2" id="add_dynamic_attr_btn">
+              <i class="ti ti-plus"></i> Add option like size or color
+            </button>
+            <hr>
+            <button type="button" class="btn btn-primary btn-sm mt-2" id="generate_variants_btn">Generate Variants</button>
+          </div>
+
+          <div class="table-responsive">
+            <table class="table align-middle mb-0" id="variants_table">
+              <thead>
+                <tr>
+                  <th style="width: 18%;">Variant Name</th>
+                  <th style="width: 12%;">Base Price</th>
+                  <th style="width: 12%;">MRP</th>
+                  <th style="width: 13%;">Purchase Price</th>
+                  <th style="width: 15%;">SKU suffix</th>
+                  <th style="width: 11%;">Stock</th>
+                  <th style="width: 12%;">Threshold</th>
+                  <th class="text-center" style="width: 7%;">Remove</th>
+                </tr>
+              </thead>
+              <tbody id="variants_tbody">
+                {% for variant in existing_variants %}
+                <tr>
+                  <td class="position-relative" data-label="Variant Name">
+                    <input type="text" class="form-control form-control-sm w-100" name="variant_name[]" value="{{ variant.name }}" placeholder="Variant Name" required>
+                    <button type="button" class="btn btn-icon btn-sm btn-light text-danger remove-variant-btn d-md-none position-absolute end-0 top-50 translate-middle-y me-3"><i class="ti ti-trash"></i></button>
+                    <!-- Pass original attribute strings to backend to preserve them on reload -->
+                    <input type="hidden" name="variant_dynamic_attributes[]" value="{{ variant.post_attr_string }}">
+                  </td>
+                  <td data-label="Base Price">
+                    <input type="number" step="0.01" min="0" class="form-control form-control-sm w-100" name="variant_base_price[]" value="{{ variant.base_price }}">
+                  </td>
+                  <td data-label="MRP">
+                    <input type="number" step="0.01" min="0" class="form-control form-control-sm w-100" name="variant_mrp[]" value="{{ variant.mrp }}">
+                  </td>
+                  <td data-label="Purchase Price">
+                    <input type="number" step="0.01" min="0" class="form-control form-control-sm w-100" name="variant_purchase_price[]" value="{{ variant.purchase_price }}">
+                  </td>
+                  <td data-label="SKU Suffix">
+                    <input type="text" class="form-control form-control-sm w-100" name="variant_sku_suffix[]" value="{{ variant.sku_suffix }}" readonly>
+                  </td>
+                  <td data-label="Stock">
+                    <input type="number" min="0" class="form-control form-control-sm w-100" name="variant_stock_quantity[]" value="{{ variant.stock_quantity }}">
+                  </td>
+                  <td data-label="Threshold">
+                    <input type="number" min="0" class="form-control form-control-sm w-100" name="variant_low_stock_threshold[]" value="{{ variant.low_stock_threshold }}">
+                  </td>
+                  <td class="d-none d-md-table-cell text-center">
+                    <button type="button" class="btn btn-icon btn-sm btn-light text-danger remove-variant-btn mt-2 mt-md-0 w-100 w-md-auto"><i class="ti ti-trash"></i></button>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="card mb-3" data-formset="images">
+        <div class="card-header panel-header">
+          <div>
+            <h3 class="panel-title">Images</h3>
+            <p class="panel-sub">Mark one image as primary for cards and rails</p>
+          </div>
+          <button type="button" class="btn btn-sm btn-outline-primary" data-formset-add><i
+              class="ti ti-plus me-1"></i>Add image</button>
+        </div>
+        <div class="card-body p-0">
+          {{ images.management_form }}
+          {% if images.non_form_errors %}
+          <div class="alert alert-danger mx-3 mt-3 mb-0">{{ images.non_form_errors|join:", " }}</div>
+          {% endif %}
+          <div class="table-responsive">
+            <table class="table repeater align-middle mb-0">
+              <thead>
+                <tr>
+                  <th class="d-none"></th>
+                  <th style="width:80px">Preview</th>
+                  <th>Image file</th>
+                  <th>Alt text</th>
+                  <th>Order</th>
+                  <th class="text-center">Primary</th>
+                  <th>Variant</th>
+                  <th class="text-center">Remove</th>
+                </tr>
+              </thead>
+              <tbody data-formset-body>
+                {% for iform in images %}
+                <tr>
+                  <td class="d-none">{{ iform.id }}</td>
+                  <td>
+                    {% if iform.instance.pk and iform.instance.image %}<img src="{{ iform.instance.image.url }}"
+                      class="thumb" data-img-preview alt="">
+                    {% else %}<img src="" class="thumb d-none" data-img-preview alt="">{% endif %}
+                  </td>
+                  <td style="max-width: 250px; overflow-wrap: break-word;">
+                    {{ iform.image }}
+                    {% if iform.image.errors %}<div class="text-danger small mt-1">{{ iform.image.errors|join:", " }}</div>{% endif %}
+                  </td>
+                  <td>
+                    {{ iform.alt_text }}
+                    {% if iform.alt_text.errors %}<div class="text-danger small mt-1">{{ iform.alt_text.errors|join:", " }}</div>{% endif %}
+                  </td>
+                  <td>
+                    {{ iform.display_order }}
+                    {% if iform.display_order.errors %}<div class="text-danger small mt-1 text-center">{{ iform.display_order.errors|join:", " }}</div>{% endif %}
+                  </td>
+                  <td class="text-center">
+                    {{ iform.is_primary }}
+                    {% if iform.is_primary.errors %}<div class="text-danger small mt-1">{{ iform.is_primary.errors|join:", " }}</div>{% endif %}
+                  </td>
+                  <td>
+                    {{ iform.variant_sku }}
+                    {% if iform.variant_sku.errors %}<div class="text-danger small mt-1">{{ iform.variant_sku.errors|join:", " }}</div>{% endif %}
+                  </td>
+                  <td class="text-center">
+                    {% if iform.instance.pk %}
+                    <div class="d-none">{{ iform.DELETE }}</div>
+                    {% endif %}
+                    <button type="button" class="btn btn-icon btn-sm btn-light text-danger" data-row-remove><i
+                        class="ti ti-trash"></i></button>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          <template data-formset-empty>
+            <tr>
+              <td class="d-none">{{ images.empty_form.id }}</td>
+              <td><img src="" class="thumb d-none" data-img-preview alt=""></td>
+              <td style="max-width: 250px; overflow-wrap: break-word;">{{ images.empty_form.image }}</td>
+              <td>{{ images.empty_form.alt_text }}</td>
+              <td>{{ images.empty_form.display_order }}</td>
+              <td class="text-center">{{ images.empty_form.is_primary }}</td>
+              <td>{{ images.empty_form.variant_sku }}</td>
+              <td class="text-center"><button type="button" class="btn btn-icon btn-sm btn-light text-danger"
+                  data-row-remove><i class="ti ti-trash"></i></button></td>
+            </tr>
+          </template>
+        </div>
+      </div>
+
+      <div class="card mb-3" data-formset="videos">
+        <div class="card-header panel-header">
+          <div>
+            <h3 class="panel-title">Videos</h3>
+            <p class="panel-sub">Upload video files and optional thumbnails</p>
+          </div>
+          <button type="button" class="btn btn-sm btn-outline-primary" data-formset-add><i
+              class="ti ti-plus me-1"></i>Add video</button>
+        </div>
+        <div class="card-body p-0">
+          {{ videos.management_form }}
+          {% if videos.non_form_errors %}
+          <div class="alert alert-danger mx-3 mt-3 mb-0">{{ videos.non_form_errors|join:", " }}</div>
+          {% endif %}
+          <div class="table-responsive">
+            <table class="table repeater align-middle mb-0">
+              <thead>
+                <tr>
+                  <th class="d-none"></th>
+                  <th>Video File</th>
+                  <th>Thumbnail</th>
+                  <th>Variant</th>
+                  <th class="text-center">Remove</th>
+                </tr>
+              </thead>
+              <tbody data-formset-body>
+                {% for vform in videos %}
+                <tr>
+                  <td class="d-none">{{ vform.id }}</td>
+                  <td>
+                    {{ vform.video_file }}
+                    {% if vform.video_file.errors %}<div class="text-danger small mt-1">{{ vform.video_file.errors|join:", " }}</div>{% endif %}
+                  </td>
+                  <td>
+                    {{ vform.thumbnail }}
+                    {% if vform.thumbnail.errors %}<div class="text-danger small mt-1">{{ vform.thumbnail.errors|join:", " }}</div>{% endif %}
+                  </td>
+                  <td>
+                    {{ vform.variant_sku }}
+                    {% if vform.variant_sku.errors %}<div class="text-danger small mt-1">{{ vform.variant_sku.errors|join:", " }}</div>{% endif %}
+                  </td>
+                  <td class="text-center">
+                    {% if vform.instance.pk %}
+                    <div class="d-none">{{ vform.DELETE }}</div>
+                    {% endif %}
+                    <button type="button" class="btn btn-icon btn-sm btn-light text-danger" data-row-remove><i
+                        class="ti ti-trash"></i></button>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          <template data-formset-empty>
+            <tr>
+              <td class="d-none">{{ videos.empty_form.id }}</td>
+              <td>{{ videos.empty_form.video_file }}</td>
+              <td>{{ videos.empty_form.thumbnail }}</td>
+              <td>{{ videos.empty_form.variant_sku }}</td>
+              <td class="text-center"><button type="button" class="btn btn-icon btn-sm btn-light text-danger"
+                  data-row-remove><i class="ti ti-trash"></i></button></td>
+            </tr>
+          </template>
+        </div>
+      </div>
+
+      <div class="card mb-3" data-formset="specifications">
+        <div class="card-header panel-header">
+          <div>
+            <h3 class="panel-title">Specifications</h3>
+            <p class="panel-sub">Technical details and attributes of the product (e.g. Dimensions, Weight)</p>
+          </div>
+          <button type="button" class="btn btn-sm btn-outline-primary" data-formset-add><i
+              class="ti ti-plus me-1"></i>Add specification</button>
+        </div>
+        <div class="card-body p-0">
+          {{ specifications.management_form }}
+          <div class="table-responsive">
+            <table class="table repeater align-middle mb-0">
+              <thead>
+                <tr>
+                  <th class="d-none"></th>
+                  <th>Specification Name</th>
+                  <th>Value</th>
+                  <th>Display Order</th>
+                  <th class="text-center">Remove</th>
+                </tr>
+              </thead>
+              <tbody data-formset-body>
+                {% for sform in specifications %}
+                <tr>
+                  <td class="d-none">
+                    {{ sform.id }}
+                    {% if sform.instance.pk %}{{ sform.DELETE }}{% endif %}
+                  </td>
+                  <td>
+                    {{ sform.name }}
+                    {% if sform.name.errors %}
+                    <div class="text-danger small mt-1">{{ sform.name.errors|join:", " }}</div>
+                    {% endif %}
+                  </td>
+                  <td>
+                    {{ sform.value }}
+                    {% if sform.value.errors %}
+                    <div class="text-danger small mt-1">{{ sform.value.errors|join:", " }}</div>
+                    {% endif %}
+                  </td>
+                  <td>
+                    {{ sform.display_order }}
+                    {% if sform.display_order.errors %}
+                    <div class="text-danger small mt-1">{{ sform.display_order.errors|join:", " }}</div>
+                    {% endif %}
+                  </td>
+                  <td class="text-center">
+                    <button type="button" class="btn btn-icon btn-sm btn-light text-danger" data-row-remove
+                      title="Remove Specification">
+                      <i class="ti ti-trash"></i>
+                    </button>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          <template data-formset-empty>
+            <tr>
+              <td class="d-none">
+                {{ specifications.empty_form.id }}
+                {{ specifications.empty_form.DELETE }}
+              </td>
+              <td>{{ specifications.empty_form.name }}</td>
+              <td>{{ specifications.empty_form.value }}</td>
+              <td>{{ specifications.empty_form.display_order }}</td>
+              <td class="text-center">
+                <button type="button" class="btn btn-icon btn-sm btn-light text-danger" data-row-remove>
+                  <i class="ti ti-trash"></i>
+                </button>
+              </td>
+            </tr>
+          </template>
+        </div>
+      </div>
+
+
+      <div class="card mb-3">
+        <div class="card-header panel-header">
+          <div>
+            <h3 class="panel-title">Shipping &mdash; package dimensions</h3>
+            <p class="panel-sub">Default packed weight &amp; size used to book couriers (e.g. Delhivery) for this product.</p>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-3">{% include "dashboard/partials/_field.html" with field=form.weight %}</div>
+            <div class="col-md-3">{% include "dashboard/partials/_field.html" with field=form.length %}</div>
+            <div class="col-md-3">{% include "dashboard/partials/_field.html" with field=form.width %}</div>
+            <div class="col-md-3">{% include "dashboard/partials/_field.html" with field=form.height %}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 col-xl-4">
+      <div class="sticky-sidebar">
+        <div class="card mb-3">
+          <div class="card-body d-grid gap-2">
+            <button type="submit" class="btn btn-primary"><i class="ti ti-device-floppy me-1"></i>Save Product</button>
+            <a href="{{ cancel_url }}" class="btn btn-light">Cancel</a>
+          </div>
+        </div>
+
+        <div class="card mb-3">
+          <div class="card-header panel-header">
+            <h3 class="panel-title">Status &amp; visibility</h3>
+          </div>
+          <div class="card-body">
+            {% include "dashboard/partials/_field.html" with field=form.is_active %}
+            {% include "dashboard/partials/_field.html" with field=form.is_bestseller %}
+            {% include "dashboard/partials/_field.html" with field=form.is_new_arrival %}
+            {% include "dashboard/partials/_field.html" with field=form.is_featured %}
+          </div>
+        </div>
+
+        <div class="card mb-3" id="main-inventory-card">
+          <div class="card-header panel-header">
+            <h3 class="panel-title">Inventory</h3>
+          </div>
+          <div class="card-body">
+            {% include "dashboard/partials/_field.html" with field=form.stock_quantity %}
+            {% include "dashboard/partials/_field.html" with field=form.low_stock_threshold %}
+          </div>
+        </div>
+
+        <div class="card mb-3">
+          <div class="card-header panel-header">
+            <h3 class="panel-title">Search engine listing</h3>
+          </div>
+          <div class="card-body">
+            {% include "dashboard/partials/_field.html" with field=form.meta_title %}
+            {% include "dashboard/partials/_field.html" with field=form.meta_description %}
+            {% include "dashboard/partials/_field.html" with field=form.og_image %}
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</form>
+
+<!-- delete attribute modal -->
+<div class="modal fade" id="deleteAttributeModal" tabindex="-1" aria-labelledby="deleteAttributeModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-body p-4">
+        <div id="deleteAttributeModalBody" class="mb-4">
+          <!-- content injected here -->
+        </div>
+        <div class="d-flex justify-content-end gap-2">
+          <button type="button" class="btn btn-primary px-4 rounded-pill" data-bs-dismiss="modal">OK</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  const toggle = document.getElementById('has_variants_toggle');
+  const variantsBody = document.getElementById('variants_body');
+  
+  function updateProductFieldsVisibility() {
+    if (!toggle) return;
+    const hasVariants = toggle.checked;
+    variantsBody.style.display = hasVariants ? 'block' : 'none';
+
+    const basePriceInput = document.getElementById('id_base_price');
+    const mrpInput = document.getElementById('id_mrp');
+    const purchasePriceInput = document.getElementById('id_purchase_price');
+    const stockInput = document.getElementById('id_stock_quantity');
+    const thresholdInput = document.getElementById('id_low_stock_threshold');
+
+    const basePriceCol = basePriceInput?.closest('.col-md-3');
+    const mrpCol = mrpInput?.closest('.col-md-3');
+    const purchasePriceCol = purchasePriceInput?.closest('.col-md-3');
+    const inventoryCard = document.getElementById('main-inventory-card');
+
+    if (hasVariants) {
+      if (basePriceCol) basePriceCol.style.display = 'none';
+      if (mrpCol) mrpCol.style.display = 'none';
+      if (purchasePriceCol) purchasePriceCol.style.display = 'none';
+      if (inventoryCard) inventoryCard.style.display = 'none';
+      
+      // remove required attributes
+      if (basePriceInput) basePriceInput.required = false;
+      if (mrpInput) mrpInput.required = false;
+      if (purchasePriceInput) purchasePriceInput.required = false;
+      if (stockInput) stockInput.required = false;
+      if (thresholdInput) thresholdInput.required = false;
+    } else {
+      if (basePriceCol) basePriceCol.style.display = '';
+      if (mrpCol) mrpCol.style.display = '';
+      if (purchasePriceCol) purchasePriceCol.style.display = '';
+      if (inventoryCard) inventoryCard.style.display = '';
+      
+      if (basePriceInput) basePriceInput.required = true;
+      if (mrpInput) mrpInput.required = false;
+      if (purchasePriceInput) purchasePriceInput.required = false;
+      if (stockInput) stockInput.required = true;
+      if (thresholdInput) thresholdInput.required = true;
+    }
+  }
+
+  if (toggle) {
+    toggle.addEventListener('change', updateProductFieldsVisibility);
+    updateProductFieldsVisibility();
+  }
+
+  // initialize Select2
+  $('select[name="collections"]').select2({
+    theme: 'bootstrap-5',
+    placeholder: 'Select collections...',
+    allowClear: true,
+    width: '100%'
+  });
+
+  // initialize Select2 with dynamic creation for Tags and Labels
+  $('select[name="tags"]').select2({
+    theme: 'bootstrap-5',
+    placeholder: 'Select or type new tags...',
+    tags: true,
+    allowClear: true,
+    width: '100%'
+  });
+
+  $('select[name="labels"]').select2({
+    theme: 'bootstrap-5',
+    placeholder: 'Select or type new labels...',
+    tags: true,
+    allowClear: true,
+    width: '100%'
+  });
+
+  // forcefully clear the values when the clear button is clicked and prevent dropdown from opening
+  $('select[name="collections"], select[name="tags"], select[name="labels"]').on('select2:clear', function (e) {
+    $(this).val(null).trigger('change');
+    $(this).data('clearing', true);
+  }).on('select2:opening', function (e) {
+    if ($(this).data('clearing')) {
+        $(this).removeData('clearing');
+        e.preventDefault();
+    }
+  });
+
+  const cartesian = (...a) => a.reduce((a, b) => a.flatMap(d => b.map(e => [d, e].flat())));
+
+  const addAttrBtn = document.getElementById('add_dynamic_attr_btn');
+  const attrContainer = document.getElementById('dynamic-attributes-container');
+
+  if (addAttrBtn) {
+    addAttrBtn.addEventListener('click', function() {
+      const row = document.createElement('div');
+      row.className = 'row gx-2 mb-2 align-items-center attr-dynamic-row';
+      row.innerHTML = `
+        <div class="col-12 col-md-3 mb-2 mb-md-0">
+          <input type="text" class="form-control attr-name-input" name="dynamic_attr_name[]" placeholder="e.g. Size, Color, Material" list="global-attr-list">
+        </div>
+        <div class="col-10 col-md-8">
+          <input type="text" class="form-control attr-values-input" name="dynamic_attr_values[]" placeholder="e.g. S, M, L (comma separated)">
+        </div>
+        <div class="col-2 col-md-1 text-end">
+          <button type="button" class="btn btn-icon btn-sm btn-light text-danger remove-attr-row-btn w-100"><i class="ti ti-trash"></i></button>
+        </div>
+      `;
+      attrContainer.appendChild(row);
+    });
+  }
+
+  if (attrContainer) {
+    attrContainer.addEventListener('click', function(e) {
+      const btn = e.target.closest('.remove-attr-row-btn');
+      if (btn) {
+        const row = btn.closest('.attr-dynamic-row');
+        const attrNameInput = row.querySelector('.attr-name-input');
+        const attrName = attrNameInput ? attrNameInput.value.trim() : '';
+
+        if (attrName) {
+          const variantInputs = document.querySelectorAll('input[name="variant_dynamic_attributes[]"]');
+          let usedInVariants = [];
+          
+          variantInputs.forEach(input => {
+            const attrs = input.value.split('|');
+            const hasAttr = attrs.some(attr => {
+              const parts = attr.split(':');
+              return parts[0].trim() === attrName;
+            });
+            
+            if (hasAttr) {
+              const tr = input.closest('tr');
+              if (tr) {
+                const variantNameEl = tr.querySelector('strong');
+                const variantName = variantNameEl ? variantNameEl.textContent : 'Unknown Variant';
+                usedInVariants.push(variantName);
+              }
+            }
+          });
+
+          if (usedInVariants.length > 0) {
+            const msgHtml = `<p>Cannot delete attribute <strong>"${attrName}"</strong>. It is currently used by the following variants:</p>
+                             <ul class="mb-4 text-secondary">
+                               ${usedInVariants.map(v => `<li>${v}</li>`).join('')}
+                             </ul>`;
+            document.getElementById('deleteAttributeModalBody').innerHTML = msgHtml;
+            const modal = new bootstrap.Modal(document.getElementById('deleteAttributeModal'));
+            modal.show();
+            return;
+          }
+        }
+        
+        row.remove();
+      }
+    });
+  }
+
+  const generateBtn = document.getElementById('generate_variants_btn');
+  if (generateBtn) {
+    generateBtn.addEventListener('click', function() {
+      const rows = document.querySelectorAll('.attr-dynamic-row');
+      if (rows.length === 0) {
+        alert("Please add at least one attribute to generate variants.");
+        return;
+      }
+
+      const groups = [];
+      rows.forEach(row => {
+        const name = row.querySelector('.attr-name-input').value.trim();
+        const valsStr = row.querySelector('.attr-values-input').value.trim();
+        if (name && valsStr) {
+          const vals = valsStr.split(',').map(v => v.trim()).filter(v => v);
+          if (vals.length > 0) {
+            groups.push(vals.map(v => ({ attrName: name, valName: v })));
+          }
+        }
+      });
+
+      if (groups.length === 0) {
+        alert("Please fill out the attribute names and values properly.");
+        return;
+      }
+
+      let combinations = [];
+      if (groups.length === 1) {
+        combinations = groups[0].map(item => [item]);
+      } else {
+        combinations = cartesian(...groups);
+      }
+
+      const executeVariantsGeneration = () => {
+        const tbody = document.getElementById('variants_tbody');
+        
+        //capture existing variant inputs before clearing table
+        const existingData = [];
+        tbody.querySelectorAll('tr').forEach(row => {
+          const attrInput = row.querySelector('input[name="variant_dynamic_attributes[]"]');
+          if (!attrInput) return;
+          const attrStr = attrInput.value.trim();
+          const nameInput = row.querySelector('input[name="variant_name[]"]');
+          const nameText = nameInput ? nameInput.value : (row.querySelector('strong') ? row.querySelector('strong').textContent.trim() : '');
+          const basePrice = row.querySelector('input[name="variant_base_price[]"]')?.value || '';
+          const mrp = row.querySelector('input[name="variant_mrp[]"]')?.value || '';
+          const purchasePrice = row.querySelector('input[name="variant_purchase_price[]"]')?.value || '';
+          const skuSuffix = row.querySelector('input[name="variant_sku_suffix[]"]')?.value || '';
+          const stock = row.querySelector('input[name="variant_stock_quantity[]"]')?.value || '0';
+          const threshold = row.querySelector('input[name="variant_low_stock_threshold[]"]')?.value || '5';
+          
+          existingData.push({
+            attrStr: attrStr,
+            attrs: attrStr.split('|').filter(Boolean),
+            name: nameText,
+            base_price: basePrice,
+            mrp: mrp,
+            purchase_price: purchasePrice,
+            sku_suffix: skuSuffix,
+            stock: stock,
+            threshold: threshold
+          });
+        });
+
+        tbody.innerHTML = ''; // clear existing
+  
+        const baseSku = document.getElementById('id_sku') ? document.getElementById('id_sku').value.trim() : '';
+
+        function findMatchingExisting(attrStrings, currentAttrs) {
+          let match = existingData.find(e => e.attrStr === attrStrings);
+          if (match) return match;
+          match = existingData.find(e => e.attrs.length > 0 && e.attrs.every(a => currentAttrs.includes(a)));
+          if (match) return match;
+          match = existingData.find(e => currentAttrs.length > 0 && currentAttrs.every(a => e.attrs.includes(a)));
+          return match || null;
+        }
+
+        combinations.forEach(combo => {
+          const nameParts = combo.map(c => c.valName);
+          const defaultName = nameParts.join(' - ');
+          const currentAttrs = combo.map(c => `${c.attrName}:${c.valName}`);
+          const attrStrings = currentAttrs.join('|');
+          const suffix = nameParts.join('-').replace(/\s+/g, '');
+          const fullSku = baseSku ? `${baseSku}-${suffix}` : suffix;
+
+          const existingMatch = findMatchingExisting(attrStrings, currentAttrs);
+          const variantName = (existingMatch && existingMatch.name) ? existingMatch.name : defaultName;
+          const basePriceVal = existingMatch ? existingMatch.base_price : '';
+          const mrpVal = existingMatch ? existingMatch.mrp : '';
+          const purchasePriceVal = existingMatch ? existingMatch.purchase_price : '';
+          const stockVal = existingMatch ? existingMatch.stock : '0';
+          const thresholdVal = existingMatch ? existingMatch.threshold : '5';
+          
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td class="position-relative" data-label="Variant Name">
+              <input type="text" class="form-control form-control-sm w-100" name="variant_name[]" value="${variantName}" placeholder="Variant Name" required>
+              <button type="button" class="btn btn-icon btn-sm btn-light text-danger remove-variant-btn d-md-none position-absolute end-0 top-50 translate-middle-y me-3"><i class="ti ti-trash"></i></button>
+              <input type="hidden" name="variant_dynamic_attributes[]" value="${attrStrings}">
+            </td>
+            <td data-label="Base Price">
+              <input type="number" step="0.01" min="0" class="form-control form-control-sm w-100" name="variant_base_price[]" value="${basePriceVal}" required>
+            </td>
+            <td data-label="MRP">
+              <input type="number" step="0.01" min="0" class="form-control form-control-sm w-100" name="variant_mrp[]" value="${mrpVal}">
+            </td>
+            <td data-label="Purchase Price">
+              <input type="number" step="0.01" min="0" class="form-control form-control-sm w-100" name="variant_purchase_price[]" value="${purchasePriceVal}">
+            </td>
+            <td data-label="Variant SKU">
+              <input type="text" class="form-control form-control-sm w-100" name="variant_sku_suffix[]" value="${fullSku}" required readonly>
+            </td>
+            <td data-label="Stock">
+              <input type="number" min="0" class="form-control form-control-sm w-100" name="variant_stock_quantity[]" value="${stockVal}" required>
+            </td>
+            <td data-label="Threshold">
+              <input type="number" min="0" class="form-control form-control-sm w-100" name="variant_low_stock_threshold[]" value="${thresholdVal}" required>
+            </td>
+            <td class="d-none d-md-table-cell text-center">
+              <button type="button" class="btn btn-icon btn-sm btn-light text-danger remove-variant-btn mt-2 mt-md-0 w-100 w-md-auto"><i class="ti ti-trash"></i></button>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+        
+        const generatedVariants = combinations.map(combo => {
+          const nameParts = combo.map(c => c.valName);
+          const suffix = nameParts.join('-').replace(/\s+/g, '');
+          const fullSku = baseSku ? `${baseSku}-${suffix}` : suffix;
+          return {
+            name: nameParts.join(' - '),
+            sku_suffix: fullSku
+          };
+        });
+        
+        function updateSelectOptions(select, variants) {
+          const currentValue = select.value;
+          const firstOption = '<option value="">Select</option><option value="all">--All Variants</option>';
+          select.innerHTML = firstOption;
+          variants.forEach(v => {
+            const opt = document.createElement('option');
+            opt.value = v.sku_suffix;
+            opt.textContent = v.name;
+            select.appendChild(opt);
+          });
+          select.value = currentValue;
+          if ($(select).hasClass('select2-hidden-accessible')) {
+            $(select).trigger('change');
+          }
+        }
+  
+        document.querySelectorAll('select[name$="-variant_sku"]').forEach(select => {
+          updateSelectOptions(select, generatedVariants);
+        });
+  
+        document.querySelectorAll('template[data-formset-empty]').forEach(template => {
+          template.content.querySelectorAll('select[name$="-variant_sku"]').forEach(select => {
+            updateSelectOptions(select, generatedVariants);
+          });
+        });
+      };
+
+      if (window.ActionLoader) {
+        window.ActionLoader.execute(generateBtn, "Generating variants...", executeVariantsGeneration);
+      } else {
+        executeVariantsGeneration();
+      }
+    });
+  }
+
+  const tbody = document.getElementById('variants_tbody');
+  if (tbody) {
+    tbody.addEventListener('click', function(e) {
+      if (e.target.closest('.remove-variant-btn')) {
+        e.target.closest('tr').remove();
+      }
+    });
+  }
+
+  const productForm = document.getElementById('product-form');
+  if (productForm) {
+    const fieldErrorMessages = {
+      name: "Product name is required.",
+      sku: "SKU is required.",
+      category: "Category is required.",
+      base_price: "Base price is required.",
+      stock_quantity: "Stock quantity is required.",
+      low_stock_threshold: "Low stock threshold is required."
+    };
+
+    function clearFieldError(el) {
+      el.classList.remove('is-invalid');
+      const container = el.closest('.mb-3') || el.closest('td') || el.parentElement;
+      if (container) {
+        const err = container.querySelector('.js-field-error');
+        if (err) err.remove();
+      }
+    }
+
+    productForm.addEventListener('submit', function(e) {
+      productForm.querySelectorAll('.is-invalid').forEach(el => clearFieldError(el));
+      
+      if (!productForm.checkValidity()) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const invalidFields = productForm.querySelectorAll(':invalid');
+        invalidFields.forEach(el => {
+          el.classList.add('is-invalid');
+          const name = el.name ? el.name.replace('[]', '') : '';
+          const msg = fieldErrorMessages[name] || "This field is required.";
+          
+          const container = el.closest('.mb-3') || el.closest('td') || el.parentElement;
+          if (container && !container.querySelector('.js-field-error')) {
+            const errDiv = document.createElement('div');
+            errDiv.className = 'text-danger small mt-1 js-field-error';
+            errDiv.textContent = msg;
+            container.appendChild(errDiv);
+          }
+        });
+
+        const firstInvalid = invalidFields[0];
+        if (firstInvalid) {
+          firstInvalid.focus();
+          firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        return false;
+      }
+    });
+
+    productForm.addEventListener('input', function(e) {
+      if (e.target && e.target.classList.contains('is-invalid') && e.target.checkValidity()) {
+        clearFieldError(e.target);
+      }
+    });
+
+    productForm.addEventListener('change', function(e) {
+      if (e.target && e.target.classList.contains('is-invalid') && e.target.checkValidity()) {
+        clearFieldError(e.target);
+      }
+    });
+  }
+});
+</script>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+{% endblock %}

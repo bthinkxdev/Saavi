@@ -1,0 +1,17 @@
+{% load i18n %}
+<div class="container pt-4 pb-0" id="explore-categories-section">
+    {% for section in section_context.category_sections %}
+        {% if section.products %}
+            <div class="mb-2">
+                <h2 class="text-uppercase mb-4" style="font-weight: bold; font-size: 1.25rem;">{{ section.category.name }}</h2>
+                <div class="row">
+                    {% for product in section.products %}
+                    <div class="col-6 col-md-4 col-lg-3 mb-4">
+                        {% include "catalog/partials/product_card.html" with product=product %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
+    {% endfor %}
+</div>

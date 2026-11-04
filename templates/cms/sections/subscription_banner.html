@@ -1,0 +1,37 @@
+{% load i18n %}
+{% firstof section_context.banner.image section_context.banner.image_url as banner_img %}
+{% firstof section_context.banner.url section_context.banner.link_url as banner_link %}
+{% firstof section_context.banner.eyebrow section_context.eyebrow as banner_eyebrow %}
+{% firstof section_context.title section_context.banner.title as banner_title %}
+{% firstof section_context.banner.subtitle section_context.subtitle as banner_subtitle %}
+{% firstof section_context.banner.button_text section_context.button_text as banner_button_text %}
+{% url 'core:contact-us' as default_contact_url %}
+
+{% if banner_img %}
+<section class="jm-section">
+  <div class="container">
+    {% if banner_link %}
+    <a href="{{ banner_link }}" class="jm-promo-banner">
+      <img src="{{ banner_img }}" alt="{% if banner_title %}{{ banner_title }}{% else %}{% trans 'Sarocchi Luxe Designs' %}{% endif %}" width="1200" height="320" loading="lazy">
+    </a>
+    {% else %}
+    <div class="jm-promo-banner">
+      <img src="{{ banner_img }}" alt="{% if banner_title %}{{ banner_title }}{% else %}{% trans 'Sarocchi Luxe Designs' %}{% endif %}" width="1200" height="320" loading="lazy">
+    </div>
+    {% endif %}
+  </div>
+</section>
+{% else %}
+<section class="jm-section">
+  <div class="container">
+    <aside class="jm-promo jm-promo--wide">
+      <div class="jm-promo__inner">
+        <p class="jm-promo__eyebrow">{% if banner_eyebrow %}{{ banner_eyebrow }}{% else %}{% trans "Bespoke Styling & Care" %}{% endif %}</p>
+        <h3 class="jm-promo__title">{% if banner_title %}{{ banner_title }}{% else %}{% trans "Bridal Styling & Saree Consultation" %}{% endif %}</h3>
+        <p class="jm-promo__text">{% if banner_subtitle %}{{ banner_subtitle }}{% else %}{% trans "Looking for the perfect saree drape, bridal ensemble, or jewellery pairing? Connect with our expert stylists in store or message us on WhatsApp." %}{% endif %}</p>
+        <a href="{% firstof banner_link default_contact_url %}" class="btn btn-floward">{% if banner_button_text %}{{ banner_button_text }}{% else %}{% trans "Contact Us" %}{% endif %}</a>
+      </div>
+    </aside>
+  </div>
+</section>
+{% endif %}

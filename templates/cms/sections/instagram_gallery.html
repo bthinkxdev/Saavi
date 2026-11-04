@@ -1,0 +1,167 @@
+{% load i18n %}
+<section class="container mb-5 instagram-gallery-wrapper">
+  {% include "cms/sections/_section_title.html" with section_context=section_context fallback_key="Follow Us" show_cta=False %}
+
+  <style>
+    .ig-card-simple {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #ffffff;
+      border: 1px solid #eaeaea;
+      border-radius: 0.75rem;
+      padding: 1.5rem 2rem;
+      text-decoration: none;
+      color: #333;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
+    
+    .ig-card-simple:hover {
+      box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+      transform: translateY(-2px);
+      color: #333;
+    }
+
+    .ig-card-content {
+      display: flex;
+      align-items: center;
+      gap: 1.25rem;
+    }
+
+    .ig-icon-gradient {
+      width: 48px;
+      height: 48px;
+      fill: url(#ig-gradient);
+    }
+    
+    .ig-text-wrapper {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .ig-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+    }
+
+    .ig-subtitle {
+      font-size: 0.9rem;
+      color: #666;
+    }
+
+    .ig-follow-btn {
+      padding: 0.5rem 1.25rem;
+      border: 1px solid #dbdbdb;
+      background: transparent;
+      border-radius: 0.5rem;
+      font-weight: 600;
+      font-size: 0.9rem;
+      color: #262626;
+      transition: all 0.2s ease;
+    }
+
+    .ig-card-simple:hover .ig-follow-btn {
+      background: #fafafa;
+      border-color: #c4c4c4;
+    }
+
+    @media (max-width: 576px) {
+      .ig-card-simple {
+        flex-direction: column;
+        text-align: center;
+        gap: 1.5rem;
+        padding: 1.5rem;
+      }
+      .ig-card-content {
+        flex-direction: column;
+      }
+    }
+    
+    .ig-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+    .ig-grid-item {
+      aspect-ratio: 1;
+      border-radius: 0.5rem;
+      overflow: hidden;
+      position: relative;
+      display: block;
+    }
+    .ig-grid-item img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.3s ease;
+    }
+    .ig-grid-item:hover img {
+      transform: scale(1.05);
+    }
+    .ig-grid-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+    .ig-grid-item:hover .ig-grid-overlay {
+      opacity: 1;
+    }
+  </style>
+
+  <svg style="width:0;height:0;position:absolute;" aria-hidden="true" focusable="false">
+    <linearGradient id="ig-gradient" x1="20%" y1="100%" x2="80%" y2="0%">
+      <stop offset="0%" stop-color="#f09433" />
+      <stop offset="25%" stop-color="#e6683c" />
+      <stop offset="50%" stop-color="#dc2743" />
+      <stop offset="75%" stop-color="#cc2366" />
+      <stop offset="100%" stop-color="#bc1888" />
+    </linearGradient>
+  </svg>
+
+  <a href="{% if section_context.instagram_handle %}https://instagram.com/{{ section_context.instagram_handle }}{% elif site_settings.instagram_url %}{{ site_settings.instagram_url }}{% else %}https://instagram.com/{% endif %}"
+     class="ig-card-simple"
+     target="_blank"
+     rel="noopener noreferrer">
+     
+    <div class="ig-card-content">
+      <svg class="ig-icon-gradient" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/>
+      </svg>
+      
+      <div class="ig-text-wrapper">
+        <span class="ig-title">
+          {% if section_context.instagram_handle %}
+            @{{ section_context.instagram_handle }}
+          {% else %}
+            {% trans "Follow us on Instagram" %}
+          {% endif %}
+        </span>
+        <span class="ig-subtitle">{% trans "Discover our latest styles and updates" %}</span>
+      </div>
+    </div>
+    
+    <span class="ig-follow-btn">{% trans "Follow" %}</span>
+  </a>
+
+  {% if section_context.images %}
+  <div class="ig-grid">
+    {% for image in section_context.images %}
+    <a href="{{ image.url|default:'#' }}" target="_blank" class="ig-grid-item">
+      <img src="{{ image.src }}" alt="Instagram Post">
+      <div class="ig-grid-overlay">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z"></path><path d="M12 7v10"></path><path d="M12 11l4 4-4 4"></path></svg>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+  {% endif %}
+</section>

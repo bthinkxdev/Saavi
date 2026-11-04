@@ -1,0 +1,84 @@
+{% load i18n static %}
+{% if products or brands or categories or equipment_types %}
+<div class="search-suggestions-container" role="presentation">
+  
+  {# products #}
+  {% if products %}
+    <ul class="list-unstyled mb-0" role="presentation">
+      {% for product in products %}
+      <li role="presentation">
+        <a href="{% url 'catalog:pdp' slug=product.slug %}"
+           class="search-suggestion-link d-flex align-items-center px-3 py-2 rounded text-dark text-decoration-none transition-all"
+           role="option"
+           id="search-suggestion-prod-{{ forloop.counter }}"
+           style="gap: 12px; font-size: 0.875rem;">
+          {% with img=product.primary_images.0 %}
+          {% if img and img.image %}
+            <img src="{{ img.image.url }}" alt="{{ img.alt_text|default:product.name }}" class="rounded bg-light" style="width: 34px; height: 34px; object-fit: cover; flex-shrink: 0; border: 1px solid var(--floward-border-light);" onerror="this.onerror=null;this.src='{% static 'img/product-placeholder.svg' %}';">
+          {% else %}
+            <div class="rounded bg-light d-flex align-items-center justify-content-center text-muted" style="width: 34px; height: 34px; flex-shrink: 0; border: 1px solid var(--floward-border-light);">
+              <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+              </svg>
+            </div>
+          {% endif %}
+          {% endwith %}
+          <div class="text-truncate flex-grow-1">
+            <span class="fw-medium text-dark d-block text-truncate">{{ product.name }}</span>
+            {% if product.brand %}
+              <span class="text-muted d-block text-truncate" style="font-size: 0.75rem; margin-top: 1px;">{{ product.brand.name }}</span>
+            {% endif %}
+          </div>
+        </a>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
+
+  {# categories #}
+  {% if categories %}
+  <div class="search-suggestions-section mt-2">
+    <ul class="list-unstyled mb-0" role="presentation">
+      {% for category in categories %}
+      <li role="presentation">
+        <a href="{% url 'catalog:plp-category' category_slug=category.slug %}"
+           class="search-suggestion-link d-flex align-items-center px-3 py-2 rounded text-dark text-decoration-none transition-all"
+           role="option"
+           id="search-suggestion-category-{{ forloop.counter }}"
+           style="gap: 12px; font-size: 0.875rem;">
+          <div class="rounded bg-light d-flex align-items-center justify-content-center text-muted" style="width: 30px; height: 30px; flex-shrink: 0; border: 1px solid var(--floward-border-light);">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
+            </svg>
+          </div>
+          <span class="fw-medium text-dark text-truncate">{{ category.name }} <span class="text-muted fw-normal" style="font-size: 0.75rem;">({% trans "Category" %})</span></span>
+        </a>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
+
+
+</div>
+{% elif query %}
+<div class="search-suggestions-empty" role="status">
+  <div class="search-suggestions-empty__icon" aria-hidden="true">
+    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+      <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
+    </svg>
+  </div>
+  <p class="search-suggestions-empty__title mb-1">
+    {% blocktrans with term=query %}No results for "{{ term }}"{% endblocktrans %}
+  </p>
+  <p class="search-suggestions-empty__hint small text-muted mb-3">
+    {% trans "Try a different keyword or browse our collections." %}
+  </p>
+  <a href="{% url 'catalog:plp' %}" class="btn btn-outline-floward btn-sm">
+    {% trans "Browse all categories" %}
+  </a>
+</div>
+{% endif %}

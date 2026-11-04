@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{{ seo_title }}{% endblock %}
+
+{% block content %}
+<div class="container page-container py-4">
+  <h1 class="section-title mb-4">{% trans "About Us" %}</h1>
+
+  <div class="card p-4">
+    <p>{% trans "Sarocchi Luxe designs brings exquisite Indian sarees, bridal collections, and handcrafted fine jewellery to customers across New Zealand. Rooted in authentic craftsmanship, our curated collections celebrate timeless elegance, rich heritage weaves, and heirloom accessories for every special celebration." %}</p>
+    <p class="mb-0">{% trans "Have questions about who we are? Reach out any time — our team is here to help." %}
+      <a href="{% url 'core:contact-us' %}">{% trans "Contact us" %}</a>.
+    </p>
+  </div>
+
+  <div class="card p-4 mt-4">
+    <h6 class="mb-3">{% trans "Company Details" %}</h6>
+    <p class="mb-2"><strong>{% trans "Official business name" %}:</strong> {% trans "Sarocchi Luxe designs" %}</p>
+    <p class="mb-2"><strong>{% trans "Phone number" %}:</strong> <a href="tel:+64220904112">+64 22 090 4112</a> (022 090 4112)</p>
+    <p class="mb-2"><strong>{% trans "Email" %}:</strong> <a href="mailto:miriyamgrace21@gmail.com">miriyamgrace21@gmail.com</a></p>
+    <p class="mb-2"><strong>{% trans "WhatsApp" %}:</strong> <a href="https://wa.me/64220904112" target="_blank" rel="noopener noreferrer">+64 22 090 4112</a></p>
+    <p class="mb-0"><strong>{% trans "Physical address" %}:</strong> {% trans "2 Gracefield place, Huntington, Hamilton, Waikato 3210, New Zealand" %}</p>
+  </div>
+</div>
+{% endblock %}

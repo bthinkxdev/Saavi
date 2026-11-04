@@ -1,0 +1,21 @@
+{% load i18n %}
+{# Single source of truth for storefront location copy. Pass compact=1 for footer. #}
+<div class="jm-locations{% if compact %} jm-locations--compact{% endif %}">
+  <div class="jm-locations__block">
+    <strong class="jm-locations__label">{% trans "Store location" %}</strong>
+    <p class="jm-locations__body">
+      Sarocchi Luxe designs<br>
+      2 Gracefield place, Huntington<br>
+      Hamilton, Waikato 3210<br>
+      New Zealand<br>
+      <a href="tel:+64220904112">+64 22 090 4112</a>
+    </p>
+  </div>
+
+  {% if not compact %}
+  <div class="jm-locations__block">
+    <strong class="jm-locations__label">{% trans "Products" %}</strong>
+    <p class="jm-locations__body">{% trans "Sarees" %}, {% trans "Jewellery" %}</p>
+  </div>
+  {% endif %}
+</div>

@@ -1,0 +1,159 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}{% if form_mode == "edit" %}Edit{% else %}Add{% endif %} {{ singular_name }}{% endblock %}
+{% block page_title %}{% if form_mode == "edit" %}Edit{% else %}Add{% endif %} {{ singular_name }}{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-12 col-xl-9">
+    <div class="card">
+      <div class="card-body p-4">
+        <form method="post" enctype="multipart/form-data" novalidate>
+          {% csrf_token %}
+          {% if form.non_field_errors %}
+          <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+          {% endif %}
+          <div class="row">
+            {% for field in form %}
+            <div class="{% if field.field.widget.input_type == 'checkbox' or field.field.widget.template_name == 'django/forms/widgets/textarea.html' %}col-12{% else %}col-md-6{% endif %} mb-3">
+              {% if field.field.widget.input_type == 'checkbox' %}
+              <div class="form-check mt-4">
+                {{ field }}
+                <label class="form-check-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+              </div>
+              {% else %}
+              <label class="form-label d-block text-start mb-2" for="{{ field.id_for_label }}">
+                {{ field.label }}{% if field.field.required %} <span class="text-danger">*</span>{% endif %}
+              </label>
+              {% if field.field.widget.input_type == 'file' %}
+              {% if field.value %}
+              <div class="d-flex justify-content-start align-items-center mb-2">
+                <div class="d-inline-flex align-items-center gap-2 p-1 px-2 border rounded bg-light">
+                  <img src="{% if field.value.url %}{{ field.value.url }}{% else %}{{ field.value }}{% endif %}" alt="Current image" class="rounded border" style="height: 44px; width: 72px; object-fit: cover;">
+                  <span class="text-muted" style="font-size: 0.8rem;"><i class="bi bi-image me-1"></i>Current image</span>
+                </div>
+              </div>
+              {% endif %}
+              <div id="new-preview-{{ field.auto_id }}" class="d-none justify-content-start align-items-center mb-2">
+                <div class="d-inline-flex align-items-center gap-2 p-1 px-2 border rounded border-primary bg-light">
+                  <img id="new-preview-img-{{ field.auto_id }}" src="#" alt="New Preview" class="rounded border border-primary" style="height: 44px; width: 72px; object-fit: cover;">
+                  <span class="text-primary fw-medium" style="font-size: 0.8rem;"><i class="bi bi-upload me-1"></i>New upload preview</span>
+                </div>
+              </div>
+              {% endif %}
+              {{ field }}
+
+
+
+              {% endif %}
+              {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+              {% for error in field.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+            </div>
+            {% endfor %}
+          </div>
+          <div class="d-flex gap-2 mt-2">
+            <button type="submit" class="btn btn-primary">Save</button>
+            <a href="{{ cancel_url }}" class="btn btn-light">Cancel</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  //dynamic section_type reload for HomepageSection forms
+  const sectionTypeSelect = document.getElementById('id_section_type') || document.querySelector('select[name="section_type"]');
+  if (sectionTypeSelect) {
+    function handleSectionChange() {
+      const url = new URL(window.location.href);
+      if (sectionTypeSelect.value) {
+        url.searchParams.set('section_type', sectionTypeSelect.value);
+      } else {
+        url.searchParams.delete('section_type');
+      }
+      const form = sectionTypeSelect.form;
+      if (form) {
+        const titleInput = form.querySelector('[name="title"]');
+        if (titleInput && titleInput.value) url.searchParams.set('title', titleInput.value);
+        const orderInput = form.querySelector('[name="display_order"]');
+        if (orderInput && orderInput.value) url.searchParams.set('display_order', orderInput.value);
+        const activeInput = form.querySelector('[name="is_active"]');
+        if (activeInput) url.searchParams.set('is_active', activeInput.checked ? '1' : '0');
+      }
+      window.location.href = url.toString();
+    }
+
+    sectionTypeSelect.addEventListener('change', handleSectionChange);
+
+    const hasConfigFields = document.querySelector('[name^="config_"]');
+    const url = new URL(window.location.href);
+    if (sectionTypeSelect.value && !url.searchParams.get('section_type') && !hasConfigFields) {
+      handleSectionChange();
+    }
+  }
+
+  const destSelect = document.getElementById('id_config_destination') || document.querySelector('[name="config_destination"]');
+  const targetSelect = document.getElementById('id_config_target') || document.querySelector('[name="config_target"]');
+  if (destSelect && targetSelect) {
+    //store all original options
+    const allOptions = Array.from(targetSelect.options).map(opt => ({
+      value: opt.value,
+      text: opt.text,
+      selected: opt.selected
+    }));
+
+    function updateTargetOptions() {
+      const currentDest = destSelect.value;
+      const currentVal = targetSelect.value;
+      targetSelect.innerHTML = '';
+
+      const matchingOptions = allOptions.filter(opt => opt.value.startsWith(currentDest + ':'));
+      matchingOptions.forEach(opt => {
+        const optionEl = document.createElement('option');
+        optionEl.value = opt.value;
+        optionEl.textContent = opt.text;
+        if (opt.value === currentVal) {
+          optionEl.selected = true;
+        }
+        targetSelect.appendChild(optionEl);
+      });
+
+      if (!targetSelect.value && matchingOptions.length > 0) {
+        targetSelect.selectedIndex = 0;
+      }
+    }
+
+    destSelect.addEventListener('change', updateTargetOptions);
+    updateTargetOptions();
+  }
+
+  //instant preview for uploaded file inputs
+  document.querySelectorAll('input[type="file"]').forEach(input => {
+    input.addEventListener('change', function() {
+      const container = document.getElementById('new-preview-' + this.id);
+      const img = document.getElementById('new-preview-img-' + this.id);
+      if (!container || !img) return;
+
+      if (this.files && this.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          img.src = e.target.result;
+          container.classList.remove('d-none');
+          container.classList.add('d-flex');
+        };
+        reader.readAsDataURL(this.files[0]);
+      } else {
+        container.classList.add('d-none');
+        container.classList.remove('d-flex');
+        img.src = '#';
+      }
+
+
+    });
+  });
+});
+</script>
+
+{% endblock %}

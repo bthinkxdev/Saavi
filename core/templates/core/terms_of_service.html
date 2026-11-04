@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{{ seo_title }}{% endblock %}
+
+{% block content %}
+<div class="container page-container py-4">
+  <h1 class="section-title mb-4">{% trans "Terms and Conditions" %}</h1>
+
+  <div class="card p-4" style="text-align: justify; text-justify: inter-word; hyphens: auto;">
+    <p class="text-muted small text-start">{% trans "Last updated" %}: {% now "F Y" %}</p>
+
+    <p>{% trans "Welcome to Sarocchi Luxe Designs. By visiting our website, purchasing our products, or engaging with our services, you agree to be bound by the following Terms and Conditions." %}</p>
+
+    <h6 class="mt-4">{% trans "1. General Conditions" %}</h6>
+    <ul class="mb-3">
+      <li>{% trans "Sarocchi Luxe Designs is a home-based online boutique based in Hamilton, New Zealand." %}</li>
+      <li>{% trans "We reserve the right to refuse service, update pricing, or modify product details at any time without prior notice." %}</li>
+      <li>{% trans "All content on this website—including images, text, logos, and product descriptions—is the intellectual property of Sarocchi Luxe Designs and may not be used or reproduced without explicit written consent." %}</li>
+    </ul>
+
+    <h6 class="mt-4">{% trans "2. Products and Orders" %}</h6>
+    <ul class="mb-3">
+      <li><strong>{% trans "Product Variations" %}:</strong> {% trans "Many of our items (including sarees, clothing, and jewellery) feature unique craftsmanship. Slight variations in color, print, or weave may occur due to lighting, photography, and device display settings." %}</li>
+      <li><strong>{% trans "Order Acceptance" %}:</strong> {% trans "Placing an order does not guarantee acceptance. We reserve the right to cancel or limit orders due to stock unavailability, pricing errors, or suspected fraud." %}</li>
+    </ul>
+
+    <h6 class="mt-4">{% trans "3. Pricing and Payments" %}</h6>
+    <ul class="mb-3">
+      <li>{% trans "All prices listed on our website are in New Zealand Dollars (NZD) unless otherwise stated." %}</li>
+      <li>{% trans "Payments are processed through secure third-party payment gateways. Full payment must be cleared before an order is processed or dispatched." %}</li>
+    </ul>
+
+    <h6 class="mt-4">{% trans "4. Shipping and Delivery" %}</h6>
+    <ul class="mb-3">
+      <li>{% trans "Shipping terms, fees, and delivery timeframes are governed by our" %} <a href="{% url 'core:shipping-policy' %}">{% trans "Shipping Policy" %}</a>.</li>
+      <li>{% trans "We are not responsible for delivery delays caused by postal carriers, customs processing, or incorrect addresses provided at checkout." %}</li>
+    </ul>
+
+    <h6 class="mt-4">{% trans "5. Cancellations, Refunds, and Returns" %}</h6>
+    <ul class="mb-3">
+      <li>{% trans "Cancellations, returns, and refund requests are handled according to our" %} <a href="{% url 'core:refund-policy' %}">{% trans "Refund & Cancellation Policy" %}</a>.</li>
+      <li>{% trans "Change-of-mind refunds or exchanges are not accepted." %}</li>
+      <li>{% trans "All claims for damaged or incorrect items must be reported promptly with supporting evidence (such as opening videos and photographs)." %}</li>
+    </ul>
+
+    <h6 class="mt-4">{% trans "6. Consumer Guarantees Act (CGA) & Legal Rights" %}</h6>
+    <ul class="mb-3">
+      <li>{% trans "Nothing in these Terms and Conditions limits, excludes, or restricts any rights you may have under the New Zealand Consumer Guarantees Act 1993 or the Fair Trading Act 1986." %}</li>
+    </ul>
+
+    <h6 class="mt-4">{% trans "7. Limitation of Liability" %}</h6>
+    <ul class="mb-3">
+      <li>{% trans "To the maximum extent permitted by New Zealand law, Sarocchi Luxe Designs is not liable for any indirect, incidental, or consequential loss resulting from the use of our website or products." %}</li>
+    </ul>
+
+    <h6 class="mt-4">{% trans "8. Changes to Terms" %}</h6>
+    <ul class="mb-0">
+      <li>{% trans "We may update these Terms and Conditions at any time. Continued use of our website following any updates indicates your acceptance of the revised terms." %}</li>
+    </ul>
+  </div>
+
+  <div class="card p-4 mt-4">
+    <h6 class="mb-3">{% trans "Contact Us" %}</h6>
+    <p class="mb-2">{% trans "For any questions regarding these Terms and Conditions, please contact us through our website, email, or social media channels." %}</p>
+    <p class="mb-1"><strong>{% trans "Email" %}:</strong> <a href="mailto:miriyamgrace21@gmail.com">miriyamgrace21@gmail.com</a></p>
+    <p class="mb-0"><strong>{% trans "Location" %}:</strong> {% trans "Sarocchi Luxe Designs, Hamilton, New Zealand" %}</p>
+  </div>
+</div>
+{% endblock %}

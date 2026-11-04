@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{{ seo_title }}{% endblock %}
+
+{% block content %}
+<div class="container page-container py-4">
+  <h1 class="section-title mb-4">{% trans "Refund & Cancellation Policy" %}</h1>
+
+  <div class="card p-4" style="text-align: justify; text-justify: inter-word; hyphens: auto;">
+    <p class="text-muted small text-start">{% trans "Last updated" %}: {% now "F Y" %}</p>
+
+    <p>{% trans "At Sarocchi Luxe Designs, we carefully inspect and pack every order with love and care." %}</p>
+
+    <h6 class="mt-4">{% trans "Order Cancellation" %}</h6>
+    <p>{% trans "Orders can be cancelled before they are processed or dispatched. Once an order has been shipped, it cannot be cancelled." %}</p>
+
+    <h6 class="mt-4">{% trans "Change of Mind" %}</h6>
+    <p>{% trans "We do not offer refunds or exchanges for change-of-mind purchases. Please check all product details, photos, and descriptions carefully before placing your order." %}</p>
+
+    <h6 class="mt-4">{% trans "Damaged, Faulty, or Incorrect Items" %}</h6>
+    <p>{% trans "If you receive a damaged, faulty, or incorrect item, please contact us as soon as possible with your order details and clear photos." %}</p>
+    <p>{% trans "We strongly recommend recording a continuous video while opening your package. This helps us investigate any claims for damaged, missing, or incorrect items and assists with courier claims." %}</p>
+
+    <h6 class="mt-4">{% trans "Sale Items" %}</h6>
+    <p>{% trans "Sale or discounted items are not eligible for change-of-mind returns or exchanges. This does not affect your rights for faulty or incorrectly described products." %}</p>
+
+    <h6 class="mt-4">{% trans "Refunds" %}</h6>
+    <p>{% trans "If a refund is approved, it will be processed through the original payment method where possible." %}</p>
+
+    <p class="text-muted small mt-4 mb-0">{% trans "This policy does not limit any rights you may have under applicable consumer law." %}</p>
+  </div>
+
+  <div class="card p-4 mt-4">
+    <h6 class="mb-3">{% trans "Contact Us" %}</h6>
+    <p class="mb-2">{% trans "For any questions regarding your order, please contact Sarocchi Luxe Designs through our website or social media." %}</p>
+    <p class="mb-1"><strong>{% trans "Email" %}:</strong> <a href="mailto:miriyamgrace21@gmail.com">miriyamgrace21@gmail.com</a></p>
+    <p class="mb-0"><strong>{% trans "Location" %}:</strong> {% trans "Sarocchi Luxe Designs, Hamilton, New Zealand" %}</p>
+  </div>
+</div>
+{% endblock %}

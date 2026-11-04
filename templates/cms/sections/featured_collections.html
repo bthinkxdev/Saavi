@@ -1,0 +1,32 @@
+{% load i18n %}
+{% for collection in section_context.collections %}
+<section class="jm-section jm-rail-section">
+  <div class="container">
+    <div class="section-header jm-section-header">
+      <h2 class="section-title">{% if section_context.title %}{{ section_context.title }} - {% endif %}{{ collection.name }}</h2>
+      <a href="{% url 'catalog:plp' %}?collection={{ collection.slug }}" class="section-cta">{% trans "View All" %}</a>
+    </div>
+    {% if collection.description %}
+    <p class="section-desc mb-3 text-muted">{{ collection.description }}</p>
+    {% endif %}
+    
+    <div class="jm-featured__rail">
+      <button type="button" class="jm-rail-arrow jm-rail-arrow--prev" data-rail-scroll="prev" aria-label="{% trans 'Previous products' %}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <div class="product-rail-scroll jm-product-rail__track" role="list" data-rail-track>
+        {% for product in collection.products.all %}
+        <div class="product-rail-item" role="listitem">
+          {% include "catalog/partials/product_card.html" with product=product %}
+        </div>
+        {% empty %}
+        <p class="text-muted small px-2">{% trans "No products available in this collection." %}</p>
+        {% endfor %}
+      </div>
+      <button type="button" class="jm-rail-arrow jm-rail-arrow--next" data-rail-scroll="next" aria-label="{% trans 'Next products' %}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+      </button>
+    </div>
+  </div>
+</section>
+{% endfor %}

@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{{ seo_title }}{% endblock %}
+
+{% block content %}
+<div class="container page-container py-4">
+  <h1 class="section-title mb-4">{% trans "Privacy Policy" %}</h1>
+
+  <div class="card p-4" style="text-align: justify; text-justify: inter-word; hyphens: auto;">
+    <p class="text-muted small text-start">{% trans "Last updated" %}: {% now "F Y" %}</p>
+
+    <p>{% trans "Sarocchi Luxe designs is a home based online boutique based in Hamilton, New Zealand." %}</p>
+    <p>{% trans "At Sarocchi we respect your privacy and are committed to protecting your personal information. This policy explains how we collect, use, and store your data when you visit our website, place an order, or contact us." %}</p>
+
+    <h6 class="mt-4">{% trans "1. Information We Collect and How We Use It" %}</h6>
+    <p>{% trans "We collect personal information necessary for our business, including your name, email, phone number, billing and delivery addresses, direct communications, and purchase history. We use this data to process orders, arrange deliveries, provide customer support, prevent fraud, and meet our legal obligations. If you have opted in, we may also send you marketing communications, which you can unsubscribe from at any time." %}</p>
+
+    <h6 class="mt-4">{% trans "2. Payments and Data Sharing" %}</h6>
+    <p>{% trans "We will never sell or rent your personal information. We only share necessary data with trusted service providers—such as couriers, website hosts, and payment gateways—to operate our business. We do not store your full payment card details; all transactions are securely handled by third-party payment providers and are subject to their own privacy practices." %}</p>
+
+    <h6 class="mt-4">{% trans "3. Cookies, Social Media, and International Services" %}</h6>
+    <p>{% trans "Our website uses cookies to function properly and improve your shopping experience, which you can manage via your browser settings. Any interactions with us on social media are also subject to the respective platform’s privacy policies. Because we use global service providers and offer international shipping, your information may be processed securely outside of New Zealand in accordance with applicable privacy laws." %}</p>
+
+    <h6 class="mt-4">{% trans "4. Security and Data Retention" %}</h6>
+    <p>{% trans "We take reasonable precautions to protect your information from unauthorized access, misuse, or loss. We only keep your personal data for as long as it is reasonably necessary for business, customer service, or legal purposes, after which it is securely deleted or anonymized." %}</p>
+
+    <h6 class="mt-4">{% trans "5. Your Rights" %}</h6>
+    <p class="mb-0">{% trans "You have the right to request access to, or correction of, the personal information we hold about you. We may update this Privacy Policy periodically to reflect business or legal changes, and continued use of our website acts as your acknowledgment of these terms." %}</p>
+  </div>
+
+  <div class="card p-4 mt-4">
+    <h6 class="mb-3">{% trans "Contact Us" %}</h6>
+    <p class="mb-2">{% trans "For any privacy-related questions or requests, please contact us:" %}</p>
+    <p class="mb-1"><strong>{% trans "Email" %}:</strong> <a href="mailto:miriyamgrace21@gmail.com">miriyamgrace21@gmail.com</a></p>
+    <p class="mb-0"><strong>{% trans "Location" %}:</strong> {% trans "Sarocchi Luxe Designs, Hamilton, New Zealand" %}</p>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,105 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}{% if form_mode == "edit" %}Edit{% else %}Add{% endif %} {{ singular_name }}{% endblock %}
+{% block page_title %}{% if form_mode == "edit" %}Edit{% else %}Add{% endif %} {{ singular_name }}{% endblock %}
+
+{% block content %}
+<div class="row align-items-stretch">
+  <div class="col-12 {% if form_mode == 'edit' %}col-xl-7{% else %}col-xl-9{% endif %} mb-4 mb-xl-0">
+    <div class="card h-100">
+      <div class="card-body p-4 d-flex flex-column">
+        <form method="post" enctype="multipart/form-data" novalidate class="flex-grow-1 d-flex flex-column">
+          {% csrf_token %}
+          {% if form.non_field_errors %}
+          <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+          {% endif %}
+          <div class="row flex-grow-1">
+            {% for field in form %}
+            <div class="{% if field.field.widget.input_type == 'checkbox' %}col-12{% else %}col-md-6{% endif %} mb-3">
+              {% if field.field.widget.input_type == 'checkbox' %}
+              <div class="form-check mt-4">
+                {{ field }}
+                <label class="form-check-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+              </div>
+              {% else %}
+              <label class="form-label" for="{{ field.id_for_label }}">
+                {{ field.label }}{% if field.field.required %} <span class="text-danger">*</span>{% endif %}
+              </label>
+              {{ field }}
+              {% endif %}
+              {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+              {% for error in field.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+            </div>
+            {% endfor %}
+          </div>
+          <div class="d-flex gap-2 mt-4 pt-3 border-top mt-auto">
+            <button type="submit" class="btn btn-primary">Save</button>
+            <a href="{{ cancel_url }}" class="btn btn-light">Cancel</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  {% if form_mode == "edit" %}
+  <div class="col-12 col-xl-5">
+    <div class="card h-100">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Products in this Collection ({{ product_count }})</h5>
+      </div>
+      <div class="card-body">
+        {% if product_count > 0 %}
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th>Price</th>
+                <th class="text-end">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for product in collection_products %}
+              <tr>
+                <td>
+                  <div class="d-flex align-items-center">
+                    {% if product.images.first %}
+                    <img src="{{ product.images.first.image.url }}" alt="{{ product.name }}" width="40" height="40" class="rounded object-fit-cover me-2" />
+                    {% else %}
+                    <div class="bg-light rounded me-2 d-flex align-items-center justify-content-center text-muted" style="width: 40px; height: 40px;">
+                      <i class="ti ti-photo"></i>
+                    </div>
+                    {% endif %}
+                    <div>
+                      <h6 class="mb-0 text-truncate" style="max-width: 150px;" title="{{ product.name }}">{{ product.name }}</h6>
+                    </div>
+                  </div>
+                </td>
+                <td>{{ currency_symbol }}{{ product.base_price }}</td>
+                <td class="text-end">
+                  <a href="{% url 'dashboard:product-update' product.pk %}?next={{ request.path }}" class="btn btn-sm btn-light">Edit</a>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% if product_count > 7 %}
+        <div class="text-center mt-3">
+          <a href="{% url 'dashboard:product-list' %}?collection={{ object.pk }}" class="text-decoration-none">
+            View all {{ product_count }} products <i class="ti ti-arrow-right"></i>
+          </a>
+        </div>
+        {% endif %}
+        {% else %}
+        <div class="text-center py-4 text-muted">
+          <i class="ti ti-box-seam fs-2 mb-2 d-block"></i>
+          No products assigned to this collection yet.
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
