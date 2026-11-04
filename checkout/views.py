@@ -29,6 +29,23 @@ from payments.services import process_payment
 logger = logging.getLogger(__name__)
 
 
+
+def _with_delivery_method(request: HttpRequest, charge):
+    """Add the Express surcharge when the shopper picked Express Delivery."""
+    from decimal import Decimal
+
+    from core.services import get_site_settings
+
+    method = request.POST.get("delivery_method")
+    if method in ("standard", "express"):
+        request.session["checkout_delivery_method"] = method
+    method = request.session.get("checkout_delivery_method", "standard")
+    extra = Decimal(str(getattr(get_site_settings(), "express_delivery_charge", 0) or 0))
+    if method == "express" and extra > 0:
+        return (charge or Decimal("0")) + extra
+    return charge
+
+
 def _get_checkout_cart(request: HttpRequest, create: bool = False):
     if request.GET.get("mode") == "cart":
         request.session["checkout_mode"] = "cart"
@@ -142,12 +159,12 @@ def checkout_update_delivery_charge_view(request: HttpRequest) -> HttpResponse:
     is_cod = (gateway_key == "cod" and enable_cod)
     summary = get_cart_summary(cart=cart, skip_delivery_charge_calculation=True)
     from delivery.selectors import get_delivery_charge
-    cart.delivery_charge = get_delivery_charge(
+    cart.delivery_charge = _with_delivery_method(request, get_delivery_charge(
         subtotal=summary.subtotal,
         address=address,
         city=city_name,
         is_cod=is_cod,
-    )
+    ))
     cart.save(update_fields=["delivery_charge", "updated_at"])
 
     from django.shortcuts import redirect
@@ -269,12 +286,12 @@ def checkout_view(request: HttpRequest) -> HttpResponse:
     from delivery.selectors import get_delivery_charge
     
     is_cod = (selected_gateway_key == "cod" and enable_cod)
-    new_charge = get_delivery_charge(
+    new_charge = _with_delivery_method(request, get_delivery_charge(
         subtotal=summary.subtotal,
         address=address,
         city=city_name,
         is_cod=is_cod,
-    )
+    ))
     if cart.delivery_charge != new_charge:
         cart.delivery_charge = new_charge
         cart.save(update_fields=["delivery_charge", "updated_at"])
@@ -300,6 +317,7 @@ def checkout_view(request: HttpRequest) -> HttpResponse:
         request,
         "checkout/checkout.html",
         {
+            "delivery_method": request.session.get("checkout_delivery_method", "standard"),
             "cart": cart,
             "summary": summary,
             "checkout_session": session,
@@ -546,12 +564,12 @@ def checkout_place_order_view(request: HttpRequest) -> HttpResponse:
         address = session.address
     
     if gateway_key == "cod" and enable_cod:
-        new_charge = get_delivery_charge(subtotal=summary.subtotal, address=address, is_cod=True)
+        new_charge = _with_delivery_method(request, get_delivery_charge(subtotal=summary.subtotal, address=address, is_cod=True))
         if cart.delivery_charge != new_charge:
             cart.delivery_charge = new_charge
             cart.save(update_fields=["delivery_charge", "updated_at"])
     else:
-        new_charge = get_delivery_charge(subtotal=summary.subtotal, address=address, is_cod=False)
+        new_charge = _with_delivery_method(request, get_delivery_charge(subtotal=summary.subtotal, address=address, is_cod=False))
         if cart.delivery_charge != new_charge:
             cart.delivery_charge = new_charge
             cart.save(update_fields=["delivery_charge", "updated_at"])
@@ -579,6 +597,18 @@ def checkout_place_order_view(request: HttpRequest) -> HttpResponse:
         if _currency is not None and session.cart.currency_id != _currency.pk:
             session.cart.currency = _currency
             session.cart.save(update_fields=["currency"])
+        # Delivery method + separate billing address travel with the order (invoice_details).
+        _details = dict(session.invoice_details or {})
+        _details["delivery_method"] = request.session.get("checkout_delivery_method", "standard")
+        if request.POST.get("billing_same", "1") != "1" and request.POST.get("billing_line1", "").strip():
+            _details["billing_address"] = {
+                k: request.POST.get(f"billing_{k}", "").strip()
+                for k in ("name", "line1", "city", "state", "country", "pincode")
+            }
+        else:
+            _details.pop("billing_address", None)
+        session.invoice_details = _details
+        session.save(update_fields=["invoice_details", "updated_at"])
         order = place_order(
             checkout_session_id=session.pk,
             idempotency_key=form.cleaned_data["idempotency_key"],

@@ -1,10 +1,10 @@
-{% load i18n static %}
+{% load i18n static storefront_tags %}
 {% with wa=site_settings.whatsapp_number|default:"971509635106" %}
 <header class="site-header sv-header sticky-top">
   <div class="sv-topbar">
     <div class="container sv-topbar__inner">
       <p class="sv-topbar__trust">
-        <span>{% trans "Free Shipping on Orders Above" %} {{ display_currency.symbol|default:"₹" }}{% if display_currency.code == "INR" or not display_currency %}999{% elif display_currency.code == "AED" %}49{% else %}15{% endif %}</span>
+        <span>{% trans "Free Shipping on Orders Above" %} {% if site_settings.free_shipping_threshold %}{% money_label site_settings.free_shipping_threshold display_currency %}{% else %}{% money_label 999 display_currency %}{% endif %}</span>
         <span class="sv-topbar__sep d-none d-md-inline" aria-hidden="true">|</span>
         <span class="d-none d-md-inline">{% trans "Easy Returns" %}</span>
         <span class="sv-topbar__sep d-none d-md-inline" aria-hidden="true">|</span>

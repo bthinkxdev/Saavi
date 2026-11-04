@@ -85,7 +85,7 @@
       <h2 class="sv-h3">{% trans "Order Summary" %}</h2>
       <div class="sv-summary__row"><span>{% trans "Subtotal" %} ({{ summary.lines|length }} {% trans "Items" %})</span><span>{% money_label summary.subtotal display_currency %}</span></div>
       {% if summary.coupon_discount %}<div class="sv-summary__row"><span>{% trans "Discount" %}</span><span class="sv-green">&minus; {% money_label summary.coupon_discount display_currency %}</span></div>{% endif %}
-      <div class="sv-summary__row"><span>{% trans "Shipping" %}</span><span>{% if summary.delivery_charge and summary.delivery_charge > 0 %}{% money_label summary.delivery_charge display_currency %}{% else %}<span class="sv-green">{% trans "Calculated at checkout" %}</span>{% endif %}</span></div>
+      <div class="sv-summary__row"><span>{% trans "Shipping" %} <span class="sv-info" title="{% trans 'Free above the free-shipping amount; otherwise based on your city at checkout.' %}">i</span></span><span>{% if summary.delivery_charge and summary.delivery_charge > 0 %}{% money_label summary.delivery_charge display_currency %}{% elif site_settings.free_shipping_threshold and summary.subtotal >= site_settings.free_shipping_threshold %}<span class="sv-green">{% trans "Free" %}</span>{% else %}<span class="sv-muted">{% trans "Calculated at checkout" %}</span>{% endif %}</span></div>
       <div class="sv-summary__total"><span>{% trans "Total" %}</span><span>{% money_label summary.grand_total display_currency %}</span></div>
       {% if summary.has_stock_issues %}
       <button class="sv-btn sv-btn--block sv-btn--lg" disabled>{% trans "Proceed to Checkout" %}</button>

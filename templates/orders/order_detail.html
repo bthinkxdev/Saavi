@@ -16,7 +16,7 @@
         <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1 6h13v10H1zM14 9h4l3 3v4h-7"/></svg><span>{% trans "Order ID" %}<strong>{{ order.order_number }}</strong></span></div>
         <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg><span>{% trans "Order Date" %}<strong>{{ order.created_at|date:"d M Y, h:i A" }}</strong></span></div>
         <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20M6 15h3"/></svg><span>{% trans "Payment Method" %}<strong>{{ order.payment_method_display|default:"Card" }}</strong></span></div>
-        <div class="sv-ofacts__status">{% include "includes/sv_order_status.html" %}{% if order.payment_status_display %}<small>{% trans "Payment" %}: {{ order.payment_status_display }}</small>{% endif %}</div>
+        <div class="sv-ofacts__status">{% include "includes/sv_order_status.html" %}{% if order.order_status == 'delivered' and timeline.3.when %}<small>{% trans "Delivered on" %} {{ timeline.3.when|date:"d M Y" }}</small>{% elif order.payment_status_display %}<small>{% trans "Payment" %}: {{ order.payment_status_display }}</small>{% endif %}</div>
       </div>
 
       <div class="sv-odetail">
@@ -46,7 +46,7 @@
             <div class="sv-summary__row"><span>{% trans "Shipping" %}</span><span>{% if order.delivery_charge > 0 %}{% money_label order.delivery_charge order.currency %}{% else %}<span class="sv-green">{% trans "Free" %}</span>{% endif %}</span></div>
             <div class="sv-summary__total"><span>{% trans "Total Paid" %}</span><span>{% money_label order.total_amount order.currency %}</span></div>
             <div class="sv-oactions">
-              <a href="{% url 'catalog:plp' %}" class="sv-btn"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 11a8 8 0 1 0-2.3 5.7M20 5v6h-6"/></svg>{% trans "Reorder" %}</a>
+              <form method="post" action="{% url 'orders:reorder' order_id=order.pk %}" class="sv-oactions__form">{% csrf_token %}<button type="submit" class="sv-btn w-100"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 11a8 8 0 1 0-2.3 5.7M20 5v6h-6"/></svg>{% trans "Reorder" %}</button></form>
               {% if order.is_revenue_order %}<a href="{% url 'accounts:customer-invoice' order.pk %}" target="_blank" class="sv-btn sv-btn--outline"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>{% trans "Download Invoice" %}</a>{% endif %}
               {% if order.order_status == 'delivered' %}<a href="{% url 'core:contact-us' %}?order={{ order.order_number|urlencode }}" class="sv-btn sv-btn--outline"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 14L4 9l5-5M4 9h11a5 5 0 0 1 0 10h-3"/></svg>{% trans "Request Return" %}</a>{% endif %}
             </div>
@@ -70,7 +70,8 @@
 
           {% if order.delivery_address_snapshot %}{% with a=order.delivery_address_snapshot %}
           <section class="sv-panel">
-            <h2 class="sv-h3">{% trans "Delivery Address" %}</h2>
+            <div class="d-flex justify-content-between align-items-start"><h2 class="sv-h3">{% trans "Delivery Address" %}</h2>
+            {% if order.order_status in "checkout_pending placed_cod confirmed processing" %}<a class="sv-icon-btn sv-icon-btn--sm" target="_blank" rel="noopener" title="{% trans 'Request an address change' %}" aria-label="{% trans 'Request an address change' %}" href="https://wa.me/{{ site_settings.whatsapp_number|default:'971509635106'|cut:'+'|cut:' ' }}?text={% filter urlencode %}Hi Saavi, I'd like to change the delivery address for order {{ order.order_number }}{% endfilter %}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg></a>{% endif %}</div>
             <div class="sv-address p-0 border-0 bg-transparent">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-top:0"><path d="M12 22s7-6.5 7-12a7 7 0 0 0-14 0c0 5.5 7 12 7 12z"/><circle cx="12" cy="10" r="2.5"/></svg>
               <div>
@@ -87,7 +88,7 @@
             <div>
               <h2 class="sv-h3 mb-1">{% trans "Need Help?" %}</h2>
               <p>{% trans "For any queries related to this order, contact our support team." %}</p>
-              <a class="sv-btn sv-btn--outline" target="_blank" rel="noopener" href="https://wa.me/{{ site_settings.whatsapp_number|default:'971509635106'|cut:'+'|cut:' ' }}?text={% filter urlencode %}Hi Saavi, I need help with order {{ order.order_number }}{% endfilter %}">{% trans "Contact Support" %}</a>
+              <a class="sv-btn sv-btn--outline" target="_blank" rel="noopener" href="https://wa.me/{{ site_settings.whatsapp_number|default:'971509635106'|cut:'+'|cut:' ' }}?text={% filter urlencode %}Hi Saavi, I need help with order {{ order.order_number }}{% endfilter %}"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M12.04 0C5.5 0 .16 5.34.16 11.88c0 2.1.55 4.14 1.6 5.95L0 24l6.35-1.66a11.86 11.86 0 0 0 5.69 1.45c6.54 0 11.88-5.34 11.88-11.88S18.58 0 12.04 0zm0 21.75a9.8 9.8 0 0 1-5-1.37l-.36-.21-3.77.99 1-3.67-.23-.38a9.84 9.84 0 1 1 8.36 4.64zm5.07-7.56c-.28-.14-1.64-.81-1.9-.9-.25-.1-.44-.14-.62.14-.19.28-.72.9-.88 1.08-.16.19-.33.21-.61.07-.28-.14-1.18-.43-2.25-1.39-.83-.74-1.39-1.65-1.55-1.93-.16-.28-.02-.43.12-.57.13-.13.28-.33.42-.5.14-.16.19-.28.28-.47.1-.19.05-.35-.02-.5-.07-.14-.62-1.49-.85-2.04-.22-.53-.45-.46-.62-.47h-.53c-.19 0-.5.07-.76.35-.26.28-1 1-1 2.43s1.02 2.82 1.16 3.01c.14.19 2.01 3.07 4.87 4.31 2.38 1.03 2.87.82 3.39.77.55-.08 1.64-.67 1.87-1.32.23-.65.23-1.2.16-1.32-.07-.11-.25-.18-.53-.32z"/></svg>{% trans "Contact Support" %}</a>
             </div>
           </section>
         </div>

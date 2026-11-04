@@ -333,6 +333,13 @@ class SiteSettings(TimeStampedModel):
         verbose_name="Free Shipping Threshold",
         help_text="Orders over this amount get free shipping (leave blank for no free shipping)."
     )
+    express_delivery_charge = models.DecimalField(
+        max_digits=10, decimal_places=2, default=149,
+        verbose_name="Express delivery charge",
+        help_text="Extra charge (base currency) for Express Delivery at checkout. Set 0 to hide the Express option.",
+    )
+    express_delivery_text = models.CharField(max_length=80, default="Delivered in 1–2 business days", blank=True)
+    standard_delivery_text = models.CharField(max_length=80, default="Delivered in 3–5 business days", blank=True)
     
     card_gateway_public_key_env = models.CharField(
         max_length=80,

@@ -113,7 +113,7 @@ body.sv-body { background: var(--sv-cream); color: var(--sv-text); font-family: 
 @media (min-width: 992px) { .sv-wa-float { bottom: 24px; } }
 @media (max-width: 991.98px) {
   .sv-header__inner { gap: .5rem; min-height: 62px; justify-content: space-between; }
-  .sv-logo { position: absolute; left: 50%; transform: translateX(-50%); }
+  .sv-header .sv-logo { position: absolute; left: 50%; transform: translateX(-50%); }
   .sv-logo__name { font-size: 1.7rem; }
   .sv-header__main .container { position: relative; }
   .sv-header__actions { gap: 0; }
@@ -587,3 +587,65 @@ body.sv-body { background: var(--sv-cream); color: var(--sv-text); font-family: 
   .sv-festive__art { display: none; }
   body:has(.jm-pdp-sticky) .sv-wa-float { bottom: 150px; }
 }
+
+/* Checkout v2 (reference layout) */
+.sv-checkout__steps .form-label { position: relative; z-index: 2; display: inline-block; margin: 0 0 -.62rem .55rem; padding: 0 .35rem; background: var(--sv-white); font-size: .8rem; color: var(--sv-text); line-height: 1.2; }
+.sv-checkout__steps .form-label.fw-bold { margin: 0 0 .5rem; padding: 0; background: none; }
+.sv-checkout__steps .form-label .text-danger { color: #B4552C !important; }
+.sv-checkout__steps .form-control, .sv-checkout__steps .form-select { padding: .75rem .9rem .6rem; }
+.sv-checkout__steps #new-address-form-fields > label.form-label { display: none; }
+.sv-options { display: flex; flex-direction: column; gap: .75rem; }
+.sv-options--row { flex-direction: row; flex-wrap: wrap; }
+.sv-option { position: relative; display: flex; align-items: center; gap: 1rem; border: 1.5px solid var(--sv-border); border-radius: var(--sv-radius-sm); padding: .9rem 1.25rem; cursor: pointer; background: #fff; margin: 0; }
+.sv-option:has(input:checked) { border-color: var(--sv-olive); background: var(--sv-white); box-shadow: 0 0 0 1px var(--sv-olive) inset; }
+.sv-option input { width: 20px; height: 20px; accent-color: var(--sv-olive); flex: none; }
+.sv-option > svg { width: 28px; height: 28px; flex: none; color: var(--sv-ink); }
+.sv-option strong { display: block; font-size: .95rem; color: var(--sv-ink); }
+.sv-option small { color: var(--sv-text); font-size: .82rem; }
+.sv-option em { margin-left: auto; font-style: normal; font-weight: 600; color: var(--sv-ink); }
+.sv-option--tile { flex: 1 1 200px; padding: .8rem 1rem; }
+.sv-option--tile > svg { width: 24px; height: 24px; }
+.sv-option--tile strong { font-weight: 500; font-size: .9rem; }
+.sv-step__note { font-size: .8rem; color: var(--sv-muted); margin: .8rem 0 0; }
+.sv-checkout__summary .cart-line__img-wrap, .sv-checkout__summary img { border-radius: 8px; }
+.sv-sumline__meta { font-size: .85rem; color: var(--sv-text); }
+.sv-sumline__price { display: flex; flex-direction: column; align-items: flex-end; gap: .15rem; flex: none; }
+.sv-sumline__price strong { font-size: 1rem; color: var(--sv-ink); }
+.sv-sumrows { padding-top: .75rem; }
+.sv-info { display: inline-grid; place-items: center; width: 17px; height: 17px; border: 1.3px solid currentColor; border-radius: 50%; font-size: .7rem; font-style: normal; font-weight: 700; margin-left: .35rem; cursor: help; vertical-align: middle; }
+.sv-trust--mini { grid-template-columns: repeat(3, 1fr); background: var(--sv-cream-2); border-radius: var(--sv-radius); margin-top: 1.25rem; padding: 1.1rem .5rem; }
+.sv-trust--mini li { flex-direction: column; text-align: center; gap: .35rem; padding: 0 .5rem; }
+.sv-trust--mini svg { width: 30px; height: 30px; }
+.sv-checkout .col-lg-5 { align-self: flex-start; position: sticky; top: 120px; }
+.sv-checkout__summary { position: static; }
+@media (max-width: 991.98px) { .sv-checkout .col-lg-5 { position: static; } }
+@media (max-width: 575.98px) { .sv-options--row { flex-direction: column; } .sv-trust--mini { grid-template-columns: repeat(3, 1fr); } .sv-trust--mini li + li { border-left: 1px solid var(--sv-border); } }
+.sv-checkout__summary { position: static !important; top: auto !important; }
+.sv-checkout__steps .checkout-step h2 { border-bottom: 0; padding-bottom: 0; }
+.sv-checkout__steps .form-label { display: table; margin-bottom: -.6rem; }
+.sv-option em { white-space: nowrap; }
+.sv-account__grid > *, .sv-cart > *, .sv-odetail > *, .sv-plp > *, .sv-account__main > * { min-width: 0; }
+@media (max-width: 767.98px) { .sv-cart__table { padding: .25rem 1rem; } .sv-cart__product { gap: .75rem; } }
+.sv-address__actions { display: flex; gap: .15rem; }
+.sv-chev { color: var(--sv-ink); text-decoration: none; font-size: 1.6rem; line-height: 1; }
+.sv-modal { border-radius: var(--sv-radius); background: var(--sv-white); }
+.sv-modal .form-control { border-color: var(--sv-border); }
+.sv-oactions__form { flex: 1; min-width: 160px; margin: 0; }
+.sv-welcome { background: linear-gradient(90deg, var(--sv-cream-2) 0%, var(--sv-cream-2) 52%, rgba(245,238,223,.1) 78%), url("../img/saavi/brand-banner.jpg") right 0 center / auto 260% no-repeat, var(--sv-cream-2); }
+.sv-success { position: relative; overflow: hidden; }
+.sv-success .container { position: relative; z-index: 1; }
+.sv-success__deco { position: absolute; top: 0; bottom: 0; width: 17%; background: url("../img/saavi/brand-banner.jpg") no-repeat; background-size: auto 100%; opacity: .9; pointer-events: none; }
+.sv-success__deco--l { left: 0; background-position: left center; -webkit-mask-image: linear-gradient(90deg, #000 55%, transparent); mask-image: linear-gradient(90deg, #000 55%, transparent); }
+.sv-success__deco--r { right: 0; background-position: right center; -webkit-mask-image: linear-gradient(270deg, #000 55%, transparent); mask-image: linear-gradient(270deg, #000 55%, transparent); }
+.sv-success__badge { border-radius: 30%; transform: rotate(0); background: #DDEBD2; }
+.sv-spark { display: inline-block; width: 34px; height: 30px; margin: 0 .6rem; vertical-align: top; background:
+  linear-gradient(60deg, transparent 45%, var(--sv-gold) 45% 55%, transparent 55%) 0 0 / 12px 14px no-repeat,
+  linear-gradient(90deg, transparent 42%, var(--sv-gold) 42% 58%, transparent 58%) 12px 0 / 10px 16px no-repeat,
+  linear-gradient(0deg, transparent 42%, var(--sv-gold) 42% 58%, transparent 58%) 2px 18px / 16px 10px no-repeat; }
+.sv-spark--r { transform: scaleX(-1); }
+@media (max-width: 991.98px) { .sv-success__deco { display: none; } .sv-spark { display: none; } }
+.sv-welcome { position: relative; overflow: hidden; background: linear-gradient(90deg, var(--sv-cream-2) 0%, var(--sv-cream-2) 55%, var(--sv-beige) 100%); }
+.sv-welcome > * { position: relative; z-index: 1; }
+.sv-welcome::after { content: ""; position: absolute; right: 0; top: 0; bottom: 0; width: 170px; background: url("../img/saavi/brand-banner.jpg") right bottom / auto 280% no-repeat;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 45%); mask-image: linear-gradient(90deg, transparent, #000 45%); }
+@media (max-width: 575.98px) { .sv-welcome::after { width: 90px; opacity: .6; } .sv-welcome { padding-right: 5rem; } }

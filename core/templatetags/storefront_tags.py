@@ -71,3 +71,14 @@ def charged_amount(amount, currency) -> str:
     from core.currency import convert_from_base
 
     return str(convert_from_base(amount, currency))
+
+
+@register.filter
+def plus_days(value, days):
+    """Date ``days`` after ``value`` (for estimated-delivery ranges)."""
+    from datetime import timedelta
+
+    try:
+        return value + timedelta(days=int(days))
+    except Exception:
+        return value

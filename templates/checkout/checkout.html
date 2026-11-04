@@ -49,26 +49,29 @@
         <div class="checkout-step mb-4">
           <h2>{% trans "Contact Information" %}</h2><p class="sv-step__sub">{% trans "We'll use this to send your order updates." %}</p>
           <div class="row g-2 mb-3">
+            <div class="col-12">
+              <label class="form-label small">{% trans "Email Address" %} <span class="text-danger">*</span></label>
+              <input type="email" name="guest_email" class="form-control form-control-sm" value="{% if checkout_session.customer_profile %}{{ checkout_session.customer_profile.user.email }}{% elif request.user.is_authenticated %}{{ request.user.email }}{% endif %}">
+              <div id="error-guest_email" class="text-danger small mt-1"></div>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="checkout-step mb-4">
+          <h2>{% trans "Shipping Address" %}</h2><p class="sv-step__sub">{% trans "Where should we deliver your order?" %}</p>
+          <div class="row g-3 mb-2">
             <div class="col-md-6">
               <label class="form-label small">{% trans "Full Name" %} <span class="text-danger">*</span></label>
               <input type="text" name="guest_name" class="form-control form-control-sm" value="{% if checkout_session.customer_profile %}{{ checkout_session.customer_profile.user.get_full_name|default:checkout_session.customer_profile.user.first_name|default:checkout_session.customer_profile.user.username }}{% elif request.user.is_authenticated %}{{ request.user.get_full_name|default:request.user.first_name|default:request.user.username }}{% endif %}">
               <div id="error-guest_name" class="text-danger small mt-1"></div>
             </div>
             <div class="col-md-6">
-              <label class="form-label small">{% trans "Email Address" %} <span class="text-danger">*</span></label>
-              <input type="email" name="guest_email" class="form-control form-control-sm" value="{% if checkout_session.customer_profile %}{{ checkout_session.customer_profile.user.email }}{% elif request.user.is_authenticated %}{{ request.user.email }}{% endif %}">
-              <div id="error-guest_email" class="text-danger small mt-1"></div>
-            </div>
-          </div>
-          <div class="mb-3">
             <label class="form-label small">{% trans "Phone Number" %} <span class="text-danger">*</span></label>
             <input type="tel" name="guest_phone" class="form-control form-control-sm" value="{{ checkout_session.customer_profile.phone|default:'' }}">
             <div id="error-guest_phone" class="text-danger small mt-1"></div>
           </div>
-        </div>
-
-        <div class="checkout-step mb-4">
-          <h2>{% trans "Shipping Address" %}</h2><p class="sv-step__sub">{% trans "Where should we deliver your order?" %}</p>
+          </div>
 
           {% if addresses %}
           <div class="mb-4">
@@ -181,30 +184,65 @@
               </div>
             </div>
           </div>
+          <label class="sv-check mt-2"><input type="checkbox" name="billing_same" value="1" checked data-sv-billing-toggle><span>{% trans "Use this address for billing as well" %}</span></label>
+          <div class="sv-billing row g-3 mt-1" data-sv-billing hidden>
+            <div class="col-md-6"><label class="form-label small">{% trans "Billing Name" %}</label><input type="text" name="billing_name" class="form-control form-control-sm"></div>
+            <div class="col-md-6"><label class="form-label small">{% trans "Billing Address" %}</label><input type="text" name="billing_line1" class="form-control form-control-sm"></div>
+            <div class="col-md-4"><label class="form-label small">{% trans "City" %}</label><input type="text" name="billing_city" class="form-control form-control-sm"></div>
+            <div class="col-md-4"><label class="form-label small">{% trans "State" %}</label><input type="text" name="billing_state" class="form-control form-control-sm"></div>
+            <div class="col-md-4"><label class="form-label small">{% trans "PIN / Postal Code" %}</label><input type="text" name="billing_pincode" class="form-control form-control-sm"></div>
+            <div class="col-md-6"><label class="form-label small">{% trans "Country" %}</label><select name="billing_country" class="form-select form-select-sm">{% for code, label in sv_countries %}<option value="{{ code }}">{{ label }}</option>{% endfor %}</select></div>
+          </div>
         </div>
 
 
-        <div class="checkout-step">
-          <h2>{% trans "Payment Method" %}</h2><p class="sv-step__sub">{% trans "Pay securely by card, Apple Pay or Google Pay via Stripe." %}</p>
-          {% for key, adapter in payment_gateways.items %}
-          <div class="form-check mb-2">
-            <input class="form-check-input" type="radio" name="gateway_key" value="{{ key }}" id="gw-{{ key }}" 
-              hx-post="{% url 'checkout:update-delivery-charge' %}"
-              hx-target="#order-summary-container"
-              hx-select="#order-summary-container"
-              hx-include="#checkout-form"
-              hx-swap="outerHTML"
-              {% if selected_gateway_key == key %}checked{% elif not selected_gateway_key and forloop.first %}checked{% endif %}>
-            <label class="form-check-label small" for="gw-{{ key }}">
-              {{ adapter.display_name }}
-              {% if key == 'cod' and settings.cod_delivery_charge > 0 %}
-                ({% money_label settings.cod_delivery_charge display_currency %} {% trans "extra charge" %})
-              {% endif %}
+
+        <div class="checkout-step mb-4">
+          <h2>{% trans "Delivery Method" %}</h2><p class="sv-step__sub">{% trans "Choose a delivery option" %}</p>
+          <div class="sv-options">
+            <label class="sv-option">
+              <input type="radio" name="delivery_method" value="standard" hx-post="{% url 'checkout:update-delivery-charge' %}" hx-target="#order-summary-container" hx-select="#order-summary-container" hx-include="#checkout-form" hx-swap="outerHTML" {% if delivery_method != 'express' or not settings.express_delivery_charge %}checked{% endif %}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="M1 6h13v10H1zM14 9h4l3 3v4h-7"/><circle cx="5.5" cy="17.5" r="1.8"/><circle cx="17.5" cy="17.5" r="1.8"/></svg>
+              <span><strong>{% trans "Standard Delivery" %}</strong><small>{{ settings.standard_delivery_text|default:_("Delivered in 3–5 business days") }}</small></span>
+              <em>{% if summary.delivery_charge and delivery_method != 'express' %}{% money_label summary.delivery_charge display_currency %}{% elif delivery_method != 'express' %}{% trans "Free" %}{% else %}{% trans "Standard rate" %}{% endif %}</em>
             </label>
+            {% if settings.express_delivery_charge %}
+            <label class="sv-option">
+              <input type="radio" name="delivery_method" value="express" hx-post="{% url 'checkout:update-delivery-charge' %}" hx-target="#order-summary-container" hx-select="#order-summary-container" hx-include="#checkout-form" hx-swap="outerHTML" {% if delivery_method == 'express' %}checked{% endif %}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+              <span><strong>{% trans "Express Delivery" %}</strong><small>{{ settings.express_delivery_text|default:_("Delivered in 1–2 business days") }}</small></span>
+              <em>+ {% money_label settings.express_delivery_charge display_currency %}</em>
+            </label>
+            {% endif %}
           </div>
+        </div>
+
+        <div class="checkout-step">
+          <h2>{% trans "Payment Method" %}</h2><p class="sv-step__sub">{% trans "Choose a secure payment option" %}</p>
+          <div class="sv-options sv-options--row">
+          {% for key, adapter in payment_gateways.items %}
+            {% if key == 'stripe' %}
+            <label class="sv-option sv-option--tile">
+              <input type="radio" name="gateway_key" value="stripe" data-method="card" hx-post="{% url 'checkout:update-delivery-charge' %}" hx-target="#order-summary-container" hx-select="#order-summary-container" hx-include="#checkout-form" hx-swap="outerHTML" {% if selected_gateway_key == key or forloop.first %}checked{% endif %}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20M6 15h3"/></svg>
+              <span><strong>{% trans "Credit / Debit Card" %}</strong></span>
+            </label>
+            <label class="sv-option sv-option--tile">
+              <input type="radio" name="gateway_key" value="stripe" data-method="wallet" hx-post="{% url 'checkout:update-delivery-charge' %}" hx-target="#order-summary-container" hx-select="#order-summary-container" hx-include="#checkout-form" hx-swap="outerHTML">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 7h16a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2zM3 7l12-4 2 4"/><circle cx="16.5" cy="13.5" r="1.3"/></svg>
+              <span><strong>{% trans "Apple Pay / Google Pay" %}</strong></span>
+            </label>
+            {% else %}
+            <label class="sv-option sv-option--tile">
+              <input type="radio" name="gateway_key" value="{{ key }}" hx-post="{% url 'checkout:update-delivery-charge' %}" hx-target="#order-summary-container" hx-select="#order-summary-container" hx-include="#checkout-form" hx-swap="outerHTML" {% if selected_gateway_key == key %}checked{% endif %}>
+              <span><strong>{{ adapter.display_name }}</strong></span>
+            </label>
+            {% endif %}
           {% empty %}
           <p class="sv-cart__err">{% trans "Online payment is not configured yet. Add your Stripe keys in Dashboard → Settings." %}</p>
           {% endfor %}
+          </div>
+          <p class="sv-step__note">{% trans "You'll enter your payment details on the next, secure Stripe page. Cards from India, the UAE, Europe and the USA are accepted." %}</p>
           <div id="error-gateway_key" class="text-danger small mt-1"></div>
 
         </div>
@@ -264,7 +302,7 @@
               {% if line.variant %}
               <div class="text-muted" style="font-size: 0.75rem;">{{ line.variant.display_name }}</div>
               {% endif %}
-              <div class="text-muted" style="font-size: 0.75rem;">{% trans "Qty:" %} {{ line.quantity }} &times; {% money_label line.unit_price_at_add display_currency %}</div>
+              <div class="sv-sumline__meta">{% trans "Qty:" %} {{ line.quantity }}</div>
               
               {% if line.is_out_of_stock %}
               <div class="text-danger fw-semibold mt-1" style="font-size: 0.75rem;">{% trans "Out of stock" %}</div>
@@ -273,16 +311,15 @@
               {% endif %}
             </div>
           </div>
-          <span class="flex-shrink-0 fw-semibold" style="font-size: 0.875rem;">{% money_label line.line_subtotal display_currency %}</span>
+          {% with mrp=line.variant.mrp|default:line.product.mrp %}<span class="sv-sumline__price"><strong>{% money_label line.line_subtotal display_currency %}</strong>{% if mrp and mrp > line.unit_price_at_add %}<span class="sv-price__was">{% money_label mrp|times:line.quantity display_currency %}</span>{% with pct=line.unit_price_at_add|discount_percent:mrp %}{% if pct %}<span class="sv-pill-off">{{ pct }}% {% trans "Off" %}</span>{% endif %}{% endwith %}{% endif %}</span>{% endwith %}
         </div>
         {% endfor %}
 
-        {% if summary.delivery_charge > 0 or selected_city or checkout_session.address %}
-        <div class="d-flex justify-content-between py-2 border-bottom text-muted" style="font-size: 0.875rem;">
-          <span>{% trans "Delivery Charge" %}{% if selected_gateway_key == 'cod' and settings.cod_delivery_charge > 0 %} <small class="text-muted">({% trans "incl. COD fee" %})</small>{% endif %}</span>
-          <span>{% if summary.delivery_charge > 0 %}{% money_label summary.delivery_charge display_currency %}{% else %}<span class="text-success fw-semibold">{% trans "FREE" %}</span>{% endif %}</span>
+        <div class="sv-sumrows">
+          <div class="sv-summary__row"><span>{% trans "Subtotal" %} ({{ summary.lines|length }} {% trans "Items" %})</span><span>{% money_label summary.subtotal display_currency %}</span></div>
+          {% if summary.coupon_discount %}<div class="sv-summary__row"><span>{% trans "Discount" %}</span><span class="sv-green">&minus; {% money_label summary.coupon_discount display_currency %}</span></div>{% endif %}
+          <div class="sv-summary__row"><span>{% trans "Shipping" %} <span class="sv-info" title="{% trans 'Based on your delivery city and the delivery method you choose.' %}">i</span></span><span>{% if summary.delivery_charge > 0 %}{% money_label summary.delivery_charge display_currency %}{% elif selected_city or checkout_session.address %}<span class="sv-green">{% trans "Free" %}</span>{% else %}<span class="sv-muted">{% trans "Enter address" %}</span>{% endif %}</span></div>
         </div>
-        {% endif %}
 
         {% if estimated_delivery_text %}
         <div class="d-flex justify-content-between py-1 border-bottom text-success" style="font-size: 0.8rem;">
@@ -352,6 +389,11 @@
           <div><strong>{% trans "100% Secure Payment" %}</strong><span>{% trans "Your payment information is safe with us." %}</span></div>
         </div>
       </div>
+      <ul class="sv-trust sv-trust--mini">
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="M1 6h13v10H1zM14 9h4l3 3v4h-7"/><circle cx="5.5" cy="17.5" r="1.8"/><circle cx="17.5" cy="17.5" r="1.8"/></svg><div><strong>{% trans "Free Shipping" %}</strong><span>{% trans "Above" %} {% if site_settings.free_shipping_threshold %}{% money_label site_settings.free_shipping_threshold display_currency %}{% else %}{% money_label 999 display_currency %}{% endif %}</span></div></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="M12 2l9 5v10l-9 5-9-5V7z"/><path d="M3 7l9 5 9-5M12 12v10"/></svg><div><strong>{% trans "Easy Returns" %}</strong><span>{% trans "7-Day Returns" %}</span></div></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M8.5 12l2.5 2.5 4.5-5"/></svg><div><strong>{% trans "Secure Payment" %}</strong><span>{% trans "100% Safe & Secure" %}</span></div></li>
+      </ul>
 
     </div>
   </div>

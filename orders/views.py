@@ -5,7 +5,7 @@ from __future__ import annotations
 from django.contrib.auth.decorators import login_required
 from django.http import Http404, HttpRequest, HttpResponse
 from django.shortcuts import render
-from django.views.decorators.http import require_GET
+from django.views.decorators.http import require_GET, require_POST
 
 from orders.selectors import get_order_tracking_view, get_customer_orders
 
@@ -97,3 +97,31 @@ def _build_timeline(order) -> list[dict]:
         )
         steps.append({"key": key, "label": label, "done": idx <= reached, "when": when})
     return steps
+
+
+@login_required
+@require_POST
+def order_reorder_view(request: HttpRequest, order_id: int) -> HttpResponse:
+    """Add every still-available item of a past order back into the cart."""
+    from django.contrib import messages
+    from django.shortcuts import redirect
+
+    from cart.services import add_to_cart, get_or_create_cart
+
+    profile = request.user.customer_profile
+    tracking = get_order_tracking_view(order_id=order_id, customer_profile=profile)
+    if tracking is None:
+        raise Http404("Order not found.")
+    cart = get_or_create_cart(request=request)
+    added = skipped = 0
+    for item in tracking.order.items.select_related("product", "variant"):
+        try:
+            add_to_cart(cart=cart, product=item.product, variant=item.variant, quantity=item.quantity)
+            added += 1
+        except Exception:  # out of stock / inactive product
+            skipped += 1
+    if added:
+        messages.success(request, "Items added to your cart.")
+    if skipped:
+        messages.error(request, f"{skipped} item(s) are no longer available.")
+    return redirect("cart:page")

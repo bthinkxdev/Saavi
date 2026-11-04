@@ -5,6 +5,7 @@
 
 {% block content %}
 <section class="sv-success">
+  <span class="sv-success__deco sv-success__deco--l" aria-hidden="true"></span><span class="sv-success__deco sv-success__deco--r" aria-hidden="true"></span>
   <div class="container">
     <div class="sv-success__badge" aria-hidden="true">
       {% if payment_pending %}<span class="sv-spinner"></span>{% else %}<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>{% endif %}
@@ -13,7 +14,7 @@
     <h1 class="sv-success__title">{% trans "Confirming your payment…" %}</h1>
     <p class="sv-success__lead">{% blocktrans with number=order.order_number %}Order <strong>{{ number }}</strong> is awaiting payment confirmation. This page updates automatically.{% endblocktrans %}</p>
     {% else %}
-    <h1 class="sv-success__title">{% trans "Order Placed Successfully!" %}</h1>
+    <h1 class="sv-success__title"><span class="sv-spark" aria-hidden="true"></span>{% trans "Order Placed Successfully!" %}<span class="sv-spark sv-spark--r" aria-hidden="true"></span></h1>
     <p class="sv-success__lead">{% trans "Thank you for shopping with" %} <strong>Saavi By Neethu.</strong><br>{% trans "Your order has been confirmed and is being processed." %}</p>
     {% endif %}
 
@@ -23,7 +24,7 @@
       <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
         <span>{% trans "Order Date" %}<strong>{{ order.created_at|date:"d M Y" }}</strong></span></div>
       <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="M1 6h13v10H1zM14 9h4l3 3v4h-7"/><circle cx="5.5" cy="17.5" r="1.8"/><circle cx="17.5" cy="17.5" r="1.8"/></svg>
-        <span>{% trans "Estimated Delivery" %}<strong>{{ order.estimated_delivery_text|default:_("3–7 business days") }}</strong></span></div>
+        <span>{% trans "Estimated Delivery" %}<strong>{% if order.estimated_delivery_text %}{{ order.estimated_delivery_text }}{% else %}{{ order.created_at|plus_days:3|date:"d" }} – {{ order.created_at|plus_days:6|date:"d M Y" }}{% endif %}</strong></span></div>
     </div>
 
     <div class="sv-success__actions">
