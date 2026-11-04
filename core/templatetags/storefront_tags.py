@@ -82,3 +82,35 @@ def plus_days(value, days):
         return value + timedelta(days=int(days))
     except Exception:
         return value
+
+
+_SWATCHES = {
+    "purple": "#6B1F6E", "wine": "#6E1F35", "magenta": "#A3195B", "maroon": "#7A1F2B", "red": "#B01E23",
+    "pink": "#D9708A", "rose": "#C9607A", "peach": "#F2B8A0", "orange": "#E2762A", "mustard": "#D9A21B",
+    "yellow": "#E6B422", "gold": "#C9A04C", "golden": "#C9A04C", "cream": "#F6E8CC", "ivory": "#F8F1DF",
+    "beige": "#E8D8B9", "off white": "#F4EEDF", "white": "#FFFFFF", "silver": "#C0C0C0", "grey": "#8C8C8C",
+    "gray": "#8C8C8C", "black": "#1E1E1E", "navy": "#1F2E5A", "blue": "#2D5DA8", "royal blue": "#2B4FB0",
+    "sky blue": "#7DB7E0", "teal": "#1C7A7A", "turquoise": "#2AA7A0", "green": "#1F6B45", "emerald": "#0F6B4E",
+    "bottle green": "#0E4A33", "olive": "#6B7A2F", "mint": "#9FD8C2", "lime": "#A8C83A", "lavender": "#B8A3D6",
+    "lilac": "#C3A6D8", "violet": "#6A3FA0", "brown": "#6B4226", "copper": "#B0663C", "rust": "#A34A28",
+    "coffee": "#5B3A29", "multicolor": "linear-gradient(135deg,#B01E23,#E6B422,#1F6B45,#2D5DA8)",
+}
+
+
+@register.filter
+def swatch_color(name) -> str:
+    """CSS colour for a colour name (longest matching keyword wins); beige when unknown."""
+    text = str(name or "").strip().lower()
+    if text.startswith("#"):
+        return text
+    best = ""
+    for key in _SWATCHES:
+        if key in text and len(key) > len(best):
+            best = key
+    return _SWATCHES.get(best, "#E8D8B9")
+
+
+@register.filter
+def is_colour_name(name) -> bool:
+    text = str(name or "").strip().lower()
+    return text.startswith("#") or any(key in text for key in _SWATCHES)

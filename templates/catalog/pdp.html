@@ -24,7 +24,8 @@
       <h1 class="jm-pdp-buybox__title sv-pdp__title">{{ product.name }}</h1>
       {% if product.average_rating %}
       <p class="sv-pdp__rating"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-        <strong>{{ product.average_rating|floatformat:1 }}</strong> <a href="#pdp-tabs" data-sv-open-tab="reviews">({{ product.review_count }} {% trans "Reviews" %})</a></p>
+        <strong>{{ product.average_rating|floatformat:1 }}</strong> <a href="#pdp-tabs" data-sv-open-tab="reviews">({{ product.review_count }} {% trans "Reviews" %})</a>{% if sold_count %}<span class="sv-pdp__sold">{{ sold_count }}{% if sold_count >= 10 %}+{% endif %} {% trans "Sold" %}</span>{% endif %}</p>
+      {% elif sold_count %}<p class="sv-pdp__rating"><span class="sv-pdp__sold ms-0 ps-0 border-0">{{ sold_count }} {% trans "Sold" %}</span></p>
       {% endif %}
       <p class="sv-pdp__sku" id="pdp-sku-display">SKU: {% if product.variant_list %}{% if target_variant %}{{ target_variant.sku_suffix }}{% else %}{{ product.variant_list.0.sku_suffix }}{% endif %}{% else %}{{ product.sku }}{% endif %}</p>
 
@@ -59,7 +60,7 @@
         {% if product.variant_list %}
         <div class="jm-pdp-field mb-3">
           <div class="d-flex justify-content-between align-items-end mb-2">
-            <label class="jm-pdp-field__label mb-0">{% trans "Select Option" %}</label>
+            {% with first_v=product.variant_list.0 %}<label class="jm-pdp-field__label mb-0">{% if first_v.display_name|is_colour_name %}{% trans "Color" %}{% else %}{% trans "Option" %}{% endif %}: <span class="fw-normal" data-sv-variant-name>{% if target_variant %}{{ target_variant.display_name }}{% else %}{{ first_v.display_name }}{% endif %}</span></label>{% endwith %}
             {% if product.size_chart and product.size_chart.is_active %}
             <a href="#" data-bs-toggle="modal" data-bs-target="#sizeGuideModal" class="text-decoration-none text-dark small" style="font-weight: 500; text-underline-offset: 4px; text-decoration: underline !important;">
               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-grid me-1" viewBox="0 0 16 16" style="margin-top: -2px;">
@@ -75,7 +76,8 @@
             {% for v in product.variant_list %}
             <input type="radio" class="btn-check variant-radio" name="variant_option" id="variant_{{ v.pk }}"
               value="{{ v.pk }}" autocomplete="off" {% if v.pk == selected_variant_id or not selected_variant_id and forloop.first %}checked{% endif %}>
-            <label class="btn btn-outline-dark rounded-pill px-4 position-relative overflow-hidden"
+            <label class="btn btn-outline-dark rounded-pill px-4 position-relative overflow-hidden {% if v.display_name|is_colour_name %}sv-colorpill{% endif %}" data-name="{{ v.display_name }}" title="{{ v.display_name }}"
+              {% if v.display_name|is_colour_name %}style="--sv-sw: {{ v.display_name|swatch_color }};{% if v.stock_quantity <= 0 %} opacity:.45;{% endif %}"{% endif %}
               for="variant_{{ v.pk }}" {% if v.stock_quantity <= 0 %}style="color: #adb5bd; border-color: #dee2e6;" {% endif %}>
               {{ v.display_name }}
               {% if v.stock_quantity <= 0 %} <span
@@ -309,7 +311,7 @@
   <section class="sv-section">
     <div class="sv-section__head"><h2 class="sv-h2">{% trans "You May Also Like" %}</h2>
       <a class="sv-link sv-link--sm" href="{% url 'catalog:plp-category' category_slug=product.category.slug %}">{% trans "View All" %} &rarr;</a></div>
-    <div class="sv-grid sv-grid--5">
+    <div class="sv-grid sv-grid--6">
       {% for related_product in related_products %}{% include "catalog/partials/product_card.html" with product=related_product %}{% endfor %}
     </div>
   </section>

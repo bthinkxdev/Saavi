@@ -36,6 +36,7 @@ def about_us_view(request: HttpRequest) -> HttpResponse:
         title=_("About Us | Saavi By Neethu"),
         description=_("Saavi By Neethu brings timeless sarees and elegant men's kurtas that blend heritage, craftsmanship and contemporary style."),
     )
+    context["about_images"] = _about_images()
     return render(request, "core/about_us.html", context)
 
 
@@ -287,3 +288,29 @@ class ImageCaptchaImageView(View):
         response['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
         response['Pragma'] = 'no-cache'
         return response
+
+
+def _about_images() -> dict:
+    """About page photos: static/img/saavi/about/<slot>.jpg when present, else product photos."""
+    from django.contrib.staticfiles import finders
+    from django.templatetags.static import static
+
+    from catalog.models import ProductImage
+
+    slots = ["hero", "story", "values", "why"]
+    fallback = list(
+        ProductImage.objects.filter(product__is_active=True).exclude(image="")
+        .order_by("product_id", "pk").values_list("image", flat=True).distinct()[:12]
+    )
+    from django.core.files.storage import default_storage
+
+    images = {}
+    for idx, slot in enumerate(slots):
+        rel = f"img/saavi/about/{slot}.jpg"
+        if finders.find(rel):
+            images[slot] = static(rel)
+        elif fallback:
+            images[slot] = default_storage.url(fallback[(idx * 3) % len(fallback)])
+        else:
+            images[slot] = ""
+    return images

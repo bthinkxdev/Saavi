@@ -1,4 +1,4 @@
-{% load i18n %}
+{% load i18n storefront_tags %}
 <form id="{{ form_id }}" class="sv-filters" method="get" action="{{ request.path }}" hx-get="{{ request.path }}"
   hx-target="#product-grid" hx-swap="innerHTML" hx-push-url="true" hx-indicator="#product-grid" hx-trigger="change, submit">
   <div class="sv-filters__head">
@@ -16,7 +16,7 @@
     <div class="sv-filter__body">
       {% if active_category %}
         {% for sub in subcategories %}
-        <label class="sv-check"><input type="radio" name="subcategory" value="{{ sub.pk }}" {% if filters.subcategory_id == sub.pk %}checked{% endif %}><span>{{ sub.name }}</span></label>
+        <label class="sv-check"><input type="checkbox" name="subcategory" onclick="this.form.querySelectorAll('input[name=subcategory]').forEach(x=>{if(x!==this)x.checked=false})" value="{{ sub.pk }}" {% if filters.subcategory_id == sub.pk %}checked{% endif %}><span>{{ sub.name }}{% if sub.product_count is not None %} <em>({{ sub.product_count }})</em>{% endif %}</span></label>
         {% endfor %}
       {% else %}
         {% for cat in categories %}
@@ -29,10 +29,14 @@
 
   <details class="sv-filter" open>
     <summary>{% trans "Price Range" %}</summary>
-    <div class="sv-filter__body sv-filter__price">
-      <input type="number" name="min_price" min="0" placeholder="{% trans 'Min' %}" value="{{ request.GET.min_price }}" aria-label="{% trans 'Minimum price' %}">
-      <span aria-hidden="true">–</span>
-      <input type="number" name="max_price" min="0" placeholder="{% trans 'Max' %}" value="{{ request.GET.max_price }}" aria-label="{% trans 'Maximum price' %}">
+    <div class="sv-filter__body sv-range" data-sv-range data-min="{{ price_bounds.min|default:0 }}" data-max="{{ price_bounds.max|default:10000 }}" data-rate="{{ display_currency.exchange_rate_to_base|default:1|stringformat:'s' }}" data-symbol="{{ display_currency.symbol }}">
+      <div class="sv-range__track"><span class="sv-range__fill"></span>
+        <input type="range" aria-label="{% trans 'Minimum price' %}" min="{{ price_bounds.min|default:0 }}" max="{{ price_bounds.max|default:10000 }}" value="{{ request.GET.min_price|default:price_bounds.min|default:0 }}" data-sv-range-lo>
+        <input type="range" aria-label="{% trans 'Maximum price' %}" min="{{ price_bounds.min|default:0 }}" max="{{ price_bounds.max|default:10000 }}" value="{{ request.GET.max_price|default:price_bounds.max|default:10000 }}" data-sv-range-hi>
+      </div>
+      <div class="sv-range__labels"><span data-sv-range-lo-label></span><span data-sv-range-hi-label></span></div>
+      <input type="hidden" name="min_price" value="{{ request.GET.min_price }}">
+      <input type="hidden" name="max_price" value="{{ request.GET.max_price }}">
     </div>
   </details>
 
@@ -40,11 +44,15 @@
   {% with is_colour=attribute.name|lower|slice:":4" %}
   <details class="sv-filter" {% if attribute.name in filters.dynamic_attrs or is_colour == "colo" %}open{% endif %}>
     <summary>{{ attribute.name }}</summary>
-    <div class="sv-filter__body ">
+    <div class="sv-filter__body {% if is_colour == 'colo' %}sv-filter__swatches{% endif %}">
       {% for attr_value in attribute.display_values %}
       {% with attr_composite=attribute.name|add:":"|add:attr_value.value %}
       {% if is_colour == "colo" %}
-      <label class="sv-check"><input type="checkbox" name="{{ attribute.name }}" value="{{ attr_value.value }}" {% if attr_composite in filters.selected_attr_values %}checked{% endif %}><i class="sv-dot" style="background: {{ attr_value.value|lower|cut:' ' }};"></i><span>{{ attr_value.value }}</span></label>
+      <label class="sv-swatch {% if forloop.counter > 5 %}is-extra{% endif %}" title="{{ attr_value.value }}">
+        <input type="checkbox" name="{{ attribute.name }}" value="{{ attr_value.value }}" {% if attr_composite in filters.selected_attr_values %}checked{% endif %}>
+        <span style="background: {{ attr_value.value|swatch_color }};"></span><em class="visually-hidden">{{ attr_value.value }}</em>
+      </label>
+      {% if forloop.counter == 5 and not forloop.last %}<button type="button" class="sv-swatch__more" data-sv-more>+ {% trans "More" %}</button>{% endif %}
       {% else %}
       <label class="sv-check"><input type="checkbox" name="{{ attribute.name }}" value="{{ attr_value.value }}" {% if attr_composite in filters.selected_attr_values %}checked{% endif %}><span>{{ attr_value.value }}</span></label>
       {% endif %}

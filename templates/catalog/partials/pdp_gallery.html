@@ -26,6 +26,8 @@
   </div>
 
   {% if product.images.all|length > 1 or product.videos.all|length > 0 %}
+  <div class="sv-thumbs-wrap">
+  <button type="button" class="sv-thumbs__nav" data-sv-thumbs="-1" aria-label="{% trans 'Previous images' %}"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 15l6-6 6 6"/></svg></button>
   <div class="jm-pdp-gallery__thumbs" role="list">
     {% for image in product.images.all %}
     <button type="button"
@@ -53,6 +55,8 @@
       {% endif %}
     </button>
     {% endfor %}
+  </div>
+  <button type="button" class="sv-thumbs__nav" data-sv-thumbs="1" aria-label="{% trans 'More images' %}"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></button>
   </div>
   {% endif %}
 </div>

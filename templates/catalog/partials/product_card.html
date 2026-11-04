@@ -36,10 +36,11 @@
       <span class="sv-badge sv-badge--new">{% trans "New" %}</span>
       {% elif product.is_flash_sale %}
       <span class="sv-badge sv-badge--sale">{% trans "Sale" %}</span>
-      {% endif %}
+      {% else %}
       {% for label in product.labels.all|slice:":1" %}
       <span class="sv-badge" style="background-color: {{ label.color|default:'#4B5A2A' }};">{{ label.name }}</span>
       {% endfor %}
+      {% endif %}
     </div>
 
     <form class="sv-card__wish-form" method="post" action="{% url 'cart:wishlist-toggle' %}" hx-post="{% url 'cart:wishlist-toggle' %}" hx-swap="none">

@@ -4,7 +4,7 @@
 {% block title %}{{ seo_title|default:"Shop | Saavi By Neethu" }}{% endblock %}
 
 {% block content %}
-<section class="sv-plp-banner" {% if active_category and active_category.og_image %}style="--sv-banner:url('{{ active_category.og_image.url }}')"{% endif %}>
+<section class="sv-plp-banner" {% if banner_image_url %}style="--sv-banner:url('{{ banner_image_url }}')"{% endif %}>
   <div class="container">
     <nav class="sv-crumbs" aria-label="{% trans 'Breadcrumb' %}">
       <a href="{% url 'cms:homepage' %}">{% trans "Home" %}</a><span aria-hidden="true">&rsaquo;</span>
@@ -24,12 +24,12 @@
   <div class="sv-plp__main">
     <div class="sv-plp__toolbar">
       <p id="jm-plp-count" class="sv-plp__count">{{ plp.total_count|default:"0" }} {% trans "Products" %}</p>
-      <button type="button" class="sv-btn sv-btn--outline sv-btn--sm d-lg-none" data-bs-toggle="offcanvas" data-bs-target="#plpFilters">{% trans "Filter" %}</button>
+      <button type="button" class="sv-btn sv-btn--outline sv-btn--sm d-lg-none" data-bs-toggle="offcanvas" data-bs-target="#plpFilters"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg>{% trans "Filter" %}</button>
       <label class="sv-sort">
         <span>{% trans "Sort:" %}</span>
         <select name="sort" form="plp-filter-form" onchange="this.form.requestSubmit()">
-          <option value="newest" {% if sort == 'newest' %}selected{% endif %}>{% trans "Newest" %}</option>
           <option value="rating" {% if sort == 'rating' %}selected{% endif %}>{% trans "Popular" %}</option>
+          <option value="newest" {% if sort == 'newest' %}selected{% endif %}>{% trans "Newest" %}</option>
           <option value="price_asc" {% if sort == 'price_asc' %}selected{% endif %}>{% trans "Price: Low to High" %}</option>
           <option value="price_desc" {% if sort == 'price_desc' %}selected{% endif %}>{% trans "Price: High to Low" %}</option>
         </select>

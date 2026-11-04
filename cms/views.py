@@ -53,8 +53,15 @@ def homepage_view(request: HttpRequest) -> HttpResponse:
         title="Saavi By Neethu | Sarees & Ethnic Wear",
         description="Shop elegant sarees and men's kurtas from Saavi By Neethu. Rooted in tradition, woven with elegance. Delivered to India, the UAE and worldwide.",
     )
+    festive_image = ""
+    for product in product_rails.get("featured", []) + product_rails.get("bestsellers", []):
+        imgs = getattr(product, "primary_images", None) or []
+        if imgs and imgs[0].image:
+            festive_image = imgs[0].image.url
+            break
     context.update(
         {
+            "festive_image": festive_image,
             "hero_slides": hero_slides,
             "collections": collections,
             "new_arrival_tabs": _tabs("new_arrivals"),

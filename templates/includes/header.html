@@ -3,13 +3,22 @@
 <header class="site-header sv-header sticky-top">
   <div class="sv-topbar">
     <div class="container sv-topbar__inner">
-      <p class="sv-topbar__trust">
+      <p class="sv-topbar__trust d-none d-md-flex">
         <span>{% trans "Free Shipping on Orders Above" %} {% if site_settings.free_shipping_threshold %}{% money_label site_settings.free_shipping_threshold display_currency %}{% else %}{% money_label 999 display_currency %}{% endif %}</span>
-        <span class="sv-topbar__sep d-none d-md-inline" aria-hidden="true">|</span>
-        <span class="d-none d-md-inline">{% trans "Easy Returns" %}</span>
-        <span class="sv-topbar__sep d-none d-md-inline" aria-hidden="true">|</span>
-        <span class="d-none d-md-inline">{% trans "Secure Payment" %}</span>
+        <span class="sv-topbar__sep" aria-hidden="true">|</span>
+        <span>{% trans "Easy Returns" %}</span>
+        <span class="sv-topbar__sep" aria-hidden="true">|</span>
+        <span>{% trans "Secure Payment" %}</span>
       </p>
+      <div class="sv-ticker d-md-none" data-sv-ticker>
+        <button type="button" data-sv-step="-1" aria-label="{% trans 'Previous message' %}">&lsaquo;</button>
+        <div class="sv-ticker__items" aria-live="polite">
+          <span data-sv-tick>{% trans "Free Shipping on Orders Above" %} {% if site_settings.free_shipping_threshold %}{% money_label site_settings.free_shipping_threshold display_currency %}{% else %}{% money_label 999 display_currency %}{% endif %}</span>
+          <span data-sv-tick>{% trans "Easy 7-Day Returns" %}</span>
+          <span data-sv-tick>{% trans "100% Secure Payment" %}</span>
+        </div>
+        <button type="button" data-sv-step="1" aria-label="{% trans 'Next message' %}">&rsaquo;</button>
+      </div>
       <form class="sv-currency" method="post" action="{% url 'core:set-currency' %}">
         {% csrf_token %}
         <label class="visually-hidden" for="sv-currency-select">{% trans "Currency" %}</label>
@@ -43,6 +52,8 @@
           <li><a class="sv-nav__link {% if request.GET.new_arrival == '1' %}is-active{% endif %}" href="{% url 'catalog:plp' %}?new_arrival=1">{% trans "New Arrivals" %}</a></li>
           <li><a class="sv-nav__link {% if request.GET.bestseller == '1' %}is-active{% endif %}" href="{% url 'catalog:plp' %}?bestseller=1">{% trans "Best Sellers" %}</a></li>
           <li><a class="sv-nav__link {% if request.GET.flash_sale %}is-active{% endif %}" href="{% url 'catalog:plp' %}?flash_sale=1">{% trans "Offers" %}</a></li>
+          <li class="d-none d-xxl-block"><a class="sv-nav__link {% if request.resolver_match.url_name == 'about-us' %}is-active{% endif %}" href="{% url 'core:about-us' %}">{% trans "About Us" %}</a></li>
+          <li class="d-none d-xxl-block"><a class="sv-nav__link {% if request.resolver_match.url_name == 'contact-us' %}is-active{% endif %}" href="{% url 'core:contact-us' %}">{% trans "Contact" %}</a></li>
         </ul>
       </nav>
 

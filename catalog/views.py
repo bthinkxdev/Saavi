@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from django.db.models import Count, Q
+
 import json
 
 from django.http import Http404, HttpRequest, HttpResponse, JsonResponse
@@ -110,11 +112,11 @@ def plp_view(request: HttpRequest, category_slug: str | None = None) -> HttpResp
     subcategories = []
     if resolved_cat:
         if resolved_cat.parent_id:
-            subcategories = list(resolved_cat.parent.children.filter(is_active=True))
+            subcategories = list(resolved_cat.parent.children.filter(is_active=True).annotate(product_count=Count("products", filter=Q(products__is_active=True))))
             filters["subcategory_id"] = resolved_cat.pk
             filters["parent_category_id"] = resolved_cat.parent_id
         else:
-            subcategories = list(resolved_cat.children.filter(is_active=True))
+            subcategories = list(resolved_cat.children.filter(is_active=True).annotate(product_count=Count("products", filter=Q(products__is_active=True))))
             filters["parent_category_id"] = resolved_cat.pk
 
     sort = request.GET.get("sort", "newest")
@@ -177,6 +179,8 @@ def plp_view(request: HttpRequest, category_slug: str | None = None) -> HttpResp
             "brands": filter_options["brands"],
             "collections": filter_options.get("collections", []),
             "subcategories": subcategories,
+            "price_bounds": _price_bounds(resolved_cat),
+            "banner_image_url": _banner_image(resolved_cat, plp_data),
             "subcategories_map": filter_options.get("subcategories_map", {}),
             "attributes": filter_options.get("attributes", []),
             "active_category": active_cat,
@@ -275,7 +279,8 @@ def pdp_view(request: HttpRequest, slug: str) -> HttpResponse:
             "selected_variant_id": target_variant.pk if target_variant else "",
             "target_variant": target_variant,
             "is_in_wishlist": is_in_wishlist,
-            "related_products": get_related_products(product=product, user=request.user),
+            "related_products": get_related_products(product=product, user=request.user, limit=6),
+            "sold_count": _sold_count(product),
             "has_delivered_order": has_delivered_order,
             "cities": __import__('delivery.models', fromlist=['City']).City.objects.filter(is_active=True).order_by('name'),
             "default_estimated_delivery_text": site_settings.default_estimated_delivery_text,
@@ -413,3 +418,46 @@ def submit_review_view(request, product_id: int):
         messages.error(request, "There was an error with your review submission. Please check your inputs.")
         
     return redirect(request.META.get('HTTP_REFERER', '/'))
+
+
+def _price_bounds(category) -> dict:
+    """Min/max active product price (base currency) for the PLP price slider."""
+    from django.db.models import Max, Min
+
+    from catalog.models import Product
+
+    qs = Product.objects.filter(is_active=True)
+    if category is not None:
+        root = category.parent_id or category.pk
+        qs = qs.filter(Q(category_id=root) | Q(category__parent_id=root) | Q(category_id=category.pk))
+    agg = qs.aggregate(lo=Min("base_price"), hi=Max("base_price"))
+    lo, hi = agg["lo"] or 0, agg["hi"] or 0
+    return {"min": int(lo), "max": int(hi) + 1}
+
+
+def _banner_image(category, plp_data) -> str:
+    """Category banner: the category's OG image, else the first listed product photo."""
+    if category is not None and getattr(category, "og_image", None):
+        try:
+            return category.og_image.url
+        except ValueError:
+            pass
+    for product in (plp_data.get("results") if isinstance(plp_data, dict) else getattr(plp_data, "results", [])) or []:
+        imgs = getattr(product, "primary_images", None) or []
+        if imgs and getattr(imgs[0], "image", None):
+            return imgs[0].image.url
+    return ""
+
+
+def _sold_count(product) -> int:
+    """Units sold across placed (non-pending, non-cancelled) orders."""
+    from django.db.models import Sum
+
+    from orders.models import OrderItem
+
+    total = (
+        OrderItem.objects.filter(product=product)
+        .exclude(order__order_status__in=["checkout_pending", "cancelled", "refunded"])
+        .aggregate(n=Sum("quantity"))["n"]
+    )
+    return int(total or 0)

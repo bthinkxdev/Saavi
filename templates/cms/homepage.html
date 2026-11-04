@@ -77,7 +77,7 @@
   {# 5. Festive promo banner #}
   <section class="container sv-section sv-section--tight">
     <a class="sv-festive" href="{% url 'catalog:plp' %}?featured=1">
-      <div class="sv-festive__art" aria-hidden="true"></div>
+      <div class="sv-festive__art" aria-hidden="true" {% if festive_image %}style="background-image: linear-gradient(90deg, rgba(0,0,0,0) 55%, var(--sv-cream-2) 100%), url('{{ festive_image }}')"{% endif %}></div>
       <div class="sv-festive__text">
         <h2 class="sv-festive__title">{% trans "Festive" %}<br>{% trans "Collection" %}</h2>
         <p>{% trans "Handpicked Sarees & Kurtas" %}<br>{% trans "for the Festive Season" %}</p>

@@ -94,3 +94,63 @@ document.addEventListener('change', function (e) {
       });
   });
 })();
+/* PLP price range slider (values are base currency; labels show display currency) */
+(function () {
+  function fmt(box, v) { var r = parseFloat(box.dataset.rate) || 1; return (box.dataset.symbol || '') + Math.round(v / r).toLocaleString('en-US'); }
+  function init(root) {
+    root.querySelectorAll('[data-sv-range]').forEach(function (box) {
+      if (box.dataset.ready) return; box.dataset.ready = '1';
+      var lo = box.querySelector('[data-sv-range-lo]'), hi = box.querySelector('[data-sv-range-hi]');
+      var fill = box.querySelector('.sv-range__fill'), min = +box.dataset.min, max = +box.dataset.max;
+      var form = box.closest('form');
+      function paint() {
+        if (+lo.value > +hi.value) { var t = lo.value; lo.value = hi.value; hi.value = t; }
+        var a = (lo.value - min) / ((max - min) || 1) * 100, b = (hi.value - min) / ((max - min) || 1) * 100;
+        fill.style.left = a + '%'; fill.style.width = (b - a) + '%';
+        box.querySelector('[data-sv-range-lo-label]').textContent = fmt(box, lo.value);
+        box.querySelector('[data-sv-range-hi-label]').textContent = fmt(box, hi.value);
+      }
+      function commit() {
+        form.elements.min_price.value = +lo.value > min ? lo.value : '';
+        form.elements.max_price.value = +hi.value < max ? hi.value : '';
+        if (form.requestSubmit) form.requestSubmit(); else form.submit();
+      }
+      [lo, hi].forEach(function (el) {
+        el.addEventListener('input', function (e) { e.stopPropagation(); paint(); });
+        el.addEventListener('change', function (e) { e.stopPropagation(); commit(); });
+      });
+      paint();
+    });
+  }
+  document.addEventListener('DOMContentLoaded', function () { init(document); });
+  document.addEventListener('htmx:afterSwap', function (e) { init(e.target); });
+  document.addEventListener('click', function (e) {
+    var m = e.target.closest('[data-sv-more]');
+    if (m) { m.closest('.sv-filter__body').classList.add('show-all'); m.remove(); }
+  });
+})();
+/* Mobile top bar: rotate trust messages */
+(function () {
+  document.addEventListener('DOMContentLoaded', function () {
+    var bar = document.querySelector('[data-sv-ticker]'); if (!bar) return;
+    var items = bar.querySelectorAll('[data-sv-tick]'), i = 0;
+    function show(n) { i = (n + items.length) % items.length; items.forEach(function (it, k) { it.classList.toggle('is-on', k === i); }); }
+    bar.addEventListener('click', function (e) { var b = e.target.closest('[data-sv-step]'); if (b) show(i + (+b.dataset.svStep)); });
+    show(0); setInterval(function () { if (window.innerWidth < 768) show(i + 1); }, 4500);
+  });
+})();
+/* PDP: thumbnail arrows + selected variant name */
+document.addEventListener('click', function (e) {
+  var b = e.target.closest('[data-sv-thumbs]');
+  if (!b) return;
+  var list = b.parentElement.querySelector('.jm-pdp-gallery__thumbs');
+  var vertical = list.scrollHeight > list.clientHeight + 4;
+  var d = (+b.getAttribute('data-sv-thumbs')) * 110;
+  list.scrollBy(vertical ? { top: d, behavior: 'smooth' } : { left: d, behavior: 'smooth' });
+});
+document.addEventListener('change', function (e) {
+  if (!e.target.matches('.variant-radio')) return;
+  var lab = document.querySelector('label[for="' + e.target.id + '"]');
+  var out = document.querySelector('[data-sv-variant-name]');
+  if (lab && out) out.textContent = lab.getAttribute('data-name') || lab.textContent.trim();
+});

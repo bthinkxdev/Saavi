@@ -4,92 +4,66 @@
 {% block title %}{{ seo_title }}{% endblock %}
 
 {% block content %}
-{# Copy below is placeholder text — replace with the client's content (see design deck, "About Us: Content We Need From You"). #}
-<section class="sv-about-hero">
+{# Draft copy — replace with the client's own wording when supplied. Photos: drop hero/story/values/why .jpg into static/img/saavi/about/ #}
+<section class="sv-ab-hero" {% if about_images.hero %}style="--sv-ab-img:url('{{ about_images.hero }}')"{% endif %}>
   <div class="container">
     <nav class="sv-crumbs" aria-label="{% trans 'Breadcrumb' %}"><a href="{% url 'cms:homepage' %}">{% trans "Home" %}</a><span aria-hidden="true">&rsaquo;</span><span>{% trans "About Us" %}</span></nav>
-    <div class="sv-about-hero__text">
-      <h1 class="sv-plp-banner__title">{% trans "About Us" %}</h1>
-      <p class="sv-about-hero__tag">{% trans "A celebration of tradition, crafted for today's you." %}</p>
-      <hr>
-      <p>{% trans "At Saavi By Neethu, we bring you timeless sarees and elegant mens kurtas that blend heritage, craftsmanship and contemporary style." %}</p>
-    </div>
-    <p class="sv-about-hero__script" aria-hidden="true">Tradition<br>in Every Thread</p>
+    <h1 class="sv-ab-hero__title">{% trans "About Us" %}</h1>
+    <p class="sv-ab-hero__sub">{% trans "Our story, our values and the people behind Saavi By Neethu." %}</p>
   </div>
 </section>
 
-<div class="container">
-  <section class="sv-split sv-section">
-    <div class="sv-split__media" style="background-image:url('{% static 'img/saavi/brand-banner.jpg' %}')"></div>
-    <div>
-      <h2 class="sv-h2">{% trans "Our Story" %}</h2>
-      <p>{% trans "Saavi By Neethu began with a simple belief – traditional wear should feel personal, elegant and effortless. What started as a passion for sarees has now grown into a curated collection of sarees and men's kurtas, designed for modern individuals who value heritage and style." %}</p>
-      <a href="#journey" class="sv-btn sv-btn--sm">{% trans "Our Journey" %} &rarr;</a>
-    </div>
-  </section>
-</div>
-
-<section class="sv-band">
-  <div class="container">
-    <h2 class="sv-h2 text-center">{% trans "Our Mission & Vision" %}</h2>
-    <div class="sv-band__grid">
-      <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/></svg><h3>{% trans "Our Mission" %}</h3><p>{% trans "To bring authentic ethnic wear with exceptional quality and timeless designs to every home." %}</p></div>
-      <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg><h3>{% trans "Our Vision" %}</h3><p>{% trans "To be a trusted and loved brand for sarees and men's kurtas, celebrating Indian heritage globally." %}</p></div>
-      <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M6 3h12l4 6-10 12L2 9z"/><path d="M2 9h20M12 21L8 9l4-6 4 6z"/></svg><h3>{% trans "Our Values" %}</h3><p>{% trans "Tradition · Quality · Elegance" %}<br>{% trans "Inclusivity · Customer Happiness" %}</p></div>
+<section class="sv-ab-row sv-ab-story">
+  <div class="sv-ab-photo" {% if about_images.story %}style="background-image:url('{{ about_images.story }}')"{% endif %} role="img" aria-label="{% trans 'Saavi saree' %}"></div>
+  <div class="sv-ab-story__main">
+    <p class="sv-eyebrow">{% trans "Our Story" %}</p>
+    <h2 class="sv-ab-h2">{% trans "A Passion for Timeless Ethnic Wear" %}</h2>
+    <p>{% trans "Saavi By Neethu is a celebration of tradition, elegance and modern style. We bring handpicked sarees and mens kurtas that reflect quality, craftsmanship and the beauty of Indian culture." %}</p>
+    <div class="sv-ab-cards">
+      <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M2 5c3-1 6-1 10 1 4-2 7-2 10-1v14c-3-1-6-1-10 1-4-2-7-2-10-1z"/><path d="M12 6v14"/></svg><span>{% trans "Started by Neethu out of a lifelong love for handwoven sarees." %}</span></div>
+      <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="9" cy="8" r="3.5"/><path d="M2 20c0-3.5 3-6 7-6s7 2.5 7 6"/><circle cx="17" cy="7" r="2.5"/><path d="M16 13c3 0 6 2 6 5"/></svg><span>{% trans "Inspired by the weavers and artisans who keep tradition alive." %}</span></div>
+      <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/></svg><span>{% trans "Our mission: authentic ethnic wear, delivered to India, the UAE and beyond." %}</span></div>
     </div>
   </div>
+  <ul class="sv-ab-points">
+    <li><span class="sv-ab-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M6 3h12l4 6-10 12L2 9z"/><path d="M2 9h20M12 21L8 9l4-6 4 6z"/></svg></span><div><strong>{% trans "Quality & Craftsmanship" %}</strong><span>{% trans "Every piece is checked for fabric, weave and finish." %}</span></div></li>
+    <li><span class="sv-ab-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M5 19C5 10 11 5 20 4c-1 9-6 15-15 15z"/><path d="M5 19l8-8"/></svg></span><div><strong>{% trans "Curated Collections" %}</strong><span>{% trans "Sarees and kurtas handpicked for every occasion." %}</span></div></li>
+    <li><span class="sv-ab-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="9" cy="8" r="3.5"/><path d="M2 20c0-3.5 3-6 7-6s7 2.5 7 6"/><circle cx="17" cy="7" r="2.5"/><path d="M16 13c3 0 6 2 6 5"/></svg></span><div><strong>{% trans "Customer First" %}</strong><span>{% trans "Personal help on WhatsApp before and after you buy." %}</span></div></li>
+  </ul>
 </section>
 
-<div class="container">
-  <section class="sv-section">
-    <h2 class="sv-h2 text-center">{% trans "Our Collections" %}</h2>
-    <div class="sv-collections">
-      {% for cat in category_tree|slice:":2" %}
-      <a class="sv-collection" href="{% url 'catalog:plp-category' category_slug=cat.slug %}">
-        <div class="sv-collection__text">
-          <h3 class="sv-collection__title">{{ cat.name }}</h3>
-          <p>{% if forloop.first %}{% trans "Graceful drapes for every occasion." %}{% else %}{% trans "Classic styles for the modern man." %}{% endif %}</p>
-          <span class="sv-link">{% trans "Explore" %} {{ cat.name }} &rarr;</span>
-        </div>
-      </a>
-      {% endfor %}
-    </div>
-  </section>
+<section class="sv-ab-row sv-ab-values">
+  <div class="sv-ab-values__intro">
+    <p class="sv-eyebrow">{% trans "Our Values" %}</p>
+    <h2 class="sv-ab-h2">{% trans "Tradition Meets Modern Style" %}</h2>
+    <p>{% trans "We believe in preserving traditional craftsmanship while offering contemporary designs for today's generation." %}</p>
+  </div>
+  <ul class="sv-ab-values__list">
+    <li><span class="sv-ab-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M5 19C5 10 11 5 20 4c-1 9-6 15-15 15z"/><path d="M5 19l8-8"/></svg></span><strong>{% trans "Authenticity" %}</strong><span>{% trans "Genuine fabrics and weaves, sourced with care." %}</span></li>
+    <li><span class="sv-ab-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M6 3h12l4 6-10 12L2 9z"/><path d="M2 9h20"/></svg></span><strong>{% trans "Quality" %}</strong><span>{% trans "Each piece is inspected before it ships." %}</span></li>
+    <li><span class="sv-ab-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z"/></svg></span><strong>{% trans "Sustainability" %}</strong><span>{% trans "We support local weavers and long-lasting craft." %}</span></li>
+  </ul>
+  <div class="sv-ab-photo" {% if about_images.values %}style="background-image:url('{{ about_images.values }}')"{% endif %} role="img" aria-label="{% trans 'Handloom weaving' %}"></div>
+</section>
 
-  <section class="sv-section">
-    <h2 class="sv-h2 text-center">{% trans "Why Choose Saavi By Neethu" %}</h2>
-    <ul class="sv-why">
-      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M12 2l9 9-9 11-9-11z"/></svg>{% trans "Premium Quality Fabrics" %}</li>
-      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M4 20l6-6M14 4l6 6-8 8-6-6z"/></svg>{% trans "Authentic Designs" %}</li>
-      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="12" cy="10" r="6"/><path d="M9 20h6M10 16v4M14 16v4"/></svg>{% trans "Curated Collections" %}</li>
-      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z"/></svg>{% trans "Customer Satisfaction" %}</li>
-      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="5" y="9" width="14" height="12" rx="2"/><path d="M8 9V6a4 4 0 0 1 8 0v3"/></svg>{% trans "Secure Shopping" %}</li>
+<section class="sv-ab-row sv-ab-why">
+  <div class="sv-ab-photo" {% if about_images.why %}style="background-image:url('{{ about_images.why }}')"{% endif %} role="img" aria-label="{% trans 'Saavi collection' %}"></div>
+  <div class="sv-ab-why__main">
+    <p class="sv-eyebrow">{% trans "Why Choose Saavi By Neethu" %}</p>
+    <h2 class="sv-ab-h2">{% trans "More Than Just Clothing" %}</h2>
+    <p>{% trans "We are committed to bringing you elegant ethnic wear that fits your lifestyle and special moments." %}</p>
+    <ul class="sv-ab-why__list">
+      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="3" y="8" width="18" height="13" rx="1"/><path d="M3 12h18M12 8v13M12 8c-2-4-6-4-6-1s6 1 6 1 6 2 6-1-4-3-6 1"/></svg><span>{% trans "Handpicked designs you won't find everywhere." %}</span></li>
+      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="12" cy="9" r="6"/><path d="M9 14l-2 8 5-3 5 3-2-8"/></svg><span>{% trans "Honest pricing, secure payment and easy returns." %}</span></li>
+      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"><path d="M1 6h13v10H1zM14 9h4l3 3v4h-7"/><circle cx="5.5" cy="17.5" r="1.8"/><circle cx="17.5" cy="17.5" r="1.8"/></svg><span>{% trans "Delivery across India, the UAE and worldwide." %}</span></li>
     </ul>
-  </section>
-
-  <section class="sv-split sv-section">
-    <div class="sv-split__media" style="background-image:url('{% static 'img/saavi/logo.jpg' %}')"></div>
-    <div>
-      <h2 class="sv-h2">{% trans "Meet the Founder" %}</h2>
-      <p>{% trans "Hi, I'm Neethu, the founder of Saavi By Neethu. My love for traditional wear and Indian craftsmanship inspired me to create a brand that brings together timeless elegance and modern style. Every piece in our collection is carefully chosen to make you feel confident, comfortable and beautifully you." %}</p>
-      <p class="sv-signature">Neethu <small>{% trans "Founder, Saavi By Neethu" %}</small></p>
+  </div>
+  <div class="sv-ab-cta">
+    <div class="sv-ab-cta__head">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M5 8h14l-1 13H6L5 8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg>
+      <div><h2>{% trans "Be a Part of Our Journey" %}</h2><p>{% trans "Explore our collections and experience the timeless beauty of Indian ethnic wear." %}</p></div>
     </div>
-  </section>
-
-  <section class="sv-section" id="journey">
-    <h2 class="sv-h2 text-center">{% trans "Our Journey" %}</h2>
-    <ol class="sv-journey">
-      <li><strong>2022</strong>{% trans "The Beginning" %}</li>
-      <li><strong>2023</strong>{% trans "First Collection Launch" %}</li>
-      <li><strong>2024</strong>{% trans "Growing Community" %}</li>
-      <li><strong>2025</strong>{% trans "Expanding Our Collections" %}</li>
-    </ol>
-  </section>
-
-  <section class="sv-cta">
-    <h2>{% trans "Be a Part of Our Story" %}</h2>
-    <p>{% trans "Explore our sarees and men's kurtas and experience the beauty of tradition with a modern touch." %}</p>
-    <a href="{% url 'catalog:plp' %}" class="sv-btn sv-btn--light">{% trans "Shop Now" %} &rarr;</a>
-  </section>
-</div>
+    <a href="{% url 'catalog:plp' %}" class="sv-btn sv-btn--block">{% trans "Shop Now" %} &rarr;</a>
+  </div>
+</section>
 {% endblock %}
