@@ -4,86 +4,84 @@
 {% block title %}{% trans "My Account" %} | {{ site_settings.site_name|default:"Saavi By Neethu" }}{% endblock %}
 
 {% block content %}
-<div class="container page-container py-4">
-  <h1 class="section-title mb-4">{% trans "My Account" %}</h1>
-
+<div class="container sv-page sv-account">
+  <nav class="sv-crumbs" aria-label="{% trans 'Breadcrumb' %}"><a href="{% url 'cms:homepage' %}">{% trans "Home" %}</a><span aria-hidden="true">&rsaquo;</span><span>{% trans "My Account" %}</span></nav>
   {% if error_message %}
   <div class="alert alert-warning">{{ error_message }}</div>
   {% else %}
-  <div class="row g-4">
-    <div class="col-md-4">
-      <div class="card p-4 rounded-3 border-0 shadow-sm bg-white">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-          <h2 class="h6 mb-0">{% trans "Profile" %}</h2>
-          <a href="{% url 'accounts:edit-profile' %}" class="btn btn-sm btn-outline-secondary py-0"
-            style="font-size: 0.75rem;">{% trans "Edit" %}</a>
-        </div>
-        <p class="small mb-1"><strong>{% trans "Name" %}:</strong> {{ request.user.get_full_name|default:"—" }}</p>
-        <p class="small mb-1"><strong>{% trans "Email" %}:</strong> {{ request.user.email }}</p>
-        {% if dashboard.profile.phone %}
-        <p class="small mb-1"><strong>{% trans "Phone" %}:</strong> {{ dashboard.profile.phone }}</p>
-        {% endif %}
-        {% if dashboard.default_address %}
-        <p class="small mb-0"><strong>{% trans "Address" %}:</strong>
-          {{ dashboard.default_address.line1 }}{% if dashboard.default_address.line2 %}, {{ dashboard.default_address.line2 }}{% endif %}, {{ dashboard.default_address.city }}{% if dashboard.default_address.state %}, {{ dashboard.default_address.state }}{% endif %}{% if dashboard.default_address.pincode %} - {{ dashboard.default_address.pincode }}{% endif %}
-        </p>
-        {% else %}
-        <p class="small mb-0 text-muted"><strong>{% trans "Address" %}:</strong> {% trans "No default address set." %}
-        </p>
-        {% endif %}
-      </div>
+  <div class="sv-account__grid">
+    <div>
+      <h1 class="sv-h1">{% trans "My Account" %}</h1>
+      {% include "includes/sv_account_nav.html" with active="dashboard" %}
     </div>
+    <div class="sv-account__main">
+      <div class="sv-welcome">
+        <h2>{% trans "Welcome Back" %}, {{ request.user.first_name|default:request.user.email }}! <span aria-hidden="true">👋</span></h2>
+        <p>{% trans "Manage your orders, addresses and account settings in one place." %}</p>
+      </div>
 
-    <div class="col-md-8">
-      <div class="card p-3 mb-4">
-        <h2 class="h6 mb-3">{% trans "Recent orders" %}</h2>
-        {% if dashboard.recent_orders %}
-        <div class="d-flex flex-column gap-3">
-          {% for order in dashboard.recent_orders %}
-          <div class="position-relative">
-            <a href="{% url 'orders:detail' order_id=order.pk %}" class="text-decoration-none text-dark d-block">
-              <div class="card border border-light shadow-sm rounded-3 bg-white">
-                <div class="card-body p-3 d-flex align-items-center justify-content-between gap-2">
-                  <div class="overflow-hidden">
-                    <div class="d-flex align-items-center mb-1 flex-wrap gap-2">
-                      <span class="fw-bold fs-6 me-md-3">#{{ order.order_number }}</span>
-                      <span class="badge bg-light text-dark border fw-normal">{{ order.get_order_status_display|default:order.order_status }}</span>
-                    </div>
-                    <div class="text-muted small">
-                      {{ order.created_at|date:"M d, Y" }} <span class="mx-1">&bull;</span> {% money_label order.total_amount order.currency %}
-                    </div>
-                  </div>
-                  <div class="text-muted d-flex align-items-center gap-2">
+      <div class="sv-quick">
+        <a href="{% url 'orders:list' %}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2l9 5v10l-9 5-9-5V7z"/><path d="M3 7l9 5 9-5M12 12v10"/></svg><span><strong>{% trans "My Orders" %}</strong><small>{% trans "View and track your orders" %}</small></span><i aria-hidden="true">&rsaquo;</i></a>
+        <a href="#addresses"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 22s7-6.5 7-12a7 7 0 0 0-14 0c0 5.5 7 12 7 12z"/><circle cx="12" cy="10" r="2.5"/></svg><span><strong>{% trans "My Addresses" %}</strong><small>{% trans "Manage delivery addresses" %}</small></span><i aria-hidden="true">&rsaquo;</i></a>
+        <a href="{% url 'accounts:wishlist' %}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg><span><strong>{% trans "Wishlist" %}</strong><small>{% trans "Your saved collections" %}</small></span><i aria-hidden="true">&rsaquo;</i></a>
+      </div>
 
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor"
-                      viewBox="0 0 16 16">
-                      <path fill-rule="evenodd"
-                        d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z" />
-                    </svg>
-                  </div>
-                </div>
-              </div>
-            </a>
-
+      <section id="addresses">
+        <div class="sv-section__head"><h2 class="sv-h2">{% trans "My Addresses" %}</h2><a class="sv-link" href="{% url 'accounts:edit-profile' %}">+ {% trans "Add New Address" %}</a></div>
+        <div class="sv-addresses">
+          {% for addr in dashboard.profile.addresses.all|dictsortreversed:"is_default"|slice:":4" %}
+          <div class="sv-address {% if addr.is_default %}is-default{% endif %}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 22s7-6.5 7-12a7 7 0 0 0-14 0c0 5.5 7 12 7 12z"/><circle cx="12" cy="10" r="2.5"/></svg>
+            <div>
+              {% if addr.is_default %}<span class="sv-badge sv-badge--soft">{% trans "Default" %}</span>{% endif %}
+              <strong>{{ addr.label|default:_("Address") }}</strong>
+              <p>{{ addr.line1 }}{% if addr.line2 %}, {{ addr.line2 }}{% endif %},<br>{{ addr.city }}{% if addr.state %}, {{ addr.state }}{% endif %}{% if addr.pincode %} – {{ addr.pincode }}{% endif %}</p>
+              {% if dashboard.profile.phone %}<p class="sv-address__phone">&#9742; {{ dashboard.profile.phone }}</p>{% endif %}
+            </div>
+            <a class="sv-icon-btn sv-icon-btn--sm" href="{% url 'accounts:edit-profile' %}" aria-label="{% trans 'Edit address' %}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg></a>
           </div>
+          {% empty %}
+          <p class="sv-muted">{% trans "No saved addresses yet." %}</p>
           {% endfor %}
         </div>
-        <div class="mt-4 text-center">
-          <a href="{% url 'orders:list' %}" class="btn btn-outline-floward btn-sm w-100 fw-medium">{% trans "View all orders" %}</a>
+      </section>
+
+      <section class="sv-orders" data-sv-orders>
+        <div class="sv-section__head">
+          <h2 class="sv-h2">{% trans "Order History" %}</h2>
+          <div class="sv-chips" role="group" aria-label="{% trans 'Filter orders' %}">
+            <button type="button" class="is-active" data-filter="all">{% trans "All Orders" %}</button>
+            <button type="button" data-filter="is-progress">{% trans "Processing" %}</button>
+            <button type="button" data-filter="is-done">{% trans "Delivered" %}</button>
+            <button type="button" data-filter="is-off">{% trans "Cancelled" %}</button>
+          </div>
         </div>
+        {% if dashboard.recent_orders %}
+        <div class="sv-panel p-0 sv-table-wrap">
+          <table class="sv-table">
+            <thead><tr><th>{% trans "Order ID" %}</th><th>{% trans "Order Date" %}</th><th>{% trans "Items" %}</th><th>{% trans "Total" %}</th><th>{% trans "Status" %}</th><th>{% trans "Actions" %}</th></tr></thead>
+            <tbody>
+              {% for order in dashboard.recent_orders %}
+              {% with st=order.order_status %}
+              <tr data-group="{% if st == 'delivered' %}is-done{% elif st == 'cancelled' or st == 'refunded' %}is-off{% else %}is-progress{% endif %}">
+                <td><strong>{{ order.order_number }}</strong></td>
+                <td>{{ order.created_at|date:"d M Y" }}</td>
+                <td><div class="sv-thumbs">{% for item in order.items.all|slice:":3" %}{% with img=item.product.images.first %}{% if img %}<img src="{{ img.image.url }}" alt="">{% endif %}{% endwith %}{% endfor %}<span>{{ order.items.count }} {% trans "Item" %}{{ order.items.count|pluralize }}</span></div></td>
+                <td><strong>{% money_label order.total_amount order.currency %}</strong></td>
+                <td>{% include "includes/sv_order_status.html" %}</td>
+                <td><a class="sv-btn sv-btn--outline sv-btn--sm" href="{% url 'orders:detail' order_id=order.pk %}">{% trans "View Order" %}</a></td>
+              </tr>
+              {% endwith %}
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        <a href="{% url 'orders:list' %}" class="sv-link sv-link--sm mt-3">{% trans "View all orders" %} &rarr;</a>
         {% else %}
-        <p class="text-muted small mb-0">{% trans "No orders yet." %}</p>
-        <a href="{% url 'catalog:plp' %}" class="btn btn-floward btn-sm mt-3">{% trans "Start shopping" %}</a>
+        <p class="sv-muted">{% trans "No orders yet." %}</p>
+        <a href="{% url 'catalog:plp' %}" class="sv-btn">{% trans "Start shopping" %}</a>
         {% endif %}
-      </div>
-      <div class="row g-2">
-        <div class="col-6">
-          <a href="{% url 'catalog:plp' %}" class="btn btn-outline-floward btn-sm w-100 px-1 h-100 d-flex align-items-center justify-content-center">{% trans "Continue shopping" %}</a>
-        </div>
-        <div class="col-6">
-          <a href="{% url 'accounts:logout' %}" class="btn btn-outline-secondary btn-sm w-100 px-1 h-100 d-flex align-items-center justify-content-center">{% trans "Logout" %}</a>
-        </div>
-      </div>
+      </section>
     </div>
   </div>
   {% endif %}

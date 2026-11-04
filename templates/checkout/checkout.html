@@ -662,7 +662,7 @@
 
   document.addEventListener("DOMContentLoaded", function () {
     var value = {{ summary.grand_total|default:0 }};
-    var currency = '{{ display_currency.code|default:"NZD" }}';
+    var currency = '{{ display_currency.code|default:"INR" }}';
     
     //google analytics 4
     if (typeof gtag === 'function') {

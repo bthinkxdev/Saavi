@@ -38,3 +38,10 @@ document.addEventListener('click', function (e) {
   var btn = document.querySelector('[data-sv-tab="' + a.getAttribute('data-sv-open-tab') + '"]');
   if (btn) btn.click();
 });
+document.addEventListener('click', function (e) {
+  var b = e.target.closest('[data-sv-orders] [data-filter]');
+  if (!b) return;
+  var box = b.closest('[data-sv-orders]'), f = b.getAttribute('data-filter');
+  box.querySelectorAll('[data-filter]').forEach(function (x) { x.classList.toggle('is-active', x === b); });
+  box.querySelectorAll('tr[data-group]').forEach(function (r) { r.hidden = f !== 'all' && r.getAttribute('data-group') !== f; });
+});

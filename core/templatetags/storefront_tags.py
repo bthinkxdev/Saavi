@@ -63,3 +63,11 @@ def times(value, factor):
         return Decimal(str(value)) * Decimal(str(factor))
     except Exception:
         return value
+
+
+@register.filter
+def charged_amount(amount, currency) -> str:
+    """Plain numeric amount in ``currency`` (no symbol/commas) — safe for JS/analytics."""
+    from core.currency import convert_from_base
+
+    return str(convert_from_base(amount, currency))

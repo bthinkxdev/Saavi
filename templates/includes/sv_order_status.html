@@ -1,0 +1,3 @@
+{% load i18n %}{% with st=order.order_status %}
+<span class="sv-status {% if st == 'delivered' %}is-done{% elif st == 'cancelled' or st == 'refunded' %}is-off{% else %}is-progress{% endif %}">{{ order.get_order_status_display|default:st }}</span>
+{% endwith %}

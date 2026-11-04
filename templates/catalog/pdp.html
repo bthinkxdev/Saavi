@@ -488,7 +488,7 @@
     var item_id = '{{ product.pk }}';
     var item_name = '{{ product.name|escapejs }}';
     var item_price = {{ price_data.price|default:0 }};
-    var currency = '{{ display_currency.code|default:"NZD" }}';
+    var currency = '{{ display_currency.code|default:"INR" }}';
     var category = '{{ product.category.name|escapejs }}';
 
     //google analytics 4

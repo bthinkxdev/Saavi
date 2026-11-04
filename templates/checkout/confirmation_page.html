@@ -4,105 +4,64 @@
 {% block title %}{% trans "Order Confirmed" %} | {{ site_settings.site_name|default:"Saavi By Neethu" }}{% endblock %}
 
 {% block content %}
-<div class="container page-container py-5">
-  <div class="row justify-content-center">
-    <div class="col-lg-7 col-md-9">
-      <div class="card border-0 shadow-lg" style="border-radius: 1.5rem; overflow: hidden;">
-        <div class="card-header bg-white border-0 text-center pt-5 pb-2">
-          <div class="d-inline-flex align-items-center justify-content-center bg-primary bg-opacity-10 text-primary rounded-circle mb-4" style="width: 80px; height: 80px; color: var(--floward-primary) !important;">
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-              <polyline points="22 4 12 14.01 9 11.01"></polyline>
-            </svg>
-          </div>
-          {% if payment_pending %}
-          <h1 class="h3 fw-bold text-dark mb-2">{% trans "Confirming your payment..." %}</h1>
-          <p class="text-muted mb-0 fs-6">
-            {% blocktrans with number=order.order_number %}Order <strong class="text-dark">#{{ number }}</strong> is awaiting payment confirmation. This page will update automatically.{% endblocktrans %}
-          </p>
-          {% else %}
-          <h1 class="h3 fw-bold text-dark mb-2">{% trans "Thank you for your order!" %}</h1>
-          <p class="text-muted mb-0 fs-6">
-            {% blocktrans with number=order.order_number %}Order <strong class="text-dark">#{{ number }}</strong> has been confirmed.{% endblocktrans %}
-          </p>
-          {% endif %}
-        </div>
+<section class="sv-success">
+  <div class="container">
+    <div class="sv-success__badge" aria-hidden="true">
+      {% if payment_pending %}<span class="sv-spinner"></span>{% else %}<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>{% endif %}
+    </div>
+    {% if payment_pending %}
+    <h1 class="sv-success__title">{% trans "Confirming your payment…" %}</h1>
+    <p class="sv-success__lead">{% blocktrans with number=order.order_number %}Order <strong>{{ number }}</strong> is awaiting payment confirmation. This page updates automatically.{% endblocktrans %}</p>
+    {% else %}
+    <h1 class="sv-success__title">{% trans "Order Placed Successfully!" %}</h1>
+    <p class="sv-success__lead">{% trans "Thank you for shopping with" %} <strong>Saavi By Neethu.</strong><br>{% trans "Your order has been confirmed and is being processed." %}</p>
+    {% endif %}
 
-        <div class="card-body px-4 px-md-5 pb-5 pt-4">
-          <div class="card bg-light border-0 mb-4" style="border-radius: 1rem;">
-            <div class="card-body p-4">
-              <div class="row g-3">
-                <div class="col-sm-4">
-                  <p class="text-muted small fw-semibold text-uppercase letter-spacing-sm mb-1">{% trans "Date" %}</p>
-                  <p class="fw-medium text-dark mb-0">{{ order.created_at|date:"M d, Y" }}</p>
-                </div>
-                <div class="col-sm-4">
-                  <p class="text-muted small fw-semibold text-uppercase letter-spacing-sm mb-1">{% trans "Payment Method" %}</p>
-                  <p class="fw-medium text-dark mb-0">{{ order.payment_method_display }}</p>
-                </div>
-                <div class="col-sm-4">
-                  <p class="text-muted small fw-semibold text-uppercase letter-spacing-sm mb-1">{% trans "Total Amount" %}</p>
-                  <p class="fw-bold text-dark mb-0 fs-5">{% money_label order.total_amount order.currency %}</p>
-                </div>
-              </div>
-            </div>
-          </div>
+    <div class="sv-success__facts">
+      <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6M9 16h4"/></svg>
+        <span>{% trans "Order Number" %}<strong>{{ order.order_number }}</strong></span></div>
+      <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+        <span>{% trans "Order Date" %}<strong>{{ order.created_at|date:"d M Y" }}</strong></span></div>
+      <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="M1 6h13v10H1zM14 9h4l3 3v4h-7"/><circle cx="5.5" cy="17.5" r="1.8"/><circle cx="17.5" cy="17.5" r="1.8"/></svg>
+        <span>{% trans "Estimated Delivery" %}<strong>{{ order.estimated_delivery_text|default:_("3–7 business days") }}</strong></span></div>
+    </div>
 
-          {% if order.delivery_address_snapshot %}
-          <div class="mb-4">
-            <h5 class="fw-bold fs-6 mb-3 text-dark">{% trans "Delivery Details" %}</h5>
-            <div class="card border border-light shadow-sm" style="border-radius: 1rem;">
-              <div class="card-body p-4 d-flex align-items-start gap-3">
-                <div class="text-muted mt-1">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-geo-alt-fill text-primary" viewBox="0 0 16 16" style="color: var(--floward-primary) !important;">
-                    <path d="M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10zm0-7a3 3 0 1 1 0-6 3 3 0 0 1 0 6z"/>
-                  </svg>
-                </div>
-                <div class="flex-grow-1 text-break">
-                  {% if order.delivery_address_snapshot.label %}
-                  <span class="badge bg-light text-dark border mb-2">{{ order.delivery_address_snapshot.label }}</span>
-                  {% endif %}
-                  {% if order.delivery_address_snapshot.name %}
-                  <div class="fw-bold text-dark mb-1">{{ order.delivery_address_snapshot.name }}</div>
-                  {% endif %}
-                  <div class="text-muted small lh-lg">
-                    {{ order.delivery_address_snapshot.line1 }}<br>
-                    {% if order.delivery_address_snapshot.line2 %}
-                    {{ order.delivery_address_snapshot.line2 }}<br>
-                    {% endif %}
-                    {{ order.delivery_address_snapshot.city }}{% if order.delivery_address_snapshot.state %}, {{ order.delivery_address_snapshot.state }}{% endif %}{% if order.delivery_address_snapshot.pincode %} - {{ order.delivery_address_snapshot.pincode }}{% endif %}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          {% endif %}
-
-          <div class="d-flex flex-column flex-sm-row gap-3 justify-content-center mt-5">
-            {% if order.is_revenue_order %}
-            <a href="{% url 'accounts:customer-invoice' order.pk %}" class="btn btn-outline-secondary px-4 py-2 fw-medium rounded-pill shadow-sm" style="transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'" target="_blank">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="me-2" viewBox="0 0 16 16"><path d="M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2zM9.5 3A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5v2z"/><path d="M4.5 6a.5.5 0 0 0 0 1h5a.5.5 0 0 0 0-1h-5zm0 2.5a.5.5 0 0 0 0 1h5a.5.5 0 0 0 0-1h-5zm0 2.5a.5.5 0 0 0 0 1h5a.5.5 0 0 0 0-1h-5z"/></svg>{% trans "View Invoice" %}
-            </a>
-            {% else %}
-            <span title="{% trans 'Invoice will be available once the order is confirmed.' %}" data-bs-toggle="tooltip">
-              <button disabled class="btn btn-outline-secondary px-4 py-2 fw-medium rounded-pill shadow-sm opacity-50" style="cursor: not-allowed; pointer-events: none;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="me-2" viewBox="0 0 16 16"><path d="M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2zM9.5 3A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5v2z"/><path d="M4.5 6a.5.5 0 0 0 0 1h5a.5.5 0 0 0 0-1h-5zm0 2.5a.5.5 0 0 0 0 1h5a.5.5 0 0 0 0-1h-5zm0 2.5a.5.5 0 0 0 0 1h5a.5.5 0 0 0 0-1h-5z"/></svg>{% trans "View Invoice" %}
-              </button>
-            </span>
-            {% endif %}
-            {% if site_settings.enable_delhivery %}
-            <a href="{% if order.delhivery_shipment.waybill_number %}https://www.delhivery.com/track-v2/package/{{ order.delhivery_shipment.waybill_number }}{% else %}https://www.delhivery.com/tracking{% endif %}" target="_blank" class="btn btn-floward px-4 py-2 fw-medium rounded-pill shadow-sm" style="transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">{% trans "Track Order" %}</a>
-            {% elif order.shipping_provider_url %}
-            <a href="{{ order.shipping_provider_url }}" target="_blank" class="btn btn-floward px-4 py-2 fw-medium rounded-pill shadow-sm" style="transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">{% trans "Track Order" %}</a>
-            {% endif %}
-            <a href="{% url 'catalog:plp' %}" class="btn btn-outline-floward px-4 py-2 fw-medium rounded-pill" style="transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">{% trans "Continue Shopping" %}</a>
-          </div>
-        </div>
-      </div>
+    <div class="sv-success__actions">
+      {% if user.is_authenticated %}
+      <a href="{% url 'orders:detail' order_id=order.pk %}" class="sv-btn sv-btn--lg">{% trans "Track Your Order" %} <span aria-hidden="true">&rarr;</span></a>
+      {% elif order.shipping_provider_url %}
+      <a href="{{ order.shipping_provider_url }}" target="_blank" rel="noopener" class="sv-btn sv-btn--lg">{% trans "Track Your Order" %} <span aria-hidden="true">&rarr;</span></a>
+      {% endif %}
+      <a href="{% url 'catalog:plp' %}" class="sv-btn sv-btn--outline sv-btn--lg">{% trans "Continue Shopping" %}</a>
     </div>
   </div>
-</div>
+</section>
 
+<div class="container sv-success__below">
+  {% with email=order.delivery_address_snapshot.email|default:order.customer_profile.user.email %}
+  <div class="sv-panel sv-panel--cream sv-success__notice">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>
+    <div>
+      {% if email %}<p class="mb-1">{% trans "We've sent the order details to" %} <strong>{{ email }}</strong>.</p>{% endif %}
+      <small>{% trans "You'll also receive updates on your order via email and WhatsApp." %}</small>
+    </div>
+  </div>
+  {% endwith %}
+
+  <div class="sv-panel sv-success__items">
+    <h2 class="sv-h3">{% trans "Order Summary" %} <small>({{ order.items.count }} {% trans "Items" %})</small></h2>
+    <div class="sv-success__grid">
+      {% for item in order.items.all %}
+      <div class="sv-success__item">
+        {% with img=item.product.images.first %}{% if img %}<img src="{{ img.image.url }}" alt="" loading="lazy">{% endif %}{% endwith %}
+        <div><strong>{{ item.product.name }}</strong><span>{% trans "Qty:" %} {{ item.quantity }}</span></div>
+      </div>
+      {% endfor %}
+    </div>
+    <div class="sv-summary__total mb-0"><span>{% trans "Total" %}</span><span>{% money_label order.total_amount order.currency %}</span></div>
+    {% if order.is_revenue_order %}<p class="mt-3 mb-0"><a class="sv-link sv-link--sm" href="{% url 'accounts:customer-invoice' order.pk %}">{% trans "Download Invoice" %} &darr;</a></p>{% endif %}
+  </div>
+</div>
 {% if payment_pending %}
 <script>
   (function () {
@@ -122,8 +81,8 @@
     var hasFired = sessionStorage.getItem('purchase_fired_' + orderNumber);
     
     if (!hasFired && orderNumber) {
-      var value = {{ order.total_amount|default:0 }};
-      var currency = '{{ order.currency.code|default:"NZD" }}';
+      var value = {{ order.total_amount|charged_amount:order.currency }};
+      var currency = '{{ order.currency.code|default:"INR" }}';
       
       //google analytics 4
       if (typeof gtag === 'function') {

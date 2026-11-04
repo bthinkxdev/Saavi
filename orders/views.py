@@ -69,5 +69,31 @@ def order_detail_view(request: HttpRequest, order_id: int) -> HttpResponse:
             "order": tracking.order,
             "items": tracking.order.items.all(),
             "tracking": tracking,
+            "timeline": _build_timeline(tracking.order),
         },
     )
+
+
+_TIMELINE_STEPS = [
+    ("placed", "Order Placed", None),
+    ("confirmed", "Order Confirmed", {"confirmed", "processing", "ready_to_ship", "placed_cod"}),
+    ("shipped", "Shipped", {"shipped", "picked_up", "in_transit", "out_for_delivery"}),
+    ("delivered", "Delivered", {"delivered"}),
+]
+_STATUS_RANK = {
+    "checkout_pending": 0, "placed_cod": 1, "confirmed": 1, "processing": 1, "ready_to_ship": 1,
+    "shipped": 2, "picked_up": 2, "in_transit": 2, "out_for_delivery": 2, "delivered": 3,
+}
+
+
+def _build_timeline(order) -> list[dict]:
+    """Placed → Confirmed → Shipped → Delivered with the time each step was reached."""
+    history = list(order.status_history.all().order_by("changed_at"))
+    reached = _STATUS_RANK.get(order.order_status, -1)
+    steps = []
+    for idx, (key, label, statuses) in enumerate(_TIMELINE_STEPS):
+        when = order.created_at if statuses is None else next(
+            (h.changed_at for h in history if h.to_status in statuses), None
+        )
+        steps.append({"key": key, "label": label, "done": idx <= reached, "when": when})
+    return steps

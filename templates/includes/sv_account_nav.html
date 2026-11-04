@@ -1,0 +1,19 @@
+{% load i18n %}
+{% with u=request.user %}
+<aside class="sv-panel sv-accnav">
+  {% if show_heading %}<h2 class="sv-h3">{% trans "My Account" %}</h2>{% endif %}
+  <div class="sv-accnav__user">
+    <span class="sv-avatar">{{ u.first_name|default:u.email|first|upper }}</span>
+    <div><strong>{{ u.get_full_name|default:u.email }}</strong><span>{{ u.email }}</span></div>
+  </div>
+  <nav>
+    <a class="{% if active == 'dashboard' %}is-active{% endif %}" href="{% url 'accounts:dashboard' %}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>{% trans "Dashboard" %}</a>
+    <a class="{% if active == 'orders' %}is-active{% endif %}" href="{% url 'orders:list' %}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 2l9 5v10l-9 5-9-5V7z"/><path d="M3 7l9 5 9-5M12 12v10"/></svg>{% trans "My Orders" %}</a>
+    <a href="{% url 'accounts:dashboard' %}#addresses"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 22s7-6.5 7-12a7 7 0 0 0-14 0c0 5.5 7 12 7 12z"/><circle cx="12" cy="10" r="2.5"/></svg>{% trans "My Addresses" %}</a>
+    <a class="{% if active == 'wishlist' %}is-active{% endif %}" href="{% url 'accounts:wishlist' %}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>{% trans "Wishlist" %}</a>
+    <a class="{% if active == 'profile' %}is-active{% endif %}" href="{% url 'accounts:edit-profile' %}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/></svg>{% trans "Account Details" %}</a>
+    <a href="{% url 'accounts:forgot-password' %}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>{% trans "Change Password" %}</a>
+    <a class="sv-accnav__logout" href="{% url 'accounts:logout' %}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M10 4H5v16h5M14 8l4 4-4 4M18 12H9"/></svg>{% trans "Logout" %}</a>
+  </nav>
+</aside>
+{% endwith %}

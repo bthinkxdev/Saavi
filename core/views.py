@@ -33,8 +33,8 @@ def about_us_view(request: HttpRequest) -> HttpResponse:
     """Render the static About Us page."""
     context = seo_context(
         request=request,
-        title=_("About Us | Saavi By Neethu designs"),
-        description=_("Learn more about Saavi By Neethu designs and our mission to deliver exquisite luxury sarees and handcrafted fine jewellery to New Zealand."),
+        title=_("About Us | Saavi By Neethu"),
+        description=_("Saavi By Neethu brings timeless sarees and elegant men's kurtas that blend heritage, craftsmanship and contemporary style."),
     )
     return render(request, "core/about_us.html", context)
 
@@ -96,7 +96,7 @@ def contact_us_view(request: HttpRequest) -> HttpResponse:
     context = seo_context(
         request=request,
         title=_("Contact Us | Saavi By Neethu"),
-        description=_("Get in touch with Saavi By Neethu customer support in New Zealand."),
+        description=_("Get in touch with Saavi By Neethu customer support."),
     )
     context["form"] = form
     context["captcha_bust"] = int(time.time() * 1000)
