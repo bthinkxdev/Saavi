@@ -65,6 +65,9 @@
   </section>
   {% endif %}
 
+  {# 2b. Shop by collection #}
+  {% include "includes/sv_collection_grid.html" with collections=featured_collections %}
+
   {# 3. Trust indicators #}
   <section class="container">
     {% include "includes/sv_trust_strip.html" %}
@@ -73,6 +76,9 @@
   {# 4. New arrivals #}
   {% trans "New Arrivals" as new_title %}
   {% include "includes/sv_product_tabs.html" with title=new_title tabs=new_arrival_tabs tab_id="new" view_all_query="new_arrival=1" %}
+
+  {# 4b. Collection rails #}
+  {% for rail in collection_rails_top %}{% include "includes/sv_collection_rail.html" with rail=rail %}{% endfor %}
 
   {# 5. Festive promo banner #}
   <section class="container sv-section sv-section--tight">
@@ -105,9 +111,27 @@
   </section>
   {% endif %}
 
+  {# 6b. Wedding edit banner and more collection rails #}
+  {% if wedding_cover or collection_rails_bottom %}
+  <section class="container sv-section sv-section--tight">
+    <a class="sv-festive sv-festive--reverse" href="{% url 'catalog:plp' %}?collection=wedding-season">
+      <div class="sv-festive__art" aria-hidden="true" {% if wedding_cover %}style="background-image: linear-gradient(90deg, rgba(0,0,0,0) 55%, var(--sv-cream-2) 100%), url('{{ wedding_cover }}')"{% endif %}></div>
+      <div class="sv-festive__text">
+        <h2 class="sv-festive__title">{% trans "The Wedding" %}<br>{% trans "Edit" %}</h2>
+        <p>{% trans "Bridal sarees for her," %}<br>{% trans "wedding kurtas for him" %}</p>
+        <span class="sv-btn sv-btn--primary sv-btn--sm">{% trans "Shop Wedding Season" %} <span aria-hidden="true">&rarr;</span></span>
+      </div>
+    </a>
+  </section>
+  {% endif %}
+  {% for rail in collection_rails_bottom %}{% include "includes/sv_collection_rail.html" with rail=rail %}{% endfor %}
+
   {# 7. Bestsellers #}
   {% trans "Bestsellers" as best_title %}
   {% include "includes/sv_product_tabs.html" with title=best_title tabs=bestseller_tabs tab_id="best" view_all_query="bestseller=1" %}
+
+  {# 8. Why shop with us #}
+  {% include "includes/sv_promise.html" %}
 
 </div>
 {% endblock %}

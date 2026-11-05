@@ -226,26 +226,17 @@ def page_view(request: HttpRequest, slug: str) -> HttpResponse:
 
 
 @require_POST
-def set_currency_view(request: HttpRequest) -> HttpResponse:
-    """Persist currency code to session."""
-    code = request.POST.get("currency")
-    if not code:
-        from core.selectors import get_default_currency
-        default_curr = get_default_currency()
-        code = default_curr.code if default_curr else "AED"
-    request.session["storefront_currency"] = code
-
-    if not is_htmx_request(request):
-        return redirect(request.META.get("HTTP_REFERER", "/"))
-
-    return rerender_app_shell(request)
-
-
-@require_POST
 def set_country_view(request: HttpRequest) -> HttpResponse:
-    """Persist the delivery country choice to session."""
+    """Persist the visitor's country choice (India / UAE) and switch to its currency."""
+    from core.country import SUPPORTED_COUNTRIES, get_active_countries
+    from core.currency import COUNTRY_SESSION_KEY, SESSION_KEY
+
     code = request.POST.get("country", "").strip().upper()
-    request.session["storefront_country"] = code
+    if code in SUPPORTED_COUNTRIES:
+        request.session[COUNTRY_SESSION_KEY] = code
+        for row in get_active_countries():
+            if row.code == code and row.currency_id and row.currency.is_active:
+                request.session[SESSION_KEY] = row.currency.code
 
     if not is_htmx_request(request):
         return redirect(request.META.get("HTTP_REFERER", "/"))

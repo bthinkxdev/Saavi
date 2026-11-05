@@ -65,14 +65,13 @@ def _rails(product_rails: dict[str, list] | None, key: str) -> list:
 
 
 def _category_products(config: dict[str, Any]) -> dict[str, Any]:
-    from catalog.models import Category
-    from catalog.selectors import get_products_by_category_slug
-    
+    from catalog.selectors import _live_categories, get_products_by_category_slug
+
     slug_val = config.get("category_slug", "all")
     sections = []
     
     if slug_val == "all":
-        roots = Category.objects.filter(is_active=True, parent__isnull=True).order_by("display_order")
+        roots = _live_categories(parent__isnull=True).order_by("display_order")
         for cat in roots:
             prods = get_products_by_category_slug(cat.slug, limit=100) # fetch effectively all products
             if prods:
@@ -84,7 +83,7 @@ def _category_products(config: dict[str, Any]) -> dict[str, Any]:
             slugs = slug_val
 
         for s in slugs:
-            cat = Category.objects.filter(slug=s, is_active=True).first()
+            cat = _live_categories(slug=s).first()
             if cat:
                 prods = get_products_by_category_slug(s, limit=100)
                 if prods:
@@ -306,9 +305,11 @@ def _empty(config: dict[str, Any]) -> dict[str, Any]:
 
 def _featured_collections(config: dict[str, Any]) -> dict[str, Any]:
     from django.db.models import Avg, Count, Prefetch, Q
-    from catalog.models import Collection, ModerationStatus, Product
+    from catalog.models import ModerationStatus
     from catalog.selectors import (
         _decorate_homepage_rail_prices,
+        _live_collections,
+        _live_products,
         _primary_image_prefetch,
         _variants_prefetch,
     )
@@ -316,7 +317,7 @@ def _featured_collections(config: dict[str, Any]) -> dict[str, Any]:
     slugs = config.get("collection_slugs", [])
     approved = Q(reviews__moderation_status=ModerationStatus.APPROVED)
     product_qs = (
-        Product.objects.filter(is_active=True)
+        _live_products()
         .select_related("category", "brand")
         .prefetch_related(_primary_image_prefetch(), _variants_prefetch(), "labels")
         .annotate(
@@ -325,7 +326,7 @@ def _featured_collections(config: dict[str, Any]) -> dict[str, Any]:
         )
     )
 
-    base_qs = Collection.objects.filter(is_active=True).prefetch_related(
+    base_qs = _live_collections().prefetch_related(
         Prefetch("products", queryset=product_qs)
     )
     if slugs:

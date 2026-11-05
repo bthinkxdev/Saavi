@@ -14,8 +14,9 @@ from cart.selectors import (
     get_wishlist_product_ids,
 )
 from catalog.selectors import get_category_tree
+from core.country import get_active_countries
 from core.selectors import get_currency_by_code, get_default_currency
-from core.services import get_site_settings
+from core.services import get_site_settings, market_setting
 
 
 def storefront(request: HttpRequest) -> dict[str, Any]:
@@ -65,7 +66,10 @@ def storefront(request: HttpRequest) -> dict[str, Any]:
         "wishlist_product_ids": wishlist_product_ids,
         "default_currency": default_currency,
         "display_currency": display_currency,
-        "active_currencies": _active_currencies(),
+        "current_country": getattr(request, "country", ""),
+        "free_shipping_threshold": market_setting(site_settings, "free_shipping_threshold"),
+        "express_delivery_charge": market_setting(site_settings, "express_delivery_charge"),
+        "served_countries": get_active_countries(),
         "sv_countries": __import__("core.currency", fromlist=["x"]).CHECKOUT_COUNTRIES,
         "session_language": request.session.get("django_language", ""),
         "session_currency": session_currency,
@@ -78,10 +82,3 @@ def storefront(request: HttpRequest) -> dict[str, Any]:
             else Page.objects.none()
         ),
     }
-
-
-def _active_currencies():
-    from core.models import Currency
-
-    order = {"INR": 0, "AED": 1, "USD": 2, "EUR": 3}
-    return sorted(Currency.objects.filter(is_active=True), key=lambda c: order.get(c.code, 9))

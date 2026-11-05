@@ -77,6 +77,10 @@ def _sync_checkout_pending_order(
     summary = get_cart_summary(cart=session.cart, skip_delivery_charge_calculation=True)
     if not summary.lines:
         raise CheckoutSessionError("Cart is empty.")
+    if summary.has_unavailable_items:
+        raise CheckoutSessionError(
+            f"Some products are not available in {summary.country_name}. Remove them to place your order."
+        )
 
     order.items.all().delete()
 
@@ -222,6 +226,10 @@ def place_order(
     summary = get_cart_summary(cart=session.cart, skip_delivery_charge_calculation=True)
     if not summary.lines:
         raise CheckoutSessionError("Cart is empty.")
+    if summary.has_unavailable_items:
+        raise CheckoutSessionError(
+            f"Some products are not available in {summary.country_name}. Remove them to place your order."
+        )
 
 
     #stock is decremented only for COD orders initially.

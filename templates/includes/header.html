@@ -4,7 +4,7 @@
   <div class="sv-topbar">
     <div class="container sv-topbar__inner">
       <p class="sv-topbar__trust d-none d-md-flex">
-        <span>{% trans "Free Shipping on Orders Above" %} {% if site_settings.free_shipping_threshold %}{% money_label site_settings.free_shipping_threshold display_currency %}{% else %}{% money_label 999 display_currency %}{% endif %}</span>
+        <span>{% trans "Free Shipping on Orders Above" %} {% if free_shipping_threshold %}{% money_label free_shipping_threshold display_currency %}{% else %}{% money_label 999 display_currency %}{% endif %}</span>
         <span class="sv-topbar__sep" aria-hidden="true">|</span>
         <span>{% trans "Easy Returns" %}</span>
         <span class="sv-topbar__sep" aria-hidden="true">|</span>
@@ -13,21 +13,23 @@
       <div class="sv-ticker d-md-none" data-sv-ticker>
         <button type="button" data-sv-step="-1" aria-label="{% trans 'Previous message' %}">&lsaquo;</button>
         <div class="sv-ticker__items" aria-live="polite">
-          <span data-sv-tick>{% trans "Free Shipping on Orders Above" %} {% if site_settings.free_shipping_threshold %}{% money_label site_settings.free_shipping_threshold display_currency %}{% else %}{% money_label 999 display_currency %}{% endif %}</span>
+          <span data-sv-tick>{% trans "Free Shipping on Orders Above" %} {% if free_shipping_threshold %}{% money_label free_shipping_threshold display_currency %}{% else %}{% money_label 999 display_currency %}{% endif %}</span>
           <span data-sv-tick>{% trans "Easy 7-Day Returns" %}</span>
           <span data-sv-tick>{% trans "100% Secure Payment" %}</span>
         </div>
         <button type="button" data-sv-step="1" aria-label="{% trans 'Next message' %}">&rsaquo;</button>
       </div>
-      <form class="sv-currency" method="post" action="{% url 'core:set-currency' %}">
+      {% if served_countries|length > 1 %}
+      <form class="sv-currency" method="post" action="{% url 'core:set-country' %}">
         {% csrf_token %}
-        <label class="visually-hidden" for="sv-currency-select">{% trans "Currency" %}</label>
-        <select id="sv-currency-select" name="currency" class="sv-currency__select" onchange="this.form.submit()">
-          {% for cur in active_currencies %}
-          <option value="{{ cur.code }}" {% if display_currency and display_currency.code == cur.code %}selected{% endif %}>{{ cur.code }} ({{ cur.symbol }})</option>
+        <label class="visually-hidden" for="sv-country-select">{% trans "Country" %}</label>
+        <select id="sv-country-select" name="country" class="sv-currency__select" onchange="this.form.submit()">
+          {% for c in served_countries %}
+          <option value="{{ c.code }}" {% if current_country == c.code %}selected{% endif %}>{{ c.name }}</option>
           {% endfor %}
         </select>
       </form>
+      {% endif %}
     </div>
   </div>
 

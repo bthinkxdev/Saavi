@@ -52,6 +52,8 @@ class ProductForm(SlugAutoMixin):
             "size_chart",
             "base_price",
             "mrp",
+            "base_price_ae",
+            "mrp_ae",
             "purchase_price",
 
             "color",
@@ -62,6 +64,7 @@ class ProductForm(SlugAutoMixin):
             "is_bestseller",
             "is_new_arrival",
             "collections",
+            "countries",
             "tags",
             "labels",
             "care_instructions",
@@ -76,6 +79,8 @@ class ProductForm(SlugAutoMixin):
         widgets = {
             "base_price": forms.NumberInput(attrs={"min": "0"}),
             "mrp": forms.NumberInput(attrs={"min": "0"}),
+            "base_price_ae": forms.NumberInput(attrs={"min": "0"}),
+            "mrp_ae": forms.NumberInput(attrs={"min": "0"}),
             "purchase_price": forms.NumberInput(attrs={"min": "0"}),
             "stock_quantity": forms.NumberInput(attrs={"min": "0"}),
             "low_stock_threshold": forms.NumberInput(attrs={"min": "0"}),
@@ -111,12 +116,16 @@ class ProductForm(SlugAutoMixin):
         self.fields["collections"].queryset = qs_col.distinct().order_by("name")
         
         self.fields["slug"].required = False
+        self.fields["base_price"].label = "Base price (INR)"
+        self.fields["mrp"].label = "MRP (INR)"
         self.fields["base_price"].required = False
         self.fields["mrp"].required = False
         self.fields["purchase_price"].required = False
         self.fields["stock_quantity"].required = False
         self.fields["low_stock_threshold"].required = False
         self.fields["collections"].required = False
+        self.fields["countries"].required = False
+        self.fields["countries"].widget.attrs["class"] = "form-select form-control"
 
         from core.services import get_site_settings
         site_settings = get_site_settings()
@@ -145,6 +154,13 @@ class ProductForm(SlugAutoMixin):
         if not has_variants and cleaned.get("base_price") is None:
             self.add_error("base_price", "Base price is required for simple products.")
             
+        # A product explicitly assigned to a market must be priced in that market currency.
+        selected = {c.code for c in cleaned.get("countries") or []}
+        if not has_variants:
+            if "AE" in selected and not cleaned.get("base_price_ae"):
+                self.add_error("base_price_ae", "UAE price is required when the product is available in the UAE.")
+            if "IN" in selected and not cleaned.get("base_price"):
+                self.add_error("base_price", "India price is required when the product is available in India.")
         for field in ["base_price", "mrp", "purchase_price", "stock_quantity", "low_stock_threshold"]:
             val = cleaned.get(field)
             if val is None:
@@ -166,11 +182,14 @@ class CategoryForm(SlugAutoMixin):
             "meta_title",
             "meta_description",
             "og_image",
+            "countries",
         ]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["slug"].required = False
+        self.fields["countries"].required = False
+        self.fields["countries"].widget.attrs["class"] = "form-select form-control"
 
 
 class CollectionForm(SlugAutoMixin):
@@ -182,11 +201,16 @@ class CollectionForm(SlugAutoMixin):
             "description",
             "image",
             "is_active",
+            "is_featured",
+            "display_order",
+            "countries",
         ]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["slug"].required = False
+        self.fields["countries"].required = False
+        self.fields["countries"].widget.attrs["class"] = "form-select form-control"
 
 
 class BrandForm(SlugAutoMixin):
@@ -239,7 +263,7 @@ class ReviewForm(forms.ModelForm):
 class ProductVariantForm(forms.ModelForm):
     class Meta:
         model = ProductVariant
-        fields = ["variant_type", "name", "base_price", "mrp", "purchase_price", "sku_suffix", "stock_quantity", "low_stock_threshold"]
+        fields = ["variant_type", "name", "base_price", "mrp", "base_price_ae", "mrp_ae", "purchase_price", "sku_suffix", "stock_quantity", "low_stock_threshold"]
         widgets = {
             "variant_type": forms.TextInput(attrs={
                 "list": "variant-type-list",
@@ -676,6 +700,9 @@ class SiteSettingsForm(forms.ModelForm):
         "default_shipping_charge",
         "free_shipping_threshold",
             "express_delivery_charge",
+            "default_shipping_charge_ae",
+            "free_shipping_threshold_ae",
+            "express_delivery_charge_ae",
             "standard_delivery_text",
             "express_delivery_text",
         "default_estimated_delivery_text",
@@ -712,6 +739,9 @@ class SiteSettingsForm(forms.ModelForm):
             "default_shipping_charge",
             "free_shipping_threshold",
             "express_delivery_charge",
+            "default_shipping_charge_ae",
+            "free_shipping_threshold_ae",
+            "express_delivery_charge_ae",
             "standard_delivery_text",
             "express_delivery_text",
             "default_estimated_delivery_text",

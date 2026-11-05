@@ -154,6 +154,12 @@ class ProductDeleteView(DashboardDeleteView):
     singular_name = "Product"
 
 
+
+def _optional_price(values: list[str], index: int):
+    """Parse an optional price field from a parallel POST list: blank -> None, bad text -> ValueError."""
+    raw = values[index].strip() if index < len(values) else ""
+    return float(raw) if raw else None
+
 def _render_product_form(request, product, mode):
     from catalog.models import ProductVariant, ProductAttribute, ProductAttributeValue, ProductTag, ProductLabel
     from django.utils.text import slugify
@@ -224,6 +230,8 @@ def _render_product_form(request, product, mode):
                 v_low_stocks = request.POST.getlist("variant_low_stock_threshold[]")
                 v_base_prices = request.POST.getlist("variant_base_price[]")
                 v_mrps = request.POST.getlist("variant_mrp[]")
+                v_base_prices_ae = request.POST.getlist("variant_base_price_ae[]")
+                v_mrps_ae = request.POST.getlist("variant_mrp_ae[]")
                 v_purchase_prices = request.POST.getlist("variant_purchase_price[]")
                 v_names = request.POST.getlist("variant_name[]")
                 
@@ -265,6 +273,18 @@ def _render_product_form(request, product, mode):
                     except ValueError:
                         mrp = purchase_price = 0.0
                         
+                    try:
+                        price_ae = _optional_price(v_base_prices_ae, i)
+                        mrp_ae = _optional_price(v_mrps_ae, i)
+                    except ValueError:
+                        messages.error(request, f"Invalid AED price for variant '{suffix_name}'.")
+                        variants_valid = False
+                        break
+                    if (price_ae or 0) < 0 or (mrp_ae or 0) < 0:
+                        messages.error(request, f"Variant '{suffix_name}' cannot have negative AED prices.")
+                        variants_valid = False
+                        break
+
                     if stock < 0 or low_stock < 0 or base_price < 0 or mrp < 0 or purchase_price < 0:
                         messages.error(request, f"Variant '{suffix_name}' cannot have negative price or stock values.")
                         variants_valid = False
@@ -324,6 +344,8 @@ def _render_product_form(request, product, mode):
                             variant.low_stock_threshold = low_stock
                             variant.base_price = base_price
                             variant.mrp = mrp
+                            variant.base_price_ae = _optional_price(v_base_prices_ae, i)
+                            variant.mrp_ae = _optional_price(v_mrps_ae, i)
                             variant.purchase_price = purchase_price
                             variant.display_order = i
                             variant.name = variant_name
@@ -336,6 +358,8 @@ def _render_product_form(request, product, mode):
                                 low_stock_threshold=low_stock,
                                 base_price=base_price,
                                 mrp=mrp,
+                                base_price_ae=_optional_price(v_base_prices_ae, i),
+                                mrp_ae=_optional_price(v_mrps_ae, i),
                                 purchase_price=purchase_price,
                                 display_order=i,
                                 name=variant_name
@@ -365,7 +389,9 @@ def _render_product_form(request, product, mode):
                         product.base_price = float(v_base_prices[0])
                         product.mrp = float(v_mrps[0]) if v_mrps[0] else 0.0
                         product.purchase_price = float(v_purchase_prices[0]) if v_purchase_prices[0] else 0.0
-                    product.save(update_fields=["stock_quantity", "base_price", "mrp", "purchase_price"])
+                        product.base_price_ae = _optional_price(v_base_prices_ae, 0)
+                        product.mrp_ae = _optional_price(v_mrps_ae, 0)
+                    product.save(update_fields=["stock_quantity", "base_price", "mrp", "base_price_ae", "mrp_ae", "purchase_price"])
                 else:
                     product.variants.all().delete()
                     product.attribute_values.clear()
@@ -441,6 +467,8 @@ def _render_product_form(request, product, mode):
             v_low_stocks = request.POST.getlist("variant_low_stock_threshold[]")
             v_base_prices = request.POST.getlist("variant_base_price[]")
             v_mrps = request.POST.getlist("variant_mrp[]")
+            v_base_prices_ae = request.POST.getlist("variant_base_price_ae[]")
+            v_mrps_ae = request.POST.getlist("variant_mrp_ae[]")
             v_purchase_prices = request.POST.getlist("variant_purchase_price[]")
             v_dynamic_attributes = request.POST.getlist("variant_dynamic_attributes[]")
             v_names = request.POST.getlist("variant_name[]")
@@ -471,6 +499,8 @@ def _render_product_form(request, product, mode):
                     "low_stock_threshold": v_low_stocks[i] if i < len(v_low_stocks) else "5",
                     "base_price": v_base_prices[i] if i < len(v_base_prices) else "0.00",
                     "mrp": v_mrps[i] if i < len(v_mrps) else "0.00",
+                    "base_price_ae": v_base_prices_ae[i] if i < len(v_base_prices_ae) else "",
+                    "mrp_ae": v_mrps_ae[i] if i < len(v_mrps_ae) else "",
                     "purchase_price": v_purchase_prices[i] if i < len(v_purchase_prices) else "0.00",
                     "post_attr_string": dynamic_attrs_str
                 })
@@ -514,6 +544,8 @@ def _render_product_form(request, product, mode):
                     "low_stock_threshold": variant.low_stock_threshold,
                     "base_price": variant.base_price,
                     "mrp": variant.mrp,
+                    "base_price_ae": variant.base_price_ae if variant.base_price_ae is not None else "",
+                    "mrp_ae": variant.mrp_ae if variant.mrp_ae is not None else "",
                     "purchase_price": variant.purchase_price,
                     "post_attr_string": attr_str
                 })

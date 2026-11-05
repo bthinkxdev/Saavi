@@ -7,6 +7,7 @@ from django.conf import settings
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
+from core.country import market_value
 from core.models import TimeStampedModel
 
 
@@ -52,6 +53,13 @@ class Category(TimeStampedModel):
         db_index=True,
         verbose_name="Is active",
         help_text="When False, category is hidden from the storefront.",
+    )
+    countries = models.ManyToManyField(
+        "core.Country",
+        blank=True,
+        related_name="categories",
+        verbose_name="Available in",
+        help_text="Countries this category is shown in. Leave empty to show it everywhere.",
     )
 
     class Meta:
@@ -184,11 +192,29 @@ class Collection(TimeStampedModel):
         verbose_name="Is active",
         help_text="When False, collection is hidden from the storefront.",
     )
+    countries = models.ManyToManyField(
+        "core.Country",
+        blank=True,
+        related_name="collections",
+        verbose_name="Available in",
+        help_text="Countries this collection is shown in. Leave empty to show it everywhere.",
+    )
+    is_featured = models.BooleanField(
+        default=False,
+        db_index=True,
+        verbose_name="Show on homepage",
+        help_text="Feature this collection in the homepage 'Shop by Collection' section.",
+    )
+    display_order = models.PositiveIntegerField(
+        default=0,
+        verbose_name="Display order",
+        help_text="Lower values appear first on the homepage and in filters.",
+    )
 
     class Meta:
         verbose_name = "Collection"
         verbose_name_plural = "Collections"
-        ordering = ["name"]
+        ordering = ["display_order", "name"]
 
     def __str__(self) -> str:
         return self.name
@@ -251,6 +277,13 @@ class Product(TimeStampedModel):
         related_name="products",
         verbose_name="Collections",
     )
+    countries = models.ManyToManyField(
+        "core.Country",
+        blank=True,
+        related_name="products",
+        verbose_name="Available in",
+        help_text="Countries this product is sold in. Leave empty to sell everywhere.",
+    )
     attribute_values = models.ManyToManyField(
         "ProductAttributeValue",
         blank=True,
@@ -264,6 +297,22 @@ class Product(TimeStampedModel):
         help_text="Default price before variant deltas.",
     )
     mrp = models.DecimalField(max_digits=12, decimal_places=2, verbose_name="MRP")
+    base_price_ae = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name="Base price (AED)",
+        help_text="Selling price for UAE visitors, in AED. Base price above is the India price, in INR.",
+    )
+    mrp_ae = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name="MRP (AED)",
+        help_text="MRP for UAE visitors, in AED.",
+    )
     purchase_price = models.DecimalField(max_digits=12, decimal_places=2, verbose_name="Purchase Price")
     is_rental = models.BooleanField(default=False, db_index=True, verbose_name="Is Rental Eligible")
     rental_price = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, verbose_name="Rental Price")
@@ -379,14 +428,24 @@ class Product(TimeStampedModel):
         return variants[0]
 
     @property
+    def market_base_price(self):
+        """Product-level selling price in the visitor's market (INR for India, AED for UAE)."""
+        return market_value(self, "base_price") or 0
+
+    @property
+    def market_mrp(self):
+        """Product-level MRP in the visitor's market."""
+        return market_value(self, "mrp") or 0
+
+    @property
     def effective_base_price(self):
         v = self.display_variant
-        return v.base_price if (v and v.base_price is not None and v.base_price > 0) else self.base_price
+        return v.market_base_price if (v and v.market_base_price > 0) else self.market_base_price
 
     @property
     def effective_mrp(self):
         v = self.display_variant
-        return v.mrp if (v and v.mrp is not None and v.mrp > 0) else self.mrp
+        return v.market_mrp if (v and v.market_mrp > 0) else self.market_mrp
 
     @property
     def quick_view_variants_json(self):
@@ -408,8 +467,8 @@ class Product(TimeStampedModel):
 
         data = []
         for v in variants:
-            eff_price = v.base_price if (v.base_price is not None and v.base_price > 0) else self.effective_base_price
-            eff_mrp = v.mrp if (v.mrp is not None and v.mrp > 0) else self.effective_mrp
+            eff_price = v.market_base_price if v.market_base_price > 0 else self.market_base_price
+            eff_mrp = v.market_mrp if v.market_mrp > 0 else self.market_mrp
             discount = 0
             if eff_mrp and eff_mrp > eff_price:
                 discount = int(((eff_mrp - eff_price) / eff_mrp) * 100)
@@ -533,6 +592,22 @@ class ProductVariant(TimeStampedModel):
         default=0,
         verbose_name="MRP",
     )
+    base_price_ae = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name="Base price (AED)",
+        help_text="Selling price for UAE visitors, in AED.",
+    )
+    mrp_ae = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name="MRP (AED)",
+        help_text="MRP for UAE visitors, in AED.",
+    )
     purchase_price = models.DecimalField(
         max_digits=12,
         decimal_places=2,
@@ -555,6 +630,16 @@ class ProductVariant(TimeStampedModel):
         default=5,
         verbose_name="Low stock threshold",
     )
+
+    @property
+    def market_base_price(self):
+        """Variant selling price in the visitor's market (INR for India, AED for UAE)."""
+        return market_value(self, "base_price") or 0
+
+    @property
+    def market_mrp(self):
+        """Variant MRP in the visitor's market."""
+        return market_value(self, "mrp") or 0
 
     class Meta:
         verbose_name = "Product variant"

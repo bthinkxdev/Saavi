@@ -1,8 +1,7 @@
-"""Multi-currency helpers: visitor country detection and base-currency conversion.
+"""Multi-currency helpers: visitor country detection and money rounding.
 
-Prices are stored in the base currency (the one whose exchange_rate_to_base is 1).
-A Currency's ``exchange_rate_to_base`` is how many base units one unit of that
-currency is worth, so ``display = base / rate``.
+Each market has its own price fields (INR for India, AED for the UAE), so there is
+no exchange-rate conversion: an amount is already in the visitor's currency.
 """
 
 from __future__ import annotations
@@ -90,14 +89,12 @@ def detect_country(request) -> str:
 
 
 def convert_from_base(amount, currency) -> Decimal:
-    """Convert a base-currency amount into ``currency`` (2dp, half-up)."""
-    value = Decimal(str(amount or 0))
-    if currency is None:
-        return value.quantize(Decimal("0.01"), ROUND_HALF_UP)
-    rate = Decimal(str(currency.exchange_rate_to_base or 0))
-    if rate <= 0:
-        return value.quantize(Decimal("0.01"), ROUND_HALF_UP)
-    return (value / rate).quantize(Decimal("0.01"), ROUND_HALF_UP)
+    """Round ``amount`` to 2dp in its own currency.
+
+    Prices are entered per market (INR for India, AED for the UAE), so no
+    exchange-rate conversion happens anywhere; ``currency`` is kept for call-site compatibility.
+    """
+    return Decimal(str(amount or 0)).quantize(Decimal("0.01"), ROUND_HALF_UP)
 
 
 def update_exchange_rates() -> dict[str, str]:

@@ -7,12 +7,13 @@
 {% if summary and summary.lines %}
 <div class="sv-cart">
   <div>
+    {% include "cart/partials/_unavailable_banner.html" with target="page" hx_target="#cart-page-body" hx_swap="outerHTML" %}
     <div class="sv-panel sv-cart__table">
       <div class="sv-cart__row sv-cart__row--head d-none d-md-grid">
         <span>{% trans "Product" %}</span><span>{% trans "Price" %}</span><span>{% trans "Quantity" %}</span><span>{% trans "Total" %}</span><span></span>
       </div>
       {% for line in summary.lines %}
-      {% with max_stock=line.max_stock mrp=line.variant.mrp|default:line.product.mrp %}
+      {% with max_stock=line.max_stock mrp=line.variant.market_mrp|default:line.product.market_mrp %}
       <div class="sv-cart__row">
         <div class="sv-cart__product">
           <a class="sv-cart__thumb" href="{% url 'catalog:pdp' slug=line.product.slug %}">
@@ -39,7 +40,8 @@
           <div class="min-w-0">
             <a href="{% url 'catalog:pdp' slug=line.product.slug %}{% if line.variant %}?variant_id={{ line.variant.pk }}{% endif %}" class="sv-cart__name">{{ line.product.name }}</a>
             {% if line.variant %}<p class="sv-cart__meta">{{ line.variant.display_name }}</p>{% endif %}
-            {% if not line.product.is_in_stock or max_stock <= 0 %}<p class="sv-cart__err">{% trans "Out of stock" %}</p>
+            {% if line.is_unavailable %}<p class="sv-cart__err"><strong>{% blocktrans with country=summary.country_name %}Not available in {{ country }}{% endblocktrans %}</strong></p>
+            {% elif not line.product.is_in_stock or max_stock <= 0 %}<p class="sv-cart__err">{% trans "Out of stock" %}</p>
             {% elif error_item_id == line.item.pk and error %}<p class="sv-cart__err">{{ error }}</p>
             {% elif line.quantity >= max_stock %}<p class="sv-cart__err">{% trans "Only" %} {{ max_stock }} {% trans "items available in stock." %}</p>{% endif %}
           </div>
@@ -49,8 +51,10 @@
           </form>
         </div>
         <div class="sv-cart__price">
+          {% if line.is_unavailable %}<span class="sv-cart__err">&mdash;</span>{% else %}
           <strong>{% money_label line.unit_price_at_add display_currency %}</strong>
-          {% if mrp and mrp > line.unit_price_at_add %}
+          {% endif %}
+          {% if not line.is_unavailable and mrp and mrp > line.unit_price_at_add %}
           <span class="sv-price__was">{% money_label mrp display_currency %}</span>
           {% with pct=line.unit_price_at_add|discount_percent:mrp %}{% if pct %}<span class="sv-pill-off">{{ pct }}% {% trans "Off" %}</span>{% endif %}{% endwith %}
           {% endif %}
@@ -66,7 +70,7 @@
             <button type="button" hx-post="{% url 'cart:quantity' %}" hx-target="#cart-page-body" hx-swap="outerHTML" hx-include="closest form" aria-label="{% trans 'Increase quantity' %}" {% if line.quantity >= max_stock %}disabled{% endif %}>&plus;</button>
           </form>
         </div>
-        <strong class="sv-cart__total">{% money_label line.line_subtotal display_currency %}</strong>
+        <strong class="sv-cart__total">{% if line.is_unavailable %}&mdash;{% else %}{% money_label line.line_subtotal display_currency %}{% endif %}</strong>
         <form method="post" action="{% url 'cart:page-remove' %}" class="m-0">
           {% csrf_token %}<input type="hidden" name="cart_item_id" value="{{ line.item.pk }}">
           <button class="sv-icon-btn sv-icon-btn--sm" type="button" hx-post="{% url 'cart:page-remove' %}" hx-target="#cart-page-body" hx-swap="outerHTML" hx-include="closest form" aria-label="{% trans 'Remove item' %}">
@@ -85,9 +89,12 @@
       <h2 class="sv-h3">{% trans "Order Summary" %}</h2>
       <div class="sv-summary__row"><span>{% trans "Subtotal" %} ({{ summary.lines|length }} {% trans "Items" %})</span><span>{% money_label summary.subtotal display_currency %}</span></div>
       {% if summary.coupon_discount %}<div class="sv-summary__row"><span>{% trans "Discount" %}</span><span class="sv-green">&minus; {% money_label summary.coupon_discount display_currency %}</span></div>{% endif %}
-      <div class="sv-summary__row"><span>{% trans "Shipping" %} <span class="sv-info" title="{% trans 'Free above the free-shipping amount; otherwise based on your city at checkout.' %}">i</span></span><span>{% if summary.delivery_charge and summary.delivery_charge > 0 %}{% money_label summary.delivery_charge display_currency %}{% elif site_settings.free_shipping_threshold and summary.subtotal >= site_settings.free_shipping_threshold %}<span class="sv-green">{% trans "Free" %}</span>{% else %}<span class="sv-muted">{% trans "Calculated at checkout" %}</span>{% endif %}</span></div>
+      <div class="sv-summary__row"><span>{% trans "Shipping" %} <span class="sv-info" title="{% trans 'Free above the free-shipping amount; otherwise based on your city at checkout.' %}">i</span></span><span>{% if summary.delivery_charge and summary.delivery_charge > 0 %}{% money_label summary.delivery_charge display_currency %}{% elif free_shipping_threshold and summary.subtotal >= free_shipping_threshold %}<span class="sv-green">{% trans "Free" %}</span>{% else %}<span class="sv-muted">{% trans "Calculated at checkout" %}</span>{% endif %}</span></div>
       <div class="sv-summary__total"><span>{% trans "Total" %}</span><span>{% money_label summary.grand_total display_currency %}</span></div>
-      {% if summary.has_stock_issues %}
+      {% if summary.has_unavailable_items %}
+      <button class="sv-btn sv-btn--block sv-btn--lg" disabled>{% trans "Proceed to Checkout" %}</button>
+      <p class="sv-cart__err text-center mt-2">{% blocktrans with country=summary.country_name %}Some products are not available in {{ country }}. Remove them to checkout.{% endblocktrans %}</p>
+      {% elif summary.has_stock_issues %}
       <button class="sv-btn sv-btn--block sv-btn--lg" disabled>{% trans "Proceed to Checkout" %}</button>
       <p class="sv-cart__err text-center mt-2">{% trans "Some items are out of stock. Please remove them to checkout." %}</p>
       {% else %}

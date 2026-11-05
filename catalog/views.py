@@ -18,6 +18,9 @@ from catalog.forms import ReviewSubmissionForm
 from catalog.services import submit_review
 
 from catalog.selectors import (
+    _live_categories,
+    _live_collections,
+    _live_products,
     get_category_by_slug,
     get_plp_filter_options,
     get_plp_products,
@@ -27,6 +30,7 @@ from catalog.selectors import (
     get_variant_price,
     record_product_view,
 )
+from core.country import price_attr
 from core.seo import build_plp_canonical_url, build_product_json_ld, resolve_meta_title, seo_context
 
 
@@ -107,7 +111,7 @@ def plp_view(request: HttpRequest, category_slug: str | None = None) -> HttpResp
     if not resolved_cat and (cat_id := filters.get("category_id")):
         from catalog.models import Category
 
-        resolved_cat = Category.objects.filter(pk=cat_id, is_active=True).first()
+        resolved_cat = _live_categories(pk=cat_id).first()
 
     subcategories = []
     if resolved_cat:
@@ -135,7 +139,7 @@ def plp_view(request: HttpRequest, category_slug: str | None = None) -> HttpResp
         else:
             from catalog.models import Collection
 
-            c = Collection.objects.filter(slug=col_slug, is_active=True).first()
+            c = _live_collections(slug=col_slug).first()
             if c:
                 active_collection = c
                 title = f"{c.name} Collection"
@@ -384,7 +388,7 @@ def variant_price_view(request: HttpRequest, product_id: int) -> JsonResponse:
 def rental_list_view(request: HttpRequest) -> HttpResponse:
     from catalog.selectors import _primary_image_prefetch, PLP_CARD_FIELDS
     products = (
-        Product.objects.filter(is_active=True, is_rental=True, show_rental_storefront=True)
+        _live_products(is_rental=True, show_rental_storefront=True)
         .select_related("category", "brand")
         .prefetch_related(_primary_image_prefetch())
         .only(*PLP_CARD_FIELDS)
@@ -395,7 +399,7 @@ def rental_list_view(request: HttpRequest) -> HttpResponse:
 @login_required
 def submit_review_view(request, product_id: int):
     """Handle product review submission from the customer order details page."""
-    product = get_object_or_404(Product, pk=product_id, is_active=True)
+    product = get_object_or_404(_live_products(), pk=product_id)
     from catalog.forms import ReviewSubmissionForm
     form = ReviewSubmissionForm(request.POST)
     
@@ -426,11 +430,12 @@ def _price_bounds(category) -> dict:
 
     from catalog.models import Product
 
-    qs = Product.objects.filter(is_active=True)
+    qs = _live_products()
     if category is not None:
         root = category.parent_id or category.pk
         qs = qs.filter(Q(category_id=root) | Q(category__parent_id=root) | Q(category_id=category.pk))
-    agg = qs.aggregate(lo=Min("base_price"), hi=Max("base_price"))
+    price = price_attr("base_price")
+    agg = qs.aggregate(lo=Min(price), hi=Max(price))
     lo, hi = agg["lo"] or 0, agg["hi"] or 0
     return {"min": int(lo), "max": int(hi) + 1}
 

@@ -208,6 +208,42 @@ class Currency(TimeStampedModel):
         return f"{self.code} ({self.symbol})"
 
 
+class Country(TimeStampedModel):
+    """A market the storefront serves (India, UAE). Drives currency and catalog availability."""
+
+    code = models.CharField(
+        max_length=2,
+        unique=True,
+        db_index=True,
+        verbose_name="Country code",
+        help_text="ISO 3166-1 alpha-2 code, e.g. IN or AE.",
+    )
+    name = models.CharField(max_length=80, verbose_name="Name")
+    currency = models.ForeignKey(
+        Currency,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="countries",
+        verbose_name="Currency",
+        help_text="Currency shown to visitors from this country.",
+    )
+    is_default = models.BooleanField(
+        default=False,
+        verbose_name="Is default",
+        help_text="Used when the visitor's country cannot be detected or is not served.",
+    )
+    is_active = models.BooleanField(default=True, db_index=True, verbose_name="Is active")
+
+    class Meta:
+        verbose_name = "Country"
+        verbose_name_plural = "Countries"
+        ordering = ["name"]
+
+    def __str__(self) -> str:
+        return self.name
+
+
 class SiteSettings(TimeStampedModel):
     """
     Singleton site configuration (fixed pk=1 via core.services.get_site_settings).
@@ -336,7 +372,22 @@ class SiteSettings(TimeStampedModel):
     express_delivery_charge = models.DecimalField(
         max_digits=10, decimal_places=2, default=149,
         verbose_name="Express delivery charge",
-        help_text="Extra charge (base currency) for Express Delivery at checkout. Set 0 to hide the Express option.",
+        help_text="Extra charge in INR for Express Delivery in India. Set 0 to hide the Express option.",
+    )
+    default_shipping_charge_ae = models.DecimalField(
+        max_digits=10, decimal_places=2, default=0,
+        verbose_name="Default Shipping Charge (AED)",
+        help_text="Flat shipping rate for UAE orders, in AED.",
+    )
+    free_shipping_threshold_ae = models.DecimalField(
+        max_digits=10, decimal_places=2, null=True, blank=True,
+        verbose_name="Free Shipping Threshold (AED)",
+        help_text="UAE orders over this amount (AED) get free shipping. Leave blank for no free shipping.",
+    )
+    express_delivery_charge_ae = models.DecimalField(
+        max_digits=10, decimal_places=2, default=0,
+        verbose_name="Express delivery charge (AED)",
+        help_text="Extra charge in AED for Express Delivery in the UAE. Set 0 to hide the Express option there.",
     )
     express_delivery_text = models.CharField(max_length=80, default="Delivered in 1–2 business days", blank=True)
     standard_delivery_text = models.CharField(max_length=80, default="Delivered in 3–5 business days", blank=True)

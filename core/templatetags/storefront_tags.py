@@ -1,4 +1,4 @@
-"""Storefront template helpers for currency display."""
+"""Storefront template helpers for money display (amounts are already in the market currency)."""
 
 from __future__ import annotations
 
@@ -18,21 +18,14 @@ def _format_money_amount(value: Decimal) -> str:
 
 
 @register.filter
-def in_display_currency(amount, currency) -> str:
-    """Convert a base-currency amount into the active display currency."""
+def in_display_currency(amount, currency=None) -> str:
+    """Format an amount that is already in the visitor's market currency (no conversion)."""
     if amount is None or amount == "":
         return ""
-    if currency is None:
-        try:
-            return _format_money_amount(Decimal(str(amount)))
-        except Exception:
-            return str(amount)
-    base = Decimal(str(amount))
-    rate = Decimal(str(currency.exchange_rate_to_base))
-    if rate <= 0:
-        return _format_money_amount(base)
-    converted = (base / rate).quantize(Decimal("0.01"), ROUND_HALF_UP)
-    return _format_money_amount(converted)
+    try:
+        return _format_money_amount(Decimal(str(amount)))
+    except Exception:
+        return str(amount)
 
 
 @register.simple_tag

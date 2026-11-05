@@ -19,7 +19,11 @@ def get_delivery_charge(*, subtotal: Decimal, address=None, city=None, is_cod: b
     if not settings:
         return Decimal("0.00")
 
-    if settings.free_shipping_threshold is not None and settings.free_shipping_threshold > 0 and subtotal >= settings.free_shipping_threshold:
+    from core.country import get_current_country
+    from core.services import market_setting
+
+    free_threshold = market_setting(settings, "free_shipping_threshold")
+    if free_threshold is not None and free_threshold > 0 and subtotal >= free_threshold:
         return Decimal("0.00")
 
     target_city_name = None
@@ -38,9 +42,10 @@ def get_delivery_charge(*, subtotal: Decimal, address=None, city=None, is_cod: b
     if not address and not target_city_name:
         return Decimal("0.00")
 
-    charge = settings.default_shipping_charge
+    charge = market_setting(settings, "default_shipping_charge") or Decimal("0.00")
 
-    if target_city_name:
+    # City overrides are Indian cities priced in INR; they never apply to UAE orders.
+    if target_city_name and get_current_country() != "AE":
         city_obj = City.objects.filter(name__iexact=target_city_name, is_active=True).first()
         if city_obj:
             charge = city_obj.delivery_charge_base

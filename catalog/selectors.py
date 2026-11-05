@@ -7,8 +7,9 @@ from typing import Any, Optional
 
 from django.core.cache import cache
 from django.core.paginator import Paginator
-from django.db.models import Avg, Count, F, Prefetch, Q, QuerySet, Case, When, Value, IntegerField
+from django.db.models import Avg, Count, Exists, F, OuterRef, Prefetch, Q, QuerySet, Case, When, Value, IntegerField
 
+from core.country import available_in_country, get_current_country, price_attr
 from catalog.models import (
     ModerationStatus,
     Product,
@@ -30,6 +31,8 @@ PLP_CARD_FIELDS: tuple[str, ...] = (
     "sku",
     "base_price",
     "mrp",
+    "base_price_ae",
+    "mrp_ae",
     "color",
     "is_featured",
     "is_bestseller",
@@ -45,6 +48,29 @@ CATEGORY_TREE_CACHE_KEY = "catalog:category_tree:v1"
 CATEGORY_TREE_TTL = 300
 DEFAULT_CURRENCY_CACHE_KEY = "core:default_currency:v1"
 DEFAULT_CURRENCY_TTL = 300
+
+
+def _live_products(**filters) -> QuerySet[Product]:
+    """Active products sold in the visitor's country: allowed there and priced in its currency."""
+    price = price_attr("base_price")
+    priced = Q(**{f"{price}__gt": 0}) | Exists(
+        ProductVariant.objects.filter(product_id=OuterRef("pk"), **{f"{price}__gt": 0})
+    )
+    return available_in_country(Product.objects.filter(is_active=True, **filters)).filter(priced)
+
+
+def _live_categories(**filters) -> QuerySet:
+    """Active categories shown in the visitor's country."""
+    from catalog.models import Category
+
+    return available_in_country(Category.objects.filter(is_active=True, **filters))
+
+
+def _live_collections(**filters) -> QuerySet:
+    """Active collections shown in the visitor's country."""
+    from catalog.models import Collection
+
+    return available_in_country(Collection.objects.filter(is_active=True, **filters))
 
 
 def get_product_display_price(*, product: Product) -> Decimal:
@@ -83,7 +109,7 @@ def _homepage_rail_queryset(*, filters: Q, ordering: tuple = ("-created_at",)) -
     """Base queryset for a single homepage rail with shared optimizations."""
     approved = Q(reviews__moderation_status=ModerationStatus.APPROVED)
     return (
-        Product.objects.filter(is_active=True)
+        _live_products()
         .filter(filters)
         .select_related("category", "brand")
         .prefetch_related(_primary_image_prefetch(), _variants_prefetch())
@@ -142,7 +168,7 @@ def get_products_by_category_slug(slug: str, limit: int | None = None) -> list[P
     cat_filter = Q(category__slug=slug) | Q(category__parent__slug=slug)
     
     qs = (
-        Product.objects.filter(is_active=True)
+        _live_products()
         .filter(cat_filter)
         .select_related("category", "brand")
         .prefetch_related(_primary_image_prefetch(), _variants_prefetch())
@@ -227,7 +253,7 @@ def _smart_search_filter(query_str: str) -> tuple[Q, str]:
             Q(meta_description__icontains=w)
         )
 
-    base_qs = Product.objects.filter(is_active=True)
+    base_qs = _live_products()
     valid_words = [w for w in words if base_qs.filter(_word_q(w)).exists()]
 
     if valid_words:
@@ -253,7 +279,7 @@ def _apply_plp_filters(queryset: QuerySet[Product], filters: dict[str, Any]) -> 
         from catalog.models import Category
         category_ids = [category_id]
         category_ids.extend(
-            Category.objects.filter(parent_id=category_id, is_active=True).values_list(
+            _live_categories(parent_id=category_id).values_list(
                 "id", flat=True
             )
         )
@@ -274,9 +300,9 @@ def _apply_plp_filters(queryset: QuerySet[Product], filters: dict[str, Any]) -> 
         elif availability == "out_of_stock":
             queryset = queryset.filter(stock_quantity=0)
     if min_price := filters.get("min_price"):
-        queryset = queryset.filter(base_price__gte=min_price)
+        queryset = queryset.filter(**{f"{price_attr('base_price')}__gte": min_price})
     if max_price := filters.get("max_price"):
-        queryset = queryset.filter(base_price__lte=max_price)
+        queryset = queryset.filter(**{f"{price_attr('base_price')}__lte": max_price})
     if q := filters.get("q"):
         search_q, clean_text = _smart_search_filter(q)
         queryset = queryset.filter(search_q).distinct()
@@ -322,8 +348,8 @@ def _apply_plp_filters(queryset: QuerySet[Product], filters: dict[str, Any]) -> 
 def _apply_plp_sort(queryset: QuerySet[Product], sort: str, is_search: bool = False) -> QuerySet[Product]:
     """Apply PLP sort key to queryset."""
     sort_map = {
-        "price_asc": "base_price",
-        "price_desc": "-base_price",
+        "price_asc": price_attr("base_price"),
+        "price_desc": f"-{price_attr('base_price')}",
         "newest": "-created_at",
         "rating": "-average_rating",
         "name": "name",
@@ -375,7 +401,7 @@ def get_plp_products(
     """
     filters = filters or {}
     queryset = (
-        Product.objects.filter(is_active=True)
+        _live_products()
         .select_related("category", "brand")
         .prefetch_related(_primary_image_prefetch(), _variants_prefetch())
         .only(*PLP_CARD_FIELDS)
@@ -493,7 +519,7 @@ def get_product_detail(*, slug: str) -> Optional[Product]:
     )
 
     return (
-        Product.objects.filter(is_active=True, slug=slug)
+        _live_products(slug=slug)
         .select_related("category", "brand")
         .prefetch_related(
             Prefetch(
@@ -572,7 +598,7 @@ def get_recently_viewed(
         return []
 
     products = (
-        Product.objects.filter(id__in=product_ids, is_active=True)
+        _live_products(id__in=product_ids)
         .select_related("category", "brand")
         .prefetch_related(_primary_image_prefetch(), _variants_prefetch())
         .only(*PLP_CARD_FIELDS)
@@ -589,27 +615,30 @@ def get_category_tree() -> list:
     """
     from catalog.models import Category
 
-    cached = cache.get(CATEGORY_TREE_CACHE_KEY)
+    cache_key = f"{CATEGORY_TREE_CACHE_KEY}:{get_current_country()}"
+    cached = cache.get(cache_key)
     if cached is not None:
         return cached
 
     tree = list(
-        Category.objects.filter(is_active=True, parent__isnull=True)
+        _live_categories(parent__isnull=True)
         .prefetch_related(
             Prefetch(
                 "children",
-                queryset=Category.objects.filter(is_active=True).order_by("display_order", "name"),
+                queryset=_live_categories().order_by("display_order", "name"),
             )
         )
         .order_by("display_order", "name")
     )
-    cache.set(CATEGORY_TREE_CACHE_KEY, tree, CATEGORY_TREE_TTL)
+    cache.set(cache_key, tree, CATEGORY_TREE_TTL)
     return tree
 
 
 def invalidate_category_tree_cache() -> None:
     """Clear cached navigation tree after category mutations."""
-    cache.delete(CATEGORY_TREE_CACHE_KEY)
+    from core.country import SUPPORTED_COUNTRIES
+
+    cache.delete_many([f"{CATEGORY_TREE_CACHE_KEY}:{code}" for code in SUPPORTED_COUNTRIES])
 
 
 def get_search_suggestions(*, query: str, limit: int = 8) -> dict[str, list]:
@@ -627,7 +656,7 @@ def get_search_suggestions(*, query: str, limit: int = 8) -> dict[str, list]:
     search_q, clean_text = _smart_search_filter(query)
 
     products = list(
-        Product.objects.filter(is_active=True)
+        _live_products()
         .filter(search_q)
         .distinct()
         .select_related("category")
@@ -635,7 +664,7 @@ def get_search_suggestions(*, query: str, limit: int = 8) -> dict[str, list]:
         .only(*PLP_CARD_FIELDS)[:limit]
     )
 
-    categories = list(Category.objects.filter(is_active=True, name__icontains=clean_text)[:5])
+    categories = list(_live_categories(name__icontains=clean_text)[:5])
 
     return {
         "products": products,
@@ -649,7 +678,7 @@ def get_root_categories(*, category_ids: list[int] | None = None) -> list:
     """Return root categories for homepage shop-by-category rail."""
     from catalog.models import Category
 
-    qs = Category.objects.filter(is_active=True, parent__isnull=True).order_by(
+    qs = _live_categories(parent__isnull=True).order_by(
         "display_order", "name"
     )
     if category_ids:
@@ -675,7 +704,7 @@ def get_products_for_section_config(*, config: dict) -> list[Product]:
     limit, flags (model booleans).
     Query guarantee: 1 SELECT + 1 primary-image prefetch.
     """
-    qs = Product.objects.filter(is_active=True)
+    qs = _live_products()
     if product_ids := config.get("product_ids"):
         qs = qs.filter(pk__in=product_ids)
     if category_id := config.get("category_id"):
@@ -683,7 +712,7 @@ def get_products_for_section_config(*, config: dict) -> list[Product]:
     if brand_id := config.get("brand_id"):
         qs = qs.filter(brand_id=brand_id)
     if min_price := config.get("min_price"):
-        qs = qs.filter(base_price__gte=min_price)
+        qs = qs.filter(**{f"{price_attr('base_price')}__gte": min_price})
     for flag in config.get("flags", []):
         if hasattr(Product, flag):
             qs = qs.filter(**{flag: True})
@@ -719,9 +748,9 @@ def get_variant_price(
     Query guarantee: 1–2 SELECTs on product/variant + 0–1 on flash sale.
     """
 
-    product = Product.objects.get(pk=product_id, is_active=True)
+    product = _live_products().get(pk=product_id)
 
-    retail_price = product.base_price
+    retail_price = product.market_base_price
     resolved_variant_id = None
     
     # Safely evaluate product in-stock status
@@ -732,15 +761,15 @@ def get_variant_price(
     elif hasattr(product, 'stock_quantity'):
         is_in_stock = product.stock_quantity > 0
 
-    mrp = product.mrp
+    mrp = product.market_mrp
 
     if variant_id:
         variant = ProductVariant.objects.filter(pk=variant_id, product=product).first()
         if variant:
-            if variant.base_price is not None and variant.base_price > 0:
-                retail_price = variant.base_price
-            if variant.mrp is not None and variant.mrp > 0:
-                mrp = variant.mrp
+            if variant.market_base_price > 0:
+                retail_price = variant.market_base_price
+            if variant.market_mrp > 0:
+                mrp = variant.market_mrp
             resolved_variant_id = variant.pk
             is_in_stock = variant.stock_quantity > 0
 
@@ -750,7 +779,7 @@ def get_variant_price(
     display_price = sale["price"]
 
     result = {
-        "base_price": str(product.base_price),
+        "base_price": str(product.market_base_price),
         "price": str(display_price),
         "retail_price": str(display_price),
         "variant_id": str(resolved_variant_id) if resolved_variant_id else "",
@@ -767,17 +796,75 @@ def get_variant_price(
     return result
 
 
+def get_featured_collections(*, limit: int = 12) -> list:
+    """
+    Collections marked "show on homepage", in display order, for the visitor's country.
+
+    Each collection gets ``product_total`` (active products) and ``cover_url`` (a product's
+    primary image). Collections with no products are skipped.
+    Query guarantee: 2 SELECTs (collections + cover images).
+    """
+    from catalog.models import Collection
+
+    collections = list(
+        _live_collections(is_featured=True)
+        .annotate(product_total=Count("products", filter=Q(products__is_active=True), distinct=True))
+        .filter(product_total__gt=0)
+        .order_by("display_order", "name")[:limit]
+    )
+    if not collections:
+        return []
+    covers: dict[int, str] = {}
+    rows = (
+        ProductImage.objects.filter(
+            product__collections__in=[c.pk for c in collections],
+            product__is_active=True,
+            is_primary=True,
+        )
+        .order_by("id")
+        .values_list("product__collections", "image")
+    )
+    for collection_id, image in rows:
+        if image:
+            covers.setdefault(collection_id, f"/media/{image}")
+    for collection in collections:
+        collection.cover_url = collection.image.url if collection.image else covers.get(collection.pk, "")
+    return collections
+
+
+def get_collection_rails(*, slugs: list[str], per_rail: int = 5) -> list[dict[str, Any]]:
+    """
+    Product rails for the given collection slugs, in the order given, for the visitor's country.
+
+    Query guarantee: 1 SELECT for the collections + 2 per rail (products + image/variant prefetch).
+    """
+    slugs = [s for s in slugs if s]
+    if not slugs:
+        return []
+    by_slug = {c.slug: c for c in _live_collections(slug__in=slugs)}
+    rails = []
+    for slug in slugs:
+        collection = by_slug.get(slug)
+        if collection is None:
+            continue
+        products = list(_homepage_rail_queryset(filters=Q(collections=collection)))[:per_rail]
+        if products:
+            rails.append({"collection": collection, "products": products})
+    _decorate_homepage_rail_prices({f"rail{i}": r["products"] for i, r in enumerate(rails)})
+    return rails
+
+
 def get_category_by_slug(*, slug: str):
     """Return an active category by slug. Query guarantee: 1 SELECT."""
     from catalog.models import Category
 
-    return Category.objects.filter(slug=slug, is_active=True).first()
+    return _live_categories(slug=slug).first()
 
 
 def get_plp_filter_options() -> dict:
     """Return sidebar filter options for PLP."""
     from catalog.models import Category, ProductAttribute, Collection
-    categories = list(Category.objects.filter(is_active=True, parent__isnull=True).prefetch_related("children").order_by("display_order", "name"))
+    categories = list(_live_categories(parent__isnull=True).prefetch_related("children").order_by("display_order", "name"))
     
     subcategories_map = {}
     for cat in categories:
@@ -821,7 +908,7 @@ def get_plp_filter_options() -> dict:
                 
     attributes = list(attributes_dict.values())
     
-    collections = list(Collection.objects.filter(is_active=True).order_by("name"))
+    collections = list(_live_collections().order_by("display_order", "name"))
         
     return {
         "categories": categories,
@@ -843,7 +930,7 @@ def get_product_for_cart_add(
     Query guarantee: 1 SELECT on product (+ 1 on variant when variant_id set).
     """
     product = (
-        Product.objects.filter(pk=product_id, is_active=True)
+        _live_products(pk=product_id)
         .select_related("category", "brand")
         .first()
     )
@@ -862,7 +949,7 @@ def get_products_by_ids(*, product_ids: list[int]) -> list[Product]:
     if not product_ids:
         return []
     return list(
-        Product.objects.filter(pk__in=product_ids, is_active=True).only(
+        _live_products(pk__in=product_ids).only(
             "id", "name", "slug", "base_price"
         )
     )
@@ -885,7 +972,7 @@ def get_related_products(*, product: Product, user: Optional[Any] = None, limit:
     )
     
     products = list(
-        Product.objects.filter(pk__in=explicit_ids, is_active=True)
+        _live_products(pk__in=explicit_ids)
         .select_related("category", "brand")
         .prefetch_related(_primary_image_prefetch(), _variants_prefetch())
         .only(*PLP_CARD_FIELDS)
@@ -896,7 +983,7 @@ def get_related_products(*, product: Product, user: Optional[Any] = None, limit:
         needed = limit - len(products)
         exclude_ids = [product.pk] + [p.pk for p in products]
         cat_products = (
-            Product.objects.filter(category=product.category, is_active=True)
+            _live_products(category=product.category)
             .exclude(pk__in=exclude_ids)
             .select_related("category", "brand")
             .prefetch_related(_primary_image_prefetch(), _variants_prefetch())
@@ -909,7 +996,7 @@ def get_related_products(*, product: Product, user: Optional[Any] = None, limit:
         needed = limit - len(products)
         exclude_ids = [product.pk] + [p.pk for p in products]
         fallback_products = (
-            Product.objects.filter(is_active=True)
+            _live_products()
             .exclude(pk__in=exclude_ids)
             .select_related("category", "brand")
             .prefetch_related(_primary_image_prefetch(), _variants_prefetch())

@@ -10,7 +10,7 @@ from django.http import HttpRequest
 
 from cart.exceptions import CartItemNotFoundError, InsufficientStockError
 from cart.models import Cart, CartItem
-from cart.selectors import get_cart_for_request, get_cart_summary
+from cart.selectors import get_cart_for_request, get_cart_summary, get_unavailable_item_ids
 from catalog.models import Product, ProductVariant
 from catalog.selectors import get_variant_price
 from core.selectors import get_default_currency
@@ -127,6 +127,15 @@ def remove_cart_item(*, cart: Cart, cart_item_id: int) -> Optional[int]:
     return None
 
 @transaction.atomic
+def remove_unavailable_items(*, cart: Cart) -> int:
+    """Delete every cart line that can't be sold in the visitor's country. Returns how many were removed."""
+    ids = get_unavailable_item_ids(cart=cart)
+    if ids:
+        CartItem.objects.filter(cart=cart, pk__in=ids).delete()
+    return len(ids)
+
+
+@transaction.atomic
 def adjust_cart_item_quantity(
     *,
     cart: Cart,
@@ -151,6 +160,9 @@ def adjust_cart_item_quantity(
         raise CartItemNotFoundError("Cart item not found.")
 
     new_quantity = item.quantity + delta
+
+    if delta > 0 and item.pk in get_unavailable_item_ids(cart=cart):
+        raise InsufficientStockError("This product is not available in your country. Please remove it.")
 
     if item.variant is None and item.product.variants.exists():
         max_stock = 0
