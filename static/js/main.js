@@ -137,16 +137,26 @@
     body.dataset.drawerHydrated = 'true';
   }
 
-  var cartOffcanvas = document.getElementById('cartOffcanvas');
+  var cartOffcanvas = document.getElementById('cartOffcanvas'), cartScroll = 0;
   if (cartOffcanvas) {
     cartOffcanvas.addEventListener('shown.bs.offcanvas', function () {
       loadCartDrawerIfNeeded();
     });
+    cartOffcanvas.addEventListener('hidden.bs.offcanvas', function () {
+      cartScroll = 0;
+    });
   }
+
+  document.body.addEventListener('htmx:beforeSwap', function (event) {
+    var sc = event.detail.target && event.detail.target.querySelector('.cart-drawer-scroll');
+    if (sc) cartScroll = sc.scrollTop;
+  });
 
   document.body.addEventListener('htmx:afterSwap', function (event) {
     if (event.detail.target && event.detail.target.id === 'cart-drawer-body') {
       event.detail.target.dataset.drawerHydrated = 'true';
+      var sc = event.detail.target.querySelector('.cart-drawer-scroll');
+      if (sc && cartScroll) sc.scrollTop = cartScroll;
     }
     if (event.detail.target && event.detail.target.id === 'search-suggestions') {
       initSearchSuggestionsKeyboard();

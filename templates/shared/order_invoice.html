@@ -254,7 +254,7 @@
             </div>
             <div class="invoice-meta">
                 <div class="invoice-title">INVOICE</div>
-                <div class="invoice-number">#{{ order.order_number }}</div>
+                <div class="invoice-number">{{ order.order_number }}</div>
                 <div class="invoice-date">Date: {{ order.created_at|date:"M d, Y" }}</div>
             </div>
         </div>

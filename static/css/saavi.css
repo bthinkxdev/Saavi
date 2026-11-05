@@ -50,6 +50,9 @@
   --bs-link-hover-color: var(--sv-olive-dark);
 }
 
+html, body { overflow-x: hidden; max-width: 100%; }
+.offcanvas, .modal, .cart-drawer-scroll { overscroll-behavior: contain; }
+body:has(.offcanvas.show), body.modal-open { overflow: hidden !important; overscroll-behavior: none; }
 body.sv-body { background: var(--sv-cream); color: var(--sv-text); font-family: var(--sv-sans); }
 .sv-body h1, .sv-body h2, .sv-body h3, .sv-body .sv-h2 { color: var(--sv-ink); }
 .sv-muted { color: var(--sv-muted); }

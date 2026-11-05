@@ -1,9 +1,10 @@
 {% load i18n storefront_tags %}
 <form id="{{ form_id }}" class="sv-filters" method="get" action="{{ request.path }}" hx-get="{{ request.path }}"
-  hx-target="#product-grid" hx-swap="innerHTML" hx-push-url="true" hx-indicator="#product-grid" hx-trigger="change, submit">
+  hx-target="#product-grid" hx-swap="innerHTML" hx-push-url="true" hx-indicator="#product-grid" hx-trigger="change, submit"
+  onchange="var a=this.querySelector('.sv-filters__head a'),h=this.querySelector('input:not([type=hidden]):checked')||this.elements.min_price?.value||this.elements.max_price?.value;if(a){a.style.cssText=h?'':'pointer-events:none;opacity:.4';a.tabIndex=h?0:-1;}">
   <div class="sv-filters__head">
     <h2><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg>{% trans "Filter" %}</h2>
-    <a href="{{ request.path }}">{% trans "Clear All" %}</a>
+    <a href="{% if active_category.parent %}{% url 'catalog:plp-category' category_slug=active_category.parent.slug %}{% else %}{{ request.path }}{% endif %}" style="{% if not request.GET and not active_category.parent and not filters.subcategory_id %}pointer-events:none;opacity:.4;{% endif %}" {% if not request.GET and not active_category.parent and not filters.subcategory_id %}tabindex="-1"{% endif %}>{% trans "Clear All" %}</a>
   </div>
   {% if filters.q %}<input type="hidden" name="q" value="{{ filters.q }}">{% endif %}
   {% if filters.new_arrival %}<input type="hidden" name="new_arrival" value="1">{% endif %}

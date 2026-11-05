@@ -61,14 +61,6 @@
         <div class="jm-pdp-field mb-3">
           <div class="d-flex justify-content-between align-items-end mb-2">
             {% with first_v=product.variant_list.0 %}<label class="jm-pdp-field__label mb-0">{% if first_v.display_name|is_colour_name %}{% trans "Color" %}{% else %}{% trans "Option" %}{% endif %}: <span class="fw-normal" data-sv-variant-name>{% if target_variant %}{{ target_variant.display_name }}{% else %}{{ first_v.display_name }}{% endif %}</span></label>{% endwith %}
-            {% if product.size_chart and product.size_chart.is_active %}
-            <a href="#" data-bs-toggle="modal" data-bs-target="#sizeGuideModal" class="text-decoration-none text-dark small" style="font-weight: 500; text-underline-offset: 4px; text-decoration: underline !important;">
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-grid me-1" viewBox="0 0 16 16" style="margin-top: -2px;">
-                <path d="M5 1v8H1V1h4zM1 0a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1V1a1 1 0 0 0-1-1H1zm13 2v5H9V2h5zM9 1a1 1 0 0 0-1 1v5a1 1 0 0 0 1 1h5a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H9zM5 11v4H1v-4h4zM1 10a1 1 0 0 0-1 1v4a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-4a1 1 0 0 0-1-1H1zm13 2v2H9v-2h5zM9 11a1 1 0 0 0-1 1v2a1 1 0 0 0 1 1h5a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1H9z"/>
-              </svg>
-              {% trans "Size Guide" %}
-            </a>
-            {% endif %}
           </div>
           <div class="d-flex flex-wrap gap-2" id="variant-select-group"
             data-price-url="{% url 'catalog:variant-price' product_id=product.pk %}"
@@ -373,7 +365,7 @@
             }
           </style>
 
-          {% if product.size_chart.image %}
+          {% if not product.size_chart.content_html and product.size_chart.image %}
             <div class="text-center mb-4">
               <img src="{{ product.size_chart.image.url }}" alt="{% trans 'Size Guide' %}" class="img-fluid rounded w-100" style="max-height: 70vh; object-fit: contain;">
             </div>

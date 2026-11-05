@@ -89,8 +89,9 @@ def contact_us_view(request: HttpRequest) -> HttpResponse:
     """Render the static Contact Us page with a contact form."""
     import time
 
-    form = ContactInquiryForm()
-    if request.user.is_authenticated:
+    saved = request.session.pop("contact_form_data", None)
+    form = ContactInquiryForm(saved) if saved else ContactInquiryForm()
+    if not saved and request.user.is_authenticated:
         form.initial["name"] = request.user.get_full_name() or request.user.email
         form.initial["email"] = request.user.email
 
@@ -123,6 +124,7 @@ def submit_inquiry_view(request: HttpRequest) -> HttpResponse:
         except ValidationError as exc:
             msg = exc.messages[0] if getattr(exc, "messages", None) else str(exc)
             messages.error(request, msg)
+            request.session["contact_form_data"] = request.POST.dict()
             return redirect(request.META.get("HTTP_REFERER", "core:contact-us"))
 
         inquiry = form.save()
@@ -157,6 +159,7 @@ def submit_inquiry_view(request: HttpRequest) -> HttpResponse:
 
         messages.success(request, _("Your message has been sent successfully. We will get back to you soon."))
     else:
+        request.session["contact_form_data"] = request.POST.dict()
         messages.error(request, _("There was an error sending your message. Please check the form and try again."))
     
     return redirect(request.META.get("HTTP_REFERER", "core:contact-us"))
