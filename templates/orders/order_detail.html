@@ -102,7 +102,7 @@
 <div class="modal fade" id="reviewModal{{ item.product.id }}" tabindex="-1" aria-labelledby="reviewModalLabel{{ item.product.id }}" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
-      <form action="{% url 'catalog:submit-review' item.product.id %}" method="post">
+      <form action="{% url 'catalog:submit-review' item.product.id %}" method="post" onsubmit="this.querySelector('button[type=submit]').disabled=true;">
         {% csrf_token %}
         <div class="modal-header"><h5 class="modal-title" id="reviewModalLabel{{ item.product.id }}">{% trans "Review" %} – {{ item.product.name }}</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans 'Close' %}"></button></div>
         <div class="modal-body">

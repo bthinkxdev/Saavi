@@ -29,7 +29,7 @@
       <section id="addresses">
         <div class="sv-section__head"><h2 class="sv-h2">{% trans "My Addresses" %}</h2><button type="button" class="sv-link border-0 bg-transparent" data-sv-address-new>+ {% trans "Add New Address" %}</button></div>
         <div class="sv-addresses">
-          {% for addr in dashboard.profile.addresses.all|dictsortreversed:"is_default"|slice:":4" %}
+          {% for addr in dashboard.profile.addresses.all|dictsortreversed:"is_default" %}
           <div class="sv-address {% if addr.is_default %}is-default{% endif %}" data-address='{"id": {{ addr.pk }}, "label": "{{ addr.label|escapejs }}", "line1": "{{ addr.line1|escapejs }}", "line2": "{{ addr.line2|escapejs }}", "city": "{{ addr.city|escapejs }}", "state": "{{ addr.state|escapejs }}", "pincode": "{{ addr.pincode|escapejs }}", "is_default": {{ addr.is_default|yesno:"true,false" }}}'>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 22s7-6.5 7-12a7 7 0 0 0-14 0c0 5.5 7 12 7 12z"/><circle cx="12" cy="10" r="2.5"/></svg>
             <div>
@@ -92,7 +92,7 @@
 
 <div class="modal fade" id="svAddressModal" tabindex="-1" aria-labelledby="svAddressTitle" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
-    <form class="modal-content sv-modal" id="svAddressForm" data-create-url="{% url 'accounts:address-list-create' %}" data-detail-url="{% url 'accounts:address-detail' address_id=0 %}">
+    <form method="post" class="modal-content sv-modal" id="svAddressForm" data-create-url="{% url 'accounts:address-list-create' %}" data-detail-url="{% url 'accounts:address-detail' address_id=0 %}">
       <div class="modal-header"><h5 class="modal-title sv-h3 mb-0" id="svAddressTitle">{% trans "Address" %}</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans 'Close' %}"></button></div>
       <div class="modal-body">
         <input type="hidden" name="id">

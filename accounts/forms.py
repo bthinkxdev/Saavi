@@ -261,10 +261,18 @@ class CustomerProfileEditForm(forms.Form):
     
     name = forms.CharField(max_length=150, label="Full name", widget=forms.TextInput(attrs={"class": "form-control"}))
     email = forms.EmailField(label="Email", required=False, widget=forms.EmailInput(attrs={"class": "form-control", "readonly": True}))
-    phone = forms.CharField(max_length=20, label="Phone number", required=False, widget=forms.TextInput(attrs={"class": "form-control"}))
+    phone = forms.CharField(max_length=20, label="Phone number", required=False, widget=forms.TextInput(attrs={"class": "form-control", "type": "tel"}))
     
     address_line1 = forms.CharField(max_length=255, label="Address Line 1", required=False, widget=forms.TextInput(attrs={"class": "form-control"}))
     address_line2 = forms.CharField(max_length=255, label="Address Line 2", required=False, widget=forms.TextInput(attrs={"class": "form-control"}))
     city = forms.CharField(label="City", required=False, widget=forms.TextInput(attrs={"class": "form-control"}))
     state = forms.CharField(max_length=120, label="State / Province", required=False, widget=forms.TextInput(attrs={"class": "form-control"}))
     pincode = forms.CharField(max_length=20, label="PIN / Postal Code", required=False, widget=forms.TextInput(attrs={"class": "form-control"}))
+
+    def clean_phone(self):
+        val = (self.cleaned_data.get("phone") or "").strip()
+        if val:
+            import re
+            if re.search(r"[a-zA-Z]", val):
+                raise forms.ValidationError("Phone number cannot contain letters.")
+        return val

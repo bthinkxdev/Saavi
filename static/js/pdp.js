@@ -1,4 +1,15 @@
 (function () {
+  function updateBtnText(btn, text) {
+    if (!btn) return;
+    var el = btn.querySelector('.btn-text');
+    if (el) el.textContent = text; else btn.textContent = text;
+  }
+  function toggleQtyDisplay(show) {
+    document.querySelectorAll('.jm-pdp-qty, .sv-pdp__qty-label').forEach(function(el) {
+      el.style.display = show ? '' : 'none';
+    });
+  }
+
   var variantGroup = document.getElementById('variant-select-group');
   var variantRadios = document.querySelectorAll('.variant-radio');
   if (variantGroup && variantRadios.length > 0) {
@@ -172,7 +183,7 @@
                   atcBtn.style.opacity = '1';
                   atcBtn.style.pointerEvents = 'auto';
                   atcBtn.onclick = null;
-                  atcBtn.textContent = 'Add to Cart';
+                  updateBtnText(atcBtn, 'Add to Cart');
                 }
                 if (stickyAtcBtn) {
                   stickyAtcBtn.type = 'submit';
@@ -181,13 +192,11 @@
                   stickyAtcBtn.style.opacity = '1';
                   stickyAtcBtn.style.pointerEvents = 'auto';
                   stickyAtcBtn.onclick = null;
-                  var stText = stickyAtcBtn.querySelector('.btn-text');
-                  if (stText) stText.textContent = 'Add to cart';
-                  else stickyAtcBtn.textContent = 'Add to cart';
+                  updateBtnText(stickyAtcBtn, 'Add to cart');
                 }
                 if (bnForm) bnForm.classList.remove('d-none');
                 if (stickyBnForm) stickyBnForm.classList.remove('d-none');
-                if (qtyStepper) qtyStepper.style.opacity = '1';
+                toggleQtyDisplay(true);
               } else {
                 if (atcBtn) {
                   atcBtn.type = 'button';
@@ -196,7 +205,7 @@
                   atcBtn.style.opacity = '0.6';
                   atcBtn.style.pointerEvents = 'auto';
                   atcBtn.onclick = function (e) { e.preventDefault(); return false; };
-                  atcBtn.textContent = 'Sold out';
+                  updateBtnText(atcBtn, 'Sold out');
                 }
                 if (stickyAtcBtn) {
                   stickyAtcBtn.type = 'button';
@@ -205,13 +214,11 @@
                   stickyAtcBtn.style.opacity = '0.6';
                   stickyAtcBtn.style.pointerEvents = 'auto';
                   stickyAtcBtn.onclick = function (e) { e.preventDefault(); return false; };
-                  var stText = stickyAtcBtn.querySelector('.btn-text');
-                  if (stText) stText.textContent = 'Sold out';
-                  else stickyAtcBtn.textContent = 'Sold out';
+                  updateBtnText(stickyAtcBtn, 'Sold out');
                 }
                 if (bnForm) bnForm.classList.add('d-none');
                 if (stickyBnForm) stickyBnForm.classList.add('d-none');
-                if (qtyStepper) qtyStepper.style.opacity = '0.5';
+                toggleQtyDisplay(false);
               }
 
               var stockText = document.getElementById('pdp-stock-text');
@@ -246,16 +253,12 @@
 
     var urlParams = new URLSearchParams(window.location.search);
     var urlVid = urlParams.get('variant_id');
-    var radioToSelect = null;
     if (urlVid) {
-      radioToSelect = document.querySelector('.variant-radio[value="' + urlVid + '"]');
-    }
-    if (!radioToSelect) {
-      radioToSelect = document.querySelector('.variant-radio:checked');
-    }
-    if (radioToSelect) {
-      radioToSelect.checked = true;
-      radioToSelect.dispatchEvent(new Event('change'));
+      var radioToSelect = document.querySelector('.variant-radio[value="' + urlVid + '"]');
+      if (radioToSelect && !radioToSelect.checked) {
+        radioToSelect.checked = true;
+        radioToSelect.dispatchEvent(new Event('change'));
+      }
     }
   }
 
@@ -334,12 +337,9 @@
         btn.style.pointerEvents = 'auto';
         btn.onclick = function (e) { e.preventDefault(); return false; };
       });
-      if (atcBtn) atcBtn.textContent = 'Sold out';
-      if (stickyAtcBtn) {
-        var stText = stickyAtcBtn.querySelector('.btn-text');
-        if (stText) stText.textContent = 'Sold out';
-        else stickyAtcBtn.textContent = 'Sold out';
-      }
+      updateBtnText(atcBtn, 'Sold out');
+      updateBtnText(stickyAtcBtn, 'Sold out');
+      toggleQtyDisplay(false);
     } else {
       if (errorMsg) {
         errorMsg.textContent = '';
@@ -353,12 +353,9 @@
         btn.style.pointerEvents = 'auto';
         btn.onclick = null;
       });
-      if (atcBtn) atcBtn.textContent = 'Add to Cart';
-      if (stickyAtcBtn) {
-        var stText = stickyAtcBtn.querySelector('.btn-text');
-        if (stText) stText.textContent = 'Add to cart';
-        else stickyAtcBtn.textContent = 'Add to cart';
-      }
+      updateBtnText(atcBtn, 'Add to Cart');
+      updateBtnText(stickyAtcBtn, 'Add to cart');
+      toggleQtyDisplay(true);
     }
   };
 

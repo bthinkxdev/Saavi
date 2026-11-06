@@ -45,7 +45,7 @@
           </div>
           <form method="post" action="{% url 'cart:wishlist-toggle' %}" hx-post="{% url 'cart:wishlist-toggle' %}" hx-swap="none" class="m-0">
             {% csrf_token %}<input type="hidden" name="product_id" value="{{ line.product.pk }}">
-            <button type="submit" class="sv-icon-btn sv-icon-btn--sm {% if wishlist_product_ids and line.product.pk in wishlist_product_ids %}is-active{% endif %}" aria-label="{% trans 'Move to wishlist' %}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></button>
+            <button type="submit" class="sv-icon-btn sv-icon-btn--sm {% if wishlist_product_ids and line.product.pk in wishlist_product_ids %}is-active{% endif %}" data-jm-wish-btn data-product-id="{{ line.product.pk }}" aria-label="{% trans 'Move to wishlist' %}" aria-pressed="{% if wishlist_product_ids and line.product.pk in wishlist_product_ids %}true{% else %}false{% endif %}"><svg viewBox="0 0 24 24" fill="{% if wishlist_product_ids and line.product.pk in wishlist_product_ids %}currentColor{% else %}none{% endif %}" stroke="currentColor" stroke-width="1.8"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></button>
           </form>
         </div>
         <div class="sv-cart__price">

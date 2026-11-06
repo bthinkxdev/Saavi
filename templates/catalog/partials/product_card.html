@@ -51,16 +51,19 @@
         <svg viewBox="0 0 24 24" fill="{% if wishlist_product_ids and product.pk in wishlist_product_ids %}currentColor{% else %}none{% endif %}" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
       </button>
     </form>
-  </div>
 
-  <div class="sv-card__body">
-    <h3 class="sv-card__title">{{ product.name }}</h3>
     {% if product.average_rating %}
     <p class="sv-card__rating" aria-label="{% trans 'Rating' %} {{ product.average_rating|floatformat:1 }}">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
       {{ product.average_rating|floatformat:1 }}{% if product.review_count %} <span>({{ product.review_count }})</span>{% endif %}
     </p>
     {% endif %}
+
+    {% if eff_stock <= 0 %}<p class="sv-card__stock">{% trans "Out of Stock" %}</p>{% endif %}
+  </div>
+
+  <div class="sv-card__body">
+    <h3 class="sv-card__title">{{ product.name }}</h3>
     {% if product.is_flash_sale %}{% with was=product.original_price|default:eff_base %}
     <p class="sv-price">
       <span class="sv-price__now">{% money_label eff_price display_currency %}</span>
@@ -76,7 +79,6 @@
       {% endif %}
     </p>
     {% endif %}
-    {% if eff_stock <= 0 %}<p class="sv-card__stock">{% trans "Out of Stock" %}</p>{% endif %}
     <a class="stretched-link" href="{% url 'catalog:pdp' slug=product.slug %}" aria-label="{% blocktrans with name=product.name %}View {{ name }}{% endblocktrans %}"></a>
   </div>
 </article>

@@ -64,11 +64,20 @@ document.addEventListener('change', function (e) {
   document.addEventListener('click', function (e) {
     var form = document.getElementById('svAddressForm');
     if (!form) return;
-    if (e.target.closest('[data-sv-address-new]')) { fill(form, null); modal().show(); }
+    if (e.target.closest('[data-sv-address-new]')) {
+      fill(form, null);
+      var m = modal();
+      if (m) m.show();
+    }
     var card = e.target.closest('[data-address]');
     if (!card) return;
-    var data = JSON.parse(card.getAttribute('data-address'));
-    if (e.target.closest('[data-sv-address-edit]')) { fill(form, data); modal().show(); }
+    var data = null;
+    try { data = JSON.parse(card.getAttribute('data-address')); } catch (err) {}
+    if (e.target.closest('[data-sv-address-edit]')) {
+      fill(form, data);
+      var m = modal();
+      if (m) m.show();
+    }
     if (e.target.closest('[data-sv-address-delete]')) {
       if (!confirm('Delete this address?')) return;
       fetch(form.dataset.detailUrl.replace('/0/', '/' + data.id + '/'), { method: 'DELETE', headers: { 'X-CSRFToken': csrf() } })
@@ -77,9 +86,9 @@ document.addEventListener('change', function (e) {
   });
   document.addEventListener('submit', function (e) {
     var form = e.target;
-    if (form.id !== 'svAddressForm') return;
+    if (!form || form.getAttribute('id') !== 'svAddressForm') return;
     e.preventDefault();
-    var id = form.elements.id.value;
+    var id = (form.elements.id && form.elements.id.value) || '';
     var body = {};
     ['label', 'line1', 'line2', 'city', 'state', 'pincode'].forEach(function (k) { body[k] = form.elements[k].value.trim(); });
     body.is_default = form.elements.is_default.checked;
@@ -154,3 +163,4 @@ document.addEventListener('change', function (e) {
   var out = document.querySelector('[data-sv-variant-name]');
   if (lab && out) out.textContent = lab.getAttribute('data-name') || lab.textContent.trim();
 });
+window.addEventListener('pageshow', function () { if (window.htmx) htmx.trigger('#cart-count-badge', 'cartUpdated'); });

@@ -42,7 +42,6 @@
           {% if price_data.is_flash_sale == "true" %}{% with pct=price_data.price|discount_percent:price_data.original_price %}{% if pct %}<span class="sv-price__off" id="pdp-price-off">({{ pct }}% {% trans "Off" %})</span>{% endif %}{% endwith %}
           {% elif price_data.has_mrp_discount == "true" %}{% with pct=price_data.price|discount_percent:price_data.mrp %}{% if pct %}<span class="sv-price__off" id="pdp-price-off">({{ pct }}% {% trans "Off" %})</span>{% endif %}{% endwith %}{% endif %}
         </p>
-        {% if product.meta_description %}<p class="sv-pdp__lead">{{ product.meta_description }}</p>{% endif %}
         <p class="jm-pdp-buybox__stock {% if not price_data.is_in_stock %}is-out{% elif price_data.stock_quantity <= price_data.low_stock_threshold %}is-low{% else %}is-in{% endif %}"
           id="pdp-stock-text">
           {% if not price_data.is_in_stock %}
@@ -88,13 +87,13 @@
       <div id="purchase-actions-wrap">
         <div id="purchase-actions" class="jm-pdp-buybox__purchase" hx-get="{{ request.path }}"
           hx-select="#purchase-actions" hx-swap="outerHTML" hx-include=".pdp-variant-id-input"
-          hx-trigger="pageshow from:window, cartItemAdded from:body, cartUpdated from:body">
+          hx-trigger="cartItemAdded from:body, cartUpdated from:body">
 
           <div id="pdp-stock-error-msg" class="text-danger small mb-2 d-none"></div>
 
           <div id="pdp-add-to-cart-group" class="jm-pdp-buybox__row {% if is_in_cart %}d-none{% endif %}">
-            <span class="sv-pdp__qty-label">{% trans "Quantity" %}</span>
-            <div class="qty-stepper jm-pdp-qty" aria-label="{% trans 'Quantity' %}" {% if not price_data.is_in_stock %}style="opacity: 0.5;" {% endif %}>
+            <span class="sv-pdp__qty-label" {% if not price_data.is_in_stock %}style="display: none;"{% endif %}>{% trans "Quantity" %}</span>
+            <div class="qty-stepper jm-pdp-qty" aria-label="{% trans 'Quantity' %}" {% if not price_data.is_in_stock %}style="display: none;"{% endif %}>
               <button class="qty-stepper__btn" type="button"
                 onclick="if(window.handlePdpQtyChange) window.handlePdpQtyChange(-1);"
                 aria-label="{% trans 'Decrease quantity' %}">&minus;</button>
@@ -116,7 +115,7 @@
                 class="btn btn-outline-floward w-100 jm-pdp-btn {% if not price_data.is_in_stock %}disabled{% endif %}" {% if not price_data.is_in_stock %}style="cursor: not-allowed; opacity: 0.6; pointer-events: auto;"
                 onclick="event.preventDefault(); return false;" {% endif %}>
                 <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M2 3h3l2.6 12.2a1.6 1.6 0 0 0 1.6 1.3h8.6a1.6 1.6 0 0 0 1.6-1.2L21 8H6"/></svg>
-                {% if price_data.is_in_stock %}{% trans "Add to Cart" %}{% else %}{% trans "Sold out" %}{% endif %}
+                <span class="btn-text">{% if price_data.is_in_stock %}{% trans "Add to Cart" %}{% else %}{% trans "Sold out" %}{% endif %}</span>
               </button>
             </form>
 
@@ -255,20 +254,16 @@
     <div class="sv-pdp-tabs__grid">
       <div>
         <div data-sv-panel="desc">
-          <p>{% if product.meta_description %}{{ product.meta_description }}{% else %}{% blocktrans with name=product.name %}{{ name }} — crafted with care for weddings, festivals and special celebrations.{% endblocktrans %}{% endif %}</p>
-          {% if product.specifications.all %}
-          <ul class="sv-spec-list">
-            {% for spec in product.specifications.all|slice:":6" %}<li><strong>{{ spec.name }}:</strong> {{ spec.value|truncatechars:80 }}</li>{% endfor %}
-          </ul>
-          {% endif %}
+          <p>{% if product.care_instructions %}{{ product.care_instructions|linebreaksbr }}{% elif product.description %}{{ product.description|linebreaksbr }}{% else %}{% blocktrans with name=product.name %}{{ name }} — crafted with care for weddings, festivals and special celebrations.{% endblocktrans %}{% endif %}</p>
         </div>
         <div data-sv-panel="specs" hidden>
           {% if product.specifications.all %}
-          <table class="sv-spec-table"><tbody>
-            {% for spec in product.specifications.all %}<tr><th>{{ spec.name }}</th><td>{{ spec.value|linebreaksbr }}</td></tr>{% endfor %}
-          </tbody></table>
+          <div class="table-responsive">
+            <table class="sv-spec-table"><tbody>
+              {% for spec in product.specifications.all %}<tr><th>{{ spec.name }}</th><td>{{ spec.value|linebreaksbr }}</td></tr>{% endfor %}
+            </tbody></table>
+          </div>
           {% else %}<p class="sv-muted">{% trans "Specifications will be added soon." %}</p>{% endif %}
-          {% if product.care_instructions %}<h3 class="sv-h3 mt-4">{% trans "Care Instructions" %}</h3><p>{{ product.care_instructions|linebreaksbr }}</p>{% endif %}
         </div>
         <div data-sv-panel="reviews" id="reviews" hidden>
           {% if has_delivered_order %}<p class="sv-muted small">{% trans "You can review this product from your" %} <a href="{% url 'orders:list' %}">{% trans "Order History" %}</a>.</p>{% endif %}

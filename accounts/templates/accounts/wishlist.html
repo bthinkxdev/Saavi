@@ -4,7 +4,7 @@
 {% block title %}{% trans "My Wishlist" %} | {{ site_settings.site_name|default:"Saavi By Neethu" }}{% endblock %}
 
 {% block content %}
-<div class="container page-container jm-page">
+<div class="container page-container jm-page" style="min-height: 60vh;">
   <h1 class="section-title jm-page-title">{% trans "My Wishlist" %}</h1>
 
   {% if items %}
@@ -20,7 +20,7 @@
   {% else %}
   <div class="card border-0 p-4 text-center mx-auto" style="max-width: 500px;">
     <p class="mb-3 text-muted">{% trans "Your wishlist is empty." %}</p>
-    <a href="{% url 'cms:homepage' %}" class="btn btn-floward">{% trans "Choose Products" %}</a>
+    <a href="{% url 'catalog:plp' %}" class="btn btn-floward">{% trans "Choose Products" %}</a>
   </div>
   {% endif %}
 </div>

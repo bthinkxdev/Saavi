@@ -210,6 +210,7 @@ def checkout_fix_stock_view(request: HttpRequest) -> HttpResponse:
     return redirect("checkout:checkout")
 
 
+@never_cache
 @require_GET
 def checkout_view(request: HttpRequest) -> HttpResponse:
     """Multi-step checkout page with gift Order Preview partial."""
@@ -338,6 +339,7 @@ def checkout_view(request: HttpRequest) -> HttpResponse:
     )
 
 
+@never_cache
 @require_http_methods(["POST"])
 def checkout_place_order_view(request: HttpRequest) -> HttpResponse:
     """Place order and process payment in one HTMX step."""
@@ -352,7 +354,27 @@ def checkout_place_order_view(request: HttpRequest) -> HttpResponse:
 
     cart = _get_checkout_cart(request=request, create=False)
     if cart is None:
-        raise Http404("Cart not found.")
+        return render(
+            request,
+            "checkout/partials/errors.html",
+            {"errors": {"__all__": ["Your checkout session or cart was not found. Please refresh the page."]}},
+            status=200,
+        )
+
+    #validate price changes and stock availability immediately before processing
+    summary = get_cart_summary(cart=cart, skip_delivery_charge_calculation=True)
+    checkout_errors = []
+    for l in summary.lines:
+        if l.item.unit_price_at_add is not None and l.unit_price_at_add != l.item.unit_price_at_add:
+            l.item.unit_price_at_add = l.unit_price_at_add
+            l.item.save(update_fields=["unit_price_at_add", "updated_at"])
+            checkout_errors.append(f"Price for '{l.product.name}' has changed. Please review before ordering.")
+    if summary.has_stock_issues:
+        checkout_errors.append("Some items are out of stock or exceed available quantity. Please review your order.")
+    if checkout_errors:
+        response = render(request, "checkout/partials/errors.html", {"errors": {"__all__": checkout_errors}}, status=200)
+        response["HX-Trigger"] = "stockChanged"
+        return response
 
     if request.user.is_authenticated:
         from accounts.services import ensure_customer_profile_for_user
@@ -574,19 +596,6 @@ def checkout_place_order_view(request: HttpRequest) -> HttpResponse:
             cart.delivery_charge = new_charge
             cart.save(update_fields=["delivery_charge", "updated_at"])
 
-    # summary is already retrieved on line 375 with skip_delivery_charge_calculation=True
-    if summary.has_stock_issues:
-        from django.utils.translation import gettext as _
-        is_buy_now = request.session.get("checkout_mode") == "buy_now"
-        msg = _("This item just went out of stock or quantity exceeds available stock. Please review your order summary.") if is_buy_now else _("Some items in your cart are out of stock. Please review your order summary to adjust them.")
-        response = render(
-            request,
-            "checkout/partials/errors.html",
-            {"errors": {"__all__": [msg]}},
-            status=200,
-        )
-        response["HX-Trigger"] = "stockChanged"
-        return response
 
     try:
         from catalog.exceptions import InsufficientStockError
@@ -617,38 +626,36 @@ def checkout_place_order_view(request: HttpRequest) -> HttpResponse:
             is_guest_checkout=not request.user.is_authenticated,
         )
     except InsufficientStockError as exc:
-        response = render(
-            request,
-            "checkout/partials/errors.html",
-            {"errors": {"__all__": [str(exc)]}},
-            status=200,
-        )
+        response = render(request, "checkout/partials/errors.html", {"errors": {"__all__": [str(exc)]}}, status=200)
         response["HX-Trigger"] = "stockChanged"
         return response
+    except Exception as exc:
+        return render(request, "checkout/partials/errors.html", {"errors": {"__all__": [str(exc)]}}, status=200)
 
     grant_order_access(request=request, order=order)
 
-    payment_data = {}
+    payment_data = {
+        "request_host": request.get_host(),
+    }
 
-    process_payment(
-        order=order,
-        gateway_key=gateway_key,
-        payment_data=payment_data,
-    )
+    try:
+        process_payment(
+            order=order,
+            gateway_key=gateway_key,
+            payment_data=payment_data,
+        )
+    except Exception as exc:
+        return render(request, "checkout/partials/errors.html", {"errors": {"__all__": [f"Payment error: {str(exc)}"]}}, status=200)
 
     if gateway_key == "stripe":
         pay_url = reverse("checkout:stripe-pay", kwargs={"order_id": order.pk})
         if request.headers.get("HX-Request"):
-            response = HttpResponse()
-            response["HX-Redirect"] = pay_url
-            return response
+            return HttpResponse(f'<script>var o=document.getElementById("order-processing-overlay");if(o)o.classList.remove("d-none");window.location.replace("{pay_url}");</script>')
         return redirect(pay_url)
 
     confirmation_url = reverse("checkout:confirmation", kwargs={"order_id": order.pk})
     if request.headers.get("HX-Request"):
-        response = HttpResponse()
-        response["HX-Redirect"] = confirmation_url
-        return response
+        return HttpResponse(f'<script>var o=document.getElementById("order-processing-overlay");if(o)o.classList.remove("d-none");window.location.replace("{confirmation_url}");</script>')
     return redirect(confirmation_url)
 
 
@@ -682,7 +689,7 @@ def checkout_confirmation_view(request: HttpRequest, order_id: int) -> HttpRespo
         "checkout/confirmation_page.html",
         {
             "order": order,
-            "payment_pending": order.order_status == OrderStatus.CHECKOUT_PENDING,
+            "payment_pending": order.order_status == OrderStatus.CHECKOUT_PENDING and not order.payment_transactions.filter(gateway_key="cod").exists(),
         },
     )
 

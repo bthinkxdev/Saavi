@@ -80,6 +80,12 @@ class ProductForm(SlugAutoMixin):
             "stock_quantity": forms.NumberInput(attrs={"min": "0"}),
             "low_stock_threshold": forms.NumberInput(attrs={"min": "0"}),
         }
+        labels = {
+            "care_instructions": "Description",
+        }
+        help_texts = {
+            "care_instructions": "Detailed product description.",
+        }
         error_messages = {
             "name": {"required": "Product name is required."},
             "sku": {"required": "SKU is required."},

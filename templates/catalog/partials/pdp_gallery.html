@@ -1,6 +1,6 @@
 {% load i18n %}
 <div class="jm-pdp-gallery sv-gallery" data-jm-pdp-gallery>
-  <div class="jm-pdp-gallery__stage sv-gallery__stage" data-bs-toggle="modal" data-bs-target="#pdpGalleryModal" style="cursor: pointer;">
+  <div class="jm-pdp-gallery__stage sv-gallery__stage">
     {% with primary=product.images.first %}
     {% if primary %}
     <img id="main-pdp-image"
@@ -9,6 +9,9 @@
          alt="{{ primary.alt_text|default:product.name }}"
          width="800"
          height="800"
+         data-bs-toggle="modal"
+         data-bs-target="#pdpGalleryModal"
+         style="cursor: pointer;"
          fetchpriority="high">
     {% endif %}
     {% endwith %}
@@ -22,7 +25,7 @@
         <svg viewBox="0 0 24 24" width="22" height="22" fill="{% if is_in_wishlist %}currentColor{% else %}none{% endif %}" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
       </button>
     </form>
-    <span class="sv-gallery__zoom" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/></svg></span>
+    <span class="sv-gallery__zoom" data-bs-toggle="modal" data-bs-target="#pdpGalleryModal" role="button" style="cursor: pointer;" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/></svg></span>
   </div>
 
   {% if product.images.all|length > 1 or product.videos.all|length > 0 %}

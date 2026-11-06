@@ -248,11 +248,11 @@
         </div>
 
       </form>
-      <div id="checkout-result" class="mt-3"></div>
     </div>
 
     <div class="col-lg-5">
-      <div class="checkout-step sv-checkout__summary" id="order-summary-container" hx-get="{% url 'checkout:checkout' %}" hx-trigger="stockChanged from:body, cartUpdated from:body" hx-select="#order-summary-container" hx-swap="outerHTML">
+      <div class="sticky-top" style="top: 100px;">
+        <div class="checkout-step sv-checkout__summary" id="order-summary-container" hx-get="{% url 'checkout:checkout' %}" hx-trigger="stockChanged from:body, cartUpdated from:body" hx-select="#order-summary-container" hx-swap="outerHTML">
         <div class="d-flex justify-content-between align-items-center mb-3">
           <h2 class="mb-0">{% trans "Order Summary" %} <small>({{ summary.lines|length }} {% trans "Items" %})</small></h2>
           {% if is_buy_now and summary.lines %}
@@ -369,7 +369,6 @@
             {% endif %}
           {% else %}
             {% if summary.has_exceeds_stock_items and not summary.has_out_of_stock_items %}
-              <div class="text-danger small mt-2 text-center">{% trans "Some items exceed available stock." %}</div>
               <form method="post" action="{% url 'checkout:fix-stock' %}" hx-post="{% url 'checkout:fix-stock' %}" hx-target="#order-summary-container" hx-select="#order-summary-container" hx-swap="outerHTML" class="mt-2">
                 {% csrf_token %}
                 <button type="submit" class="btn btn-dark w-100 py-2">{% trans "Update Items to Max Available Stock" %}</button>
@@ -389,6 +388,8 @@
           <div><strong>{% trans "100% Secure Payment" %}</strong><span>{% trans "Your payment information is safe with us." %}</span></div>
         </div>
       </div>
+      <div id="checkout-result" class="mt-3"></div>
+    </div>
       <ul class="sv-trust sv-trust--mini">
         <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="M1 6h13v10H1zM14 9h4l3 3v4h-7"/><circle cx="5.5" cy="17.5" r="1.8"/><circle cx="17.5" cy="17.5" r="1.8"/></svg><div><strong>{% trans "Free Shipping" %}</strong><span>{% trans "Above" %} {% if site_settings.free_shipping_threshold %}{% money_label site_settings.free_shipping_threshold display_currency %}{% else %}{% money_label 999 display_currency %}{% endif %}</span></div></li>
         <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="M12 2l9 5v10l-9 5-9-5V7z"/><path d="M3 7l9 5 9-5M12 12v10"/></svg><div><strong>{% trans "Easy Returns" %}</strong><span>{% trans "7-Day Returns" %}</span></div></li>
@@ -607,23 +608,35 @@
             event.stopPropagation();
             return false;
           }
-          var selectedGateway = document.querySelector('input[name="gateway_key"]:checked');
-          if (selectedGateway && selectedGateway.value === 'cod') {
-            document.getElementById('order-processing-overlay').classList.remove('d-none');
-          }
+          var overlay = document.getElementById('order-processing-overlay');
+          if (overlay) overlay.classList.remove('d-none');
         }
       });
 
-      checkoutForm.addEventListener('htmx:afterSwap', function(event) {
-        if (event.detail.elt === checkoutForm) {
-          document.getElementById('order-processing-overlay').classList.add('d-none');
+      document.body.addEventListener('htmx:beforeSwap', function(event) {
+        if (event.detail.target && event.detail.target.id === 'checkout-result') {
+          if (!event.detail.serverResponse || !event.detail.serverResponse.includes('window.location.replace')) {
+            var overlay = document.getElementById('order-processing-overlay');
+            if (overlay) overlay.classList.add('d-none');
+          }
         }
       });
-      checkoutForm.addEventListener('htmx:responseError', function(event) {
-        document.getElementById('order-processing-overlay').classList.add('d-none');
+      document.body.addEventListener('htmx:afterSwap', function(event) {
+        if (event.detail.target && event.detail.target.id === 'checkout-result') {
+          var res = document.getElementById('checkout-result');
+          if (res && res.querySelector('.alert')) {
+            var overlay = document.getElementById('order-processing-overlay');
+            if (overlay) overlay.classList.add('d-none');
+          }
+        }
       });
-      checkoutForm.addEventListener('htmx:sendError', function(event) {
-        document.getElementById('order-processing-overlay').classList.add('d-none');
+      document.body.addEventListener('htmx:responseError', function() {
+        var overlay = document.getElementById('order-processing-overlay');
+        if (overlay) overlay.classList.add('d-none');
+      });
+      document.body.addEventListener('htmx:sendError', function() {
+        var overlay = document.getElementById('order-processing-overlay');
+        if (overlay) overlay.classList.add('d-none');
       });
     }
 
@@ -690,6 +703,11 @@
       if (/^[^a-zA-Z0-9]+$/.test(val)) return "Postal code cannot contain special characters only.";
       if (!/^\d+$/.test(val)) return "Postal code can only contain numbers.";
       return "";
+    });
+    window.addEventListener('pageshow', function (e) {
+      if (e.persisted) {
+        window.location.reload();
+      }
     });
   });
 </script>
