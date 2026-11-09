@@ -680,34 +680,44 @@ document.addEventListener("DOMContentLoaded", function() {
 
     const basePriceInput = document.getElementById('id_base_price');
     const mrpInput = document.getElementById('id_mrp');
+    const basePriceAeInput = document.getElementById('id_base_price_ae');
+    const mrpAeInput = document.getElementById('id_mrp_ae');
     const purchasePriceInput = document.getElementById('id_purchase_price');
     const stockInput = document.getElementById('id_stock_quantity');
     const thresholdInput = document.getElementById('id_low_stock_threshold');
 
     const basePriceCol = basePriceInput?.closest('.col-md-3');
     const mrpCol = mrpInput?.closest('.col-md-3');
+    const basePriceAeCol = basePriceAeInput?.closest('.col-md-3');
+    const mrpAeCol = mrpAeInput?.closest('.col-md-3');
     const purchasePriceCol = purchasePriceInput?.closest('.col-md-3');
     const inventoryCard = document.getElementById('main-inventory-card');
 
     if (hasVariants) {
       if (basePriceCol) basePriceCol.style.display = 'none';
       if (mrpCol) mrpCol.style.display = 'none';
+      if (basePriceAeCol) basePriceAeCol.style.display = 'none';
+      if (mrpAeCol) mrpAeCol.style.display = 'none';
       if (purchasePriceCol) purchasePriceCol.style.display = 'none';
       if (inventoryCard) inventoryCard.style.display = 'none';
       
       // remove required attributes
       if (basePriceInput) basePriceInput.required = false;
       if (mrpInput) mrpInput.required = false;
+      if (basePriceAeInput) basePriceAeInput.required = false;
+      if (mrpAeInput) mrpAeInput.required = false;
       if (purchasePriceInput) purchasePriceInput.required = false;
       if (stockInput) stockInput.required = false;
       if (thresholdInput) thresholdInput.required = false;
     } else {
       if (basePriceCol) basePriceCol.style.display = '';
       if (mrpCol) mrpCol.style.display = '';
+      if (basePriceAeCol) basePriceAeCol.style.display = '';
+      if (mrpAeCol) mrpAeCol.style.display = '';
       if (purchasePriceCol) purchasePriceCol.style.display = '';
       if (inventoryCard) inventoryCard.style.display = '';
       
-      if (basePriceInput) basePriceInput.required = true;
+      if (basePriceInput) basePriceInput.required = false;
       if (mrpInput) mrpInput.required = false;
       if (purchasePriceInput) purchasePriceInput.required = false;
       if (stockInput) stockInput.required = true;
@@ -933,7 +943,7 @@ document.addEventListener("DOMContentLoaded", function() {
               <input type="hidden" name="variant_dynamic_attributes[]" value="${attrStrings}">
             </td>
             <td data-label="Base Price">
-              <input type="number" step="0.01" min="0" class="form-control form-control-sm w-100" name="variant_base_price[]" value="${basePriceVal}" required>
+              <input type="number" step="0.01" min="0" class="form-control form-control-sm w-100" name="variant_base_price[]" value="${basePriceVal}">
             </td>
             <td data-label="MRP">
               <input type="number" step="0.01" min="0" class="form-control form-control-sm w-100" name="variant_mrp[]" value="${mrpVal}">

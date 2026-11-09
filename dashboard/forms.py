@@ -157,21 +157,26 @@ class ProductForm(SlugAutoMixin):
         cleaned = super().clean()
         has_variants = self.data.get("has_variants") == "on"
         
-        if not has_variants and cleaned.get("base_price") is None:
-            self.add_error("base_price", "Base price is required for simple products.")
-            
         # A product explicitly assigned to a market must be priced in that market currency.
+        #if no country is selected, it is sold everywhere (both India and UAE).
         selected = {c.code for c in cleaned.get("countries") or []}
         if not has_variants:
-            if "AE" in selected and not cleaned.get("base_price_ae"):
-                self.add_error("base_price_ae", "UAE price is required when the product is available in the UAE.")
-            if "IN" in selected and not cleaned.get("base_price"):
-                self.add_error("base_price", "India price is required when the product is available in India.")
+            is_empty = not selected
+            if (is_empty or "IN" in selected) and not cleaned.get("base_price"):
+                context = "when sold everywhere." if is_empty else "when the product is available in India."
+                self.add_error("base_price", f"Base price (INR) is required {context}")
+            if (is_empty or "AE" in selected) and not cleaned.get("base_price_ae"):
+                context = "when sold everywhere." if is_empty else "when the product is available in the UAE."
+                self.add_error("base_price_ae", f"UAE price is required {context}")
         for field in ["base_price", "mrp", "purchase_price", "stock_quantity", "low_stock_threshold"]:
             val = cleaned.get(field)
             if val is None:
                 cleaned[field] = 0
             elif val < 0:
+                self.add_error(field, f"{field.replace('_', ' ').capitalize()} cannot be negative.")
+        for field in ["base_price_ae", "mrp_ae"]:
+            val = cleaned.get(field)
+            if val is not None and val < 0:
                 self.add_error(field, f"{field.replace('_', ' ').capitalize()} cannot be negative.")
         return cleaned
 

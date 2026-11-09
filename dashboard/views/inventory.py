@@ -10,6 +10,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
 from catalog.models import Category, Product, ProductVariant
+from dashboard import selectors
 from dashboard.access import dashboard_required
 
 
@@ -236,15 +237,7 @@ def inventory_adjust_stock(request: HttpRequest) -> HttpResponse:
         parent_status_label = status_label
         parent_status_pill = status_pill
 
-    low_stock_count = (
-        Product.objects.filter(is_active=True)
-        .filter(
-            Q(variants__stock_quantity__lte=F("variants__low_stock_threshold"))
-            | Q(variants__isnull=True, stock_quantity__lte=F("low_stock_threshold"))
-        )
-        .distinct()
-        .count()
-    )
+    low_stock_count = selectors.get_inventory_alert_count()
 
     msg = f"Stock updated for {sku} to {new_stock}."
     if is_ajax:

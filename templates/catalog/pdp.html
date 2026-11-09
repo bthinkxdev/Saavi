@@ -30,6 +30,11 @@
       <p class="sv-pdp__sku" id="pdp-sku-display">SKU: {% if product.variant_list %}{% if target_variant %}{{ target_variant.sku_suffix }}{% else %}{{ product.variant_list.0.sku_suffix }}{% endif %}{% else %}{{ product.sku }}{% endif %}</p>
 
       <div class="jm-pdp-buybox__price-row">
+        {% if price_data.has_price == "false" or price_data.price == "0" or price_data.price == "0.00" %}
+        <p class="jm-pdp-buybox__stock is-out" id="pdp-stock-text">
+          {% blocktrans with country=current_country_name %}This product is not available in {{ country }}{% endblocktrans %}
+        </p>
+        {% else %}
         <p class="pdp-price jm-pdp-buybox__price" id="pdp-price">
           {% if price_data.is_flash_sale == "true" %}
           <span class="was" id="pdp-price-original">{% money_label price_data.original_price display_currency %}</span>
@@ -52,6 +57,7 @@
           {% trans "In stock" %}
           {% endif %}
         </p>
+        {% endif %}
       </div>
 
       <div class="jm-pdp-buybox__options">
@@ -63,7 +69,8 @@
           </div>
           <div class="d-flex flex-wrap gap-2" id="variant-select-group"
             data-price-url="{% url 'catalog:variant-price' product_id=product.pk %}"
-            data-currency-symbol="{{ display_currency.symbol }}">
+            data-currency-symbol="{{ display_currency.symbol }}"
+            data-country-name="{{ current_country_name }}">
             {% for v in product.variant_list %}
             <input type="radio" class="btn-check variant-radio" name="variant_option" id="variant_{{ v.pk }}"
               value="{{ v.pk }}" autocomplete="off" {% if v.pk == selected_variant_id or not selected_variant_id and forloop.first %}checked{% endif %}>
@@ -205,7 +212,7 @@
 
     <div class="d-flex align-items-center gap-2 gap-lg-3 ms-auto" style="flex: 0 0 auto;">
       <div class="jm-pdp-sticky__price d-none d-sm-block" id="pdp-sticky-price"
-        style="font-size: 0.85rem; font-weight: 500;">{% money_label price_data.price display_currency %}</div>
+        style="font-size: 0.85rem; font-weight: 500;">{% if price_data.has_price == "false" or price_data.price == "0" or price_data.price == "0.00" %}{% trans "Unavailable" %}{% else %}{% money_label price_data.price display_currency %}{% endif %}</div>
       <div class="jm-pdp-sticky__actions" id="pdp-sticky-actions-group" style="flex: 0 0 auto;">
         <form id="sticky-buy-form" method="post" action="{% url 'cart:add' %}"
           class="jm-pdp-sticky__atc {% if is_in_cart %}d-none{% endif %}" hx-post="{% url 'cart:add' %}"
@@ -328,17 +335,17 @@
               border-radius: 12px;
               overflow: hidden;
               box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
-              border: 1px solid #e2e8f0;
+              border: 1px solid #94a3b8;
             }
             .size-chart-content table th,
             .size-chart-content table td {
               padding: 14px 16px;
               text-align: center;
-              border-bottom: 1px solid #f1f5f9;
+              border-bottom: 1px solid #cbd5e1;
             }
             .size-chart-content table td:not(:last-child),
             .size-chart-content table th:not(:last-child) {
-              border-right: 1px solid #f1f5f9;
+              border-right: 1px solid #cbd5e1;
             }
             .size-chart-content table th,
             .size-chart-content table tr:first-child td {

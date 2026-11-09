@@ -519,7 +519,7 @@ def get_product_detail(*, slug: str) -> Optional[Product]:
     )
 
     return (
-        _live_products(slug=slug)
+        Product.objects.filter(is_active=True, slug=slug)
         .select_related("category", "brand")
         .prefetch_related(
             Prefetch(
@@ -748,9 +748,9 @@ def get_variant_price(
     Query guarantee: 1–2 SELECTs on product/variant + 0–1 on flash sale.
     """
 
-    product = _live_products().get(pk=product_id)
+    product = Product.objects.filter(pk=product_id, is_active=True).first() or _live_products().get(pk=product_id)
 
-    retail_price = product.market_base_price
+    retail_price = product.market_base_price or 0
     resolved_variant_id = None
     
     # Safely evaluate product in-stock status
@@ -766,25 +766,34 @@ def get_variant_price(
     if variant_id:
         variant = ProductVariant.objects.filter(pk=variant_id, product=product).first()
         if variant:
-            if variant.market_base_price > 0:
+            if (variant.market_base_price or 0) > 0:
                 retail_price = variant.market_base_price
-            if variant.market_mrp > 0:
+            if (variant.market_mrp or 0) > 0:
                 mrp = variant.market_mrp
             resolved_variant_id = variant.pk
             is_in_stock = variant.stock_quantity > 0
+
+    from core.country import available_in_country
+    if not available_in_country(Product.objects.filter(pk=product.pk)).exists():
+        retail_price = 0
+
+    if float(retail_price or 0) <= 0:
+        is_in_stock = False
 
     from marketing.selectors import get_active_flash_sale_price
 
     sale = get_active_flash_sale_price(product_id=product.pk, base_price=retail_price)
     display_price = sale["price"]
+    has_price = float(display_price or 0) > 0
 
     result = {
         "base_price": str(product.market_base_price),
         "price": str(display_price),
         "retail_price": str(display_price),
+        "has_price": "true" if has_price else "false",
         "variant_id": str(resolved_variant_id) if resolved_variant_id else "",
         "is_flash_sale": str(sale["is_flash_sale"]).lower(),
-        "is_in_stock": is_in_stock,
+        "is_in_stock": is_in_stock and has_price,
         "stock_quantity": getattr(variant, 'stock_quantity', getattr(product, 'stock_quantity', 0)) if variant_id else getattr(product, 'stock_quantity', 0),
         "low_stock_threshold": getattr(variant, 'low_stock_threshold', getattr(product, 'low_stock_threshold', 5)) if variant_id else getattr(product, 'low_stock_threshold', 5),
         "mrp": str(mrp) if mrp else "",

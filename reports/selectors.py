@@ -12,7 +12,7 @@ from django.utils import timezone
 from decimal import Decimal
 
 from accounts.models import CustomerProfile
-from catalog.models import Product
+from catalog.models import Product, ProductVariant
 
 from orders.models import Order
 from orders.services import REVENUE_ORDER_STATUSES
@@ -124,15 +124,17 @@ def get_live_today_customer_report() -> DailyCustomerReport:
     """Compute today's customer report on the fly."""
     today = timezone.localdate()
     new_customers = CustomerProfile.objects.filter(created_at__date=today).count()
-    returning = Order.objects.filter(
+    today_orders = Order.objects.filter(
         created_at__date=today, order_status__in=REVENUE_ORDER_STATUSES
-    ).values("customer_profile").distinct().count()
-    
+    )
+    buyer_ids = today_orders.exclude(customer_profile__isnull=True).values_list("customer_profile_id", flat=True).distinct()
+    returning_customers = CustomerProfile.objects.filter(id__in=buyer_ids, created_at__date__lt=today).count()
+
     return DailyCustomerReport(
         report_date=today,
         new_customers=new_customers,
-        returning_customers=max(returning - new_customers, 0),
-        total_active_customers=CustomerProfile.objects.count()
+        returning_customers=returning_customers,
+        total_active_customers=CustomerProfile.objects.count(),
     )
 
 
@@ -153,26 +155,10 @@ def get_admin_dashboard_summary() -> dict[str, Any]:
     yesterday = today - timedelta(days=1)
 
     yesterday_report = DailySalesReport.objects.filter(report_date=yesterday).first()
-    out_of_stock_qs = (
-        Product.objects.filter(is_active=True)
-        .filter(
-            Q(variants__stock_quantity=0)
-            | Q(variants__isnull=True, stock_quantity=0)
-        )
-        .distinct()
-    )
-    out_of_stock = out_of_stock_qs.count()
+    from dashboard import selectors as dashboard_selectors
 
-    strictly_low_stock = (
-        Product.objects.filter(is_active=True)
-        .filter(
-            Q(variants__stock_quantity__lte=F("variants__low_stock_threshold"), variants__stock_quantity__gt=0)
-            | Q(variants__isnull=True, stock_quantity__lte=F("low_stock_threshold"), stock_quantity__gt=0)
-        )
-        .exclude(id__in=out_of_stock_qs.values_list("id", flat=True))
-        .distinct()
-        .count()
-    )
+    out_of_stock = dashboard_selectors.get_out_of_stock_count()
+    strictly_low_stock = dashboard_selectors.get_low_stock_count()
 
     today_orders = Order.objects.filter(
         created_at__date=today, order_status__in=REVENUE_ORDER_STATUSES

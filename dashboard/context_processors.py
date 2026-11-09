@@ -25,17 +25,9 @@ def dashboard_chrome(request: HttpRequest) -> dict:
     )
     unread_count = Notification.objects.filter(user=user, is_read=False).count()
     from core.services import get_site_settings
-    from catalog.models import Product
-    from django.db.models import F, Q
-    low_stock_count = (
-        Product.objects.filter(is_active=True)
-        .filter(
-            Q(variants__stock_quantity__lte=F("variants__low_stock_threshold"))
-            | Q(variants__isnull=True, stock_quantity__lte=F("low_stock_threshold"))
-        )
-        .distinct()
-        .count()
-    )
+    from dashboard.selectors import get_inventory_alert_count
+
+    low_stock_count = get_inventory_alert_count()
     return {
         "dashboard_notifications": notifications,
         "dashboard_unread_count": unread_count,

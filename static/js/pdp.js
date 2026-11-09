@@ -102,6 +102,11 @@
             var retailContainer = document.getElementById('pdp-retail-price-container');
             var symbol = variantGroup.getAttribute('data-currency-symbol') || '';
             var elPriceValue = document.getElementById('pdp-price-value');
+            var hasPrice = data.has_price !== 'false' && parseFloat(data.price || 0) > 0;
+
+            if (el) {
+              el.style.display = hasPrice ? '' : 'none';
+            }
 
             if (data.sku) {
               var elSku = document.getElementById('pdp-sku-display');
@@ -129,7 +134,7 @@
                 retailContainer.classList.add("d-none");
               }
             }
-            if (elSticky) elSticky.textContent = symbol + window.svMoney(data.price);
+            if (elSticky) elSticky.textContent = hasPrice ? (symbol + window.svMoney(data.price)) : 'Unavailable';
             
             var stickyVariantName = document.getElementById('pdp-sticky-variant-name');
             if (stickyVariantName) {
@@ -238,7 +243,12 @@
                   stockText.classList.remove('is-in');
                   stockText.classList.remove('is-low');
                   stockText.classList.add('is-out');
-                  stockText.textContent = 'Out of stock';
+                  if (!hasPrice) {
+                    var countryName = variantGroup ? variantGroup.getAttribute('data-country-name') : '';
+                    stockText.textContent = countryName ? ('This product is not available in ' + countryName) : 'Unavailable in this country';
+                  } else {
+                    stockText.textContent = 'Out of stock';
+                  }
                 }
               }
             }

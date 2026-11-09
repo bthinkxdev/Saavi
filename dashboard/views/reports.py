@@ -73,9 +73,11 @@ def reports_view(request: HttpRequest) -> HttpResponse:
     chart_categories = []
     chart_revenue = []
     chart_orders = []
+    chart_returning = []
     
     #create a lookup for quick access
     sales_by_date = {r.report_date: r for r in ordered}
+    customers_by_date = {r.report_date: r for r in customers["results"]}
     
     current_date = start
     while current_date <= end:
@@ -87,12 +89,15 @@ def reports_view(request: HttpRequest) -> HttpResponse:
         else:
             chart_revenue.append(0.0)
             chart_orders.append(0)
+        c_row = customers_by_date.get(current_date)
+        chart_returning.append(c_row.returning_customers if c_row else 0)
         current_date += timedelta(days=1)
         
     chart = {
         "categories": chart_categories,
         "revenue": chart_revenue,
         "orders": chart_orders,
+        "returning_customers": chart_returning,
     }
     total_revenue = sum(float(r.revenue) for r in sales["results"])
     total_orders = sum(r.order_count for r in sales["results"])

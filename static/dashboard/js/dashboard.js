@@ -134,6 +134,17 @@
     var salesEl = document.querySelector("#salesChart");
     if (salesEl) {
       var sales = readJSON("sales-chart-data", { categories: [], revenue: [], orders: [] });
+      var series = [
+        { name: "Revenue", data: sales.revenue },
+        { name: "Orders", data: sales.orders },
+      ];
+      var colors = ["#e66239", "#2e90fa"];
+      var strokeWidth = [3, 2];
+      if (sales.returning_customers) {
+        series.push({ name: "Returning Customers", data: sales.returning_customers });
+        colors.push("#12b76a");
+        strokeWidth.push(2);
+      }
       new ApexCharts(salesEl, {
         chart: {
           type: "area",
@@ -142,13 +153,10 @@
           toolbar: { show: false },
           zoom: { enabled: false },
         },
-        colors: ["#e66239", "#2e90fa"],
-        stroke: { width: [3, 2], curve: "smooth" },
+        colors: colors,
+        stroke: { width: strokeWidth, curve: "smooth" },
         dataLabels: { enabled: false },
-        series: [
-          { name: "Revenue", data: sales.revenue },
-          { name: "Orders", data: sales.orders },
-        ],
+        series: series,
         fill: {
           type: "gradient",
           gradient: { shadeIntensity: 1, opacityFrom: 0.35, opacityTo: 0.02, stops: [0, 100] },

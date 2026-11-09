@@ -49,6 +49,9 @@ def storefront(request: HttpRequest) -> dict[str, Any]:
     from cms.models import Page
 
     site_settings = get_site_settings()
+    served_countries = get_active_countries()
+    cur_country = getattr(request, "country", "")
+    cur_country_name = next((c.name for c in served_countries if c.code == cur_country), cur_country)
 
     from core.seo import resolve_default_og_image_url
 
@@ -66,10 +69,11 @@ def storefront(request: HttpRequest) -> dict[str, Any]:
         "wishlist_product_ids": wishlist_product_ids,
         "default_currency": default_currency,
         "display_currency": display_currency,
-        "current_country": getattr(request, "country", ""),
+        "current_country": cur_country,
+        "current_country_name": cur_country_name,
         "free_shipping_threshold": market_setting(site_settings, "free_shipping_threshold"),
         "express_delivery_charge": market_setting(site_settings, "express_delivery_charge"),
-        "served_countries": get_active_countries(),
+        "served_countries": served_countries,
         "sv_countries": __import__("core.currency", fromlist=["x"]).CHECKOUT_COUNTRIES,
         "session_language": request.session.get("django_language", ""),
         "session_currency": session_currency,

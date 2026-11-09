@@ -234,14 +234,26 @@ def _render_product_form(request, product, mode):
                 v_mrps_ae = request.POST.getlist("variant_mrp_ae[]")
                 v_purchase_prices = request.POST.getlist("variant_purchase_price[]")
                 v_names = request.POST.getlist("variant_name[]")
+                selected_countries = {getattr(c, "code", str(c)) for c in form.cleaned_data.get("countries", [])}
+                is_empty = not selected_countries
+                is_in_required = is_empty or ("IN" in selected_countries)
+                is_uae = is_empty or ("AE" in selected_countries)
+                missing_aed_variants = []
+                missing_inr_variants = []
                 
                 for i in range(len(v_sku_suffixes)):
                     suffix_name = v_names[i].strip() if i < len(v_names) and v_names[i].strip() else (v_sku_suffixes[i] if v_sku_suffixes[i] else f"Variant {i+1}")
                     
-                    if i >= len(v_base_prices) or not str(v_base_prices[i]).strip():
-                        messages.error(request, f"Base price is required for variant '{suffix_name}'.")
+                    inr_str = str(v_base_prices[i]).strip() if i < len(v_base_prices) else ""
+                    try:
+                        base_price = float(inr_str) if inr_str else 0.0
+                    except ValueError:
+                        messages.error(request, f"Invalid base price for variant '{suffix_name}'.")
                         variants_valid = False
                         break
+
+                    if is_in_required and (not inr_str or base_price <= 0):
+                        missing_inr_variants.append(f"'{suffix_name}'")
                         
                     if i >= len(v_stocks) or not str(v_stocks[i]).strip():
                         messages.error(request, f"Stock quantity is required for variant '{suffix_name}'.")
@@ -261,13 +273,6 @@ def _render_product_form(request, product, mode):
                         low_stock = 5
                         
                     try:
-                        base_price = float(v_base_prices[i])
-                    except ValueError:
-                        messages.error(request, f"Invalid base price for variant '{suffix_name}'.")
-                        variants_valid = False
-                        break
-                        
-                    try:
                         mrp = float(v_mrps[i]) if i < len(v_mrps) and str(v_mrps[i]).strip() else 0.0
                         purchase_price = float(v_purchase_prices[i]) if i < len(v_purchase_prices) and str(v_purchase_prices[i]).strip() else 0.0
                     except ValueError:
@@ -280,6 +285,10 @@ def _render_product_form(request, product, mode):
                         messages.error(request, f"Invalid AED price for variant '{suffix_name}'.")
                         variants_valid = False
                         break
+
+                    if is_uae and (price_ae is None or price_ae <= 0):
+                        missing_aed_variants.append(f"'{suffix_name}'")
+
                     if (price_ae or 0) < 0 or (mrp_ae or 0) < 0:
                         messages.error(request, f"Variant '{suffix_name}' cannot have negative AED prices.")
                         variants_valid = False
@@ -289,6 +298,30 @@ def _render_product_form(request, product, mode):
                         messages.error(request, f"Variant '{suffix_name}' cannot have negative price or stock values.")
                         variants_valid = False
                         break
+
+                if missing_inr_variants and missing_aed_variants:
+                    context = "when sold everywhere." if is_empty else "for the selected countries."
+                    if missing_inr_variants == missing_aed_variants:
+                        names = ", ".join(missing_inr_variants)
+                        label = "variants" if len(missing_inr_variants) > 1 else "variant"
+                        messages.error(request, f"Both INR and AED prices are required for {label} {names} {context}")
+                    else:
+                        inr_names = ", ".join(missing_inr_variants)
+                        aed_names = ", ".join(missing_aed_variants)
+                        messages.error(request, f"Base price (INR) is required for {inr_names}, and AED price is required for {aed_names} {context}")
+                    variants_valid = False
+                elif missing_inr_variants:
+                    names = ", ".join(missing_inr_variants)
+                    label = "variants" if len(missing_inr_variants) > 1 else "variant"
+                    context = "when sold everywhere." if is_empty else "when available in India."
+                    messages.error(request, f"Base price (INR) is required for {label} {names} {context}")
+                    variants_valid = False
+                elif missing_aed_variants:
+                    names = ", ".join(missing_aed_variants)
+                    label = "variants" if len(missing_aed_variants) > 1 else "variant"
+                    context = "when sold everywhere." if is_empty else "when available in the UAE."
+                    messages.error(request, f"AED price is required for {label} {names} {context}")
+                    variants_valid = False
             
             if variants_valid:
                 product = form.save()
@@ -385,10 +418,10 @@ def _render_product_form(request, product, mode):
                     product.variants.exclude(pk__in=updated_variant_ids).delete()
                     
                     product.stock_quantity = total_stock
-                    if v_base_prices and v_base_prices[0]:
-                        product.base_price = float(v_base_prices[0])
-                        product.mrp = float(v_mrps[0]) if v_mrps[0] else 0.0
-                        product.purchase_price = float(v_purchase_prices[0]) if v_purchase_prices[0] else 0.0
+                    if (v_base_prices and v_base_prices[0]) or (v_base_prices_ae and v_base_prices_ae[0]):
+                        product.base_price = float(v_base_prices[0]) if (v_base_prices and v_base_prices[0]) else 0.0
+                        product.mrp = float(v_mrps[0]) if (v_mrps and v_mrps[0]) else 0.0
+                        product.purchase_price = float(v_purchase_prices[0]) if (v_purchase_prices and v_purchase_prices[0]) else 0.0
                         product.base_price_ae = _optional_price(v_base_prices_ae, 0)
                         product.mrp_ae = _optional_price(v_mrps_ae, 0)
                     product.save(update_fields=["stock_quantity", "base_price", "mrp", "base_price_ae", "mrp_ae", "purchase_price"])

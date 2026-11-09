@@ -9,7 +9,7 @@ from django.db.models import F
 from django.utils import timezone
 
 from accounts.models import CustomerProfile
-from catalog.models import Product
+from catalog.models import Product, ProductVariant
 from orders.models import Order
 from orders.services import REVENUE_ORDER_STATUSES
 from reports.models import (
@@ -188,3 +188,43 @@ def get_dashboard_counts() -> dict[str, int]:
         "customer_count": CustomerProfile.objects.count(),
         "order_count": Order.objects.count(),
     }
+
+
+def get_low_stock_count() -> int:
+    """Return count of active low-stock variants and simple products."""
+    return (
+        ProductVariant.objects.filter(
+            product__is_active=True,
+            stock_quantity__lte=F("low_stock_threshold"),
+            stock_quantity__gt=0,
+        ).count()
+        + Product.objects.filter(
+            is_active=True,
+            variants__isnull=True,
+            stock_quantity__lte=F("low_stock_threshold"),
+            stock_quantity__gt=0,
+        ).count()
+    )
+
+
+def get_out_of_stock_count() -> int:
+    """Return count of active out-of-stock variants and simple products."""
+    return (
+        ProductVariant.objects.filter(product__is_active=True, stock_quantity=0).count()
+        + Product.objects.filter(is_active=True, variants__isnull=True, stock_quantity=0).count()
+    )
+
+
+def get_inventory_alert_count() -> int:
+    """Return total count of active variants and simple products needing restock (low + out of stock)."""
+    return (
+        ProductVariant.objects.filter(
+            product__is_active=True,
+            stock_quantity__lte=F("low_stock_threshold"),
+        ).count()
+        + Product.objects.filter(
+            is_active=True,
+            variants__isnull=True,
+            stock_quantity__lte=F("low_stock_threshold"),
+        ).count()
+    )
