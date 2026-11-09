@@ -1,0 +1,20 @@
+{% load i18n %}
+{% if collections %}
+<section class="container sv-section">
+  <div class="sv-section__head">
+    <h2 class="sv-h2">{% trans "Shop by Collection" %}</h2>
+    <a class="sv-link sv-link--sm" href="{% url 'catalog:plp' %}?collection=all">{% trans "View All" %} <span aria-hidden="true">&rarr;</span></a>
+  </div>
+  <div class="sv-coltiles">
+    {% for collection in collections %}
+    <a class="sv-coltile" href="{% url 'catalog:plp' %}?collection={{ collection.slug }}">
+      <span class="sv-coltile__img" {% if collection.cover_url %}style="background-image:url('{{ collection.cover_url }}')"{% endif %}></span>
+      <span class="sv-coltile__text">
+        <strong>{{ collection.name }}</strong>
+        <small>{{ collection.product_total }} {% trans "styles" %}</small>
+      </span>
+    </a>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}

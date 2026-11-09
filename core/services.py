@@ -26,6 +26,13 @@ def get_site_settings() -> SiteSettings:
     return settings
 
 
+def market_setting(settings: SiteSettings, name: str, country: str | None = None):
+    """SiteSettings amount for the visitor's market (INR field for India, ``<name>_ae`` for the UAE)."""
+    from core.country import market_value
+
+    return market_value(settings, name, country)
+
+
 @transaction.atomic
 def create_currency(
     *,

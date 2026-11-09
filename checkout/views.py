@@ -40,7 +40,9 @@ def _with_delivery_method(request: HttpRequest, charge):
     if method in ("standard", "express"):
         request.session["checkout_delivery_method"] = method
     method = request.session.get("checkout_delivery_method", "standard")
-    extra = Decimal(str(getattr(get_site_settings(), "express_delivery_charge", 0) or 0))
+    from core.services import market_setting
+
+    extra = Decimal(str(market_setting(get_site_settings(), "express_delivery_charge") or 0))
     if method == "express" and extra > 0:
         return (charge or Decimal("0")) + extra
     return charge
@@ -596,6 +598,33 @@ def checkout_place_order_view(request: HttpRequest) -> HttpResponse:
             cart.delivery_charge = new_charge
             cart.save(update_fields=["delivery_charge", "updated_at"])
 
+    if summary.has_unavailable_items:
+        from django.utils.translation import gettext as _
+        response = render(
+            request,
+            "checkout/partials/errors.html",
+            {"errors": {"__all__": [
+                _("Some products in your order are not available in %(country)s. Please remove them to continue.")
+                % {"country": summary.country_name}
+            ]}},
+            status=200,
+        )
+        response["HX-Trigger"] = "stockChanged"
+        return response
+
+    # summary is already retrieved on line 375 with skip_delivery_charge_calculation=True
+    if summary.has_stock_issues:
+        from django.utils.translation import gettext as _
+        is_buy_now = request.session.get("checkout_mode") == "buy_now"
+        msg = _("This item just went out of stock or quantity exceeds available stock. Please review your order summary.") if is_buy_now else _("Some items in your cart are out of stock. Please review your order summary to adjust them.")
+        response = render(
+            request,
+            "checkout/partials/errors.html",
+            {"errors": {"__all__": [msg]}},
+            status=200,
+        )
+        response["HX-Trigger"] = "stockChanged"
+        return response
 
     try:
         from catalog.exceptions import InsufficientStockError

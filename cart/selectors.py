@@ -70,6 +70,7 @@ class CartSummaryLine:
     max_stock: int = 0
     is_out_of_stock: bool = False
     exceeds_stock: bool = False
+    is_unavailable: bool = False
 
 
 @dataclass
@@ -87,6 +88,28 @@ class CartSummary:
     has_stock_issues: bool = False
     has_out_of_stock_items: bool = False
     has_exceeds_stock_items: bool = False
+    has_unavailable_items: bool = False
+    unavailable_count: int = 0
+    country_code: str = ""
+    country_name: str = ""
+
+    @property
+    def can_checkout(self) -> bool:
+        """False while any line is unavailable in the visitor's country or out of stock."""
+        return not (self.has_unavailable_items or self.has_stock_issues)
+
+
+def get_unavailable_item_ids(*, cart: Cart) -> set[int]:
+    """Ids of cart lines whose product can't be sold in the visitor's current country.
+
+    A product is unavailable when it is inactive, not offered in the country, or has no
+    price in that country's currency. Query guarantee: 2 SELECTs.
+    """
+    from catalog.selectors import _live_products
+
+    rows = list(CartItem.objects.filter(cart=cart).values_list("pk", "product_id"))
+    sellable = set(_live_products(pk__in={pid for _, pid in rows}).values_list("pk", flat=True))
+    return {item_id for item_id, pid in rows if pid not in sellable}
 
 
 def get_cart_by_id(*, cart_id: int) -> Optional[Cart]:
@@ -241,8 +264,29 @@ def get_cart_summary(
     has_exceeds_stock_items = False
 
     from cart.services import _resolve_unit_price
+    from core.country import get_active_countries, get_current_country
+
+    country_code = get_current_country()
+    country_name = next((c.name for c in get_active_countries() if c.code == country_code), country_code)
+    unavailable_ids = get_unavailable_item_ids(cart=cart) if items else set()
+    unavailable_count = 0
 
     for item in items:
+        if item.pk in unavailable_ids:
+            # Not sold in this country: shown so the customer can remove it, never priced or counted.
+            unavailable_count += 1
+            lines.append(
+                CartSummaryLine(
+                    item=item,
+                    product=item.product,
+                    variant=item.variant,
+                    quantity=item.quantity,
+                    unit_price_at_add=Decimal("0.00"),
+                    line_subtotal=Decimal("0.00"),
+                    is_unavailable=True,
+                )
+            )
+            continue
         try:
             unit_price = _resolve_unit_price(
                 product=item.product,
@@ -303,7 +347,7 @@ def get_cart_summary(
     if coupon_code:
         from marketing.services import validate_coupon_for_cart
         from marketing.exceptions import InvalidCouponError
-        category_ids = [line.product.category_id for line in lines]
+        category_ids = [line.product.category_id for line in lines if not line.is_unavailable]
         try:
             result = validate_coupon_for_cart(
                 code=coupon_code,
@@ -330,4 +374,8 @@ def get_cart_summary(
         has_stock_issues=has_stock_issues,
         has_out_of_stock_items=has_out_of_stock_items,
         has_exceeds_stock_items=has_exceeds_stock_items,
+        has_unavailable_items=unavailable_count > 0,
+        unavailable_count=unavailable_count,
+        country_code=country_code,
+        country_name=country_name,
     )

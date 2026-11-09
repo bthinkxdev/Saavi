@@ -5,6 +5,7 @@
 <div class="alert alert-danger py-2 small m-3 mb-0" role="alert">{{ error }}</div>
 {% endif %}
 <div class="cart-drawer-scroll">
+  {% include "cart/partials/_unavailable_banner.html" with target="drawer" hx_target="#cart-drawer-body" hx_swap="innerHTML" %}
   <ul class="list-unstyled mb-0">
     {% for line in summary.lines %}
     <li class="cart-line">
@@ -36,9 +37,11 @@
       {% if line.variant %}
       <div class="cart-line__meta text-muted small mt-1 mb-1">{{ line.variant.display_name }}</div>
       {% endif %}
-      <div class="cart-line__meta">{% money_label line.unit_price_at_add display_currency %}</div>
+      {% if not line.is_unavailable %}<div class="cart-line__meta">{% money_label line.unit_price_at_add display_currency %}</div>{% endif %}
       {% with max_stock=line.max_stock %}
-      {% if not line.product.is_in_stock or max_stock <= 0 %}
+      {% if line.is_unavailable %}
+      <div class="text-danger small fw-semibold mt-1">{% blocktrans with country=summary.country_name %}Not available in {{ country }}{% endblocktrans %}</div>
+      {% elif not line.product.is_in_stock or max_stock <= 0 %}
       <div class="text-danger small mt-1">{% trans "Out of stock" %}</div>
       {% elif error_item_id == line.item.pk and error %}
       <div class="text-danger small mt-1">{{ error }}</div>
@@ -83,7 +86,10 @@
   <div class="cart-summary-row"><span>{% trans "Delivery" %}</span><span>{% if summary.delivery_charge and summary.delivery_charge > 0 %}{% money_label summary.delivery_charge display_currency %}{% else %}{% trans "Calculated at checkout" %}{% endif %}</span></div>
   <div class="cart-summary-row cart-summary-total"><span>{% trans "Total" %}</span><span class="text-floward">{% money_label summary.grand_total display_currency %}</span></div>
   <a href="{% url 'cart:page' %}" class="btn btn-outline-floward w-100 py-2 mt-2">{% trans "View Cart" %}</a>
-  {% if summary.has_stock_issues %}
+  {% if summary.has_unavailable_items %}
+  <button class="btn btn-floward w-100 py-2 mt-2" disabled style="cursor: not-allowed;" onclick="event.preventDefault();">{% trans "Checkout" %}</button>
+  <div class="text-danger small mt-2 text-center">{% blocktrans with country=summary.country_name %}Some products are not available in {{ country }}. Remove them to checkout.{% endblocktrans %}</div>
+  {% elif summary.has_stock_issues %}
   <button class="btn btn-floward w-100 py-2 mt-2" disabled style="cursor: not-allowed;" onclick="event.preventDefault();">{% trans "Checkout" %}</button>
   <div class="text-danger small mt-2 text-center">{% trans "Some items are out of stock. Please remove them to checkout." %}</div>
   {% else %}

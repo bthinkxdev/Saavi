@@ -201,17 +201,17 @@
           <h2>{% trans "Delivery Method" %}</h2><p class="sv-step__sub">{% trans "Choose a delivery option" %}</p>
           <div class="sv-options">
             <label class="sv-option">
-              <input type="radio" name="delivery_method" value="standard" hx-post="{% url 'checkout:update-delivery-charge' %}" hx-target="#order-summary-container" hx-select="#order-summary-container" hx-include="#checkout-form" hx-swap="outerHTML" {% if delivery_method != 'express' or not settings.express_delivery_charge %}checked{% endif %}>
+              <input type="radio" name="delivery_method" value="standard" hx-post="{% url 'checkout:update-delivery-charge' %}" hx-target="#order-summary-container" hx-select="#order-summary-container" hx-include="#checkout-form" hx-swap="outerHTML" {% if delivery_method != 'express' or not express_delivery_charge %}checked{% endif %}>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="M1 6h13v10H1zM14 9h4l3 3v4h-7"/><circle cx="5.5" cy="17.5" r="1.8"/><circle cx="17.5" cy="17.5" r="1.8"/></svg>
               <span><strong>{% trans "Standard Delivery" %}</strong><small>{{ settings.standard_delivery_text|default:_("Delivered in 3–5 business days") }}</small></span>
               <em>{% if summary.delivery_charge and delivery_method != 'express' %}{% money_label summary.delivery_charge display_currency %}{% elif delivery_method != 'express' %}{% trans "Free" %}{% else %}{% trans "Standard rate" %}{% endif %}</em>
             </label>
-            {% if settings.express_delivery_charge %}
+            {% if express_delivery_charge %}
             <label class="sv-option">
               <input type="radio" name="delivery_method" value="express" hx-post="{% url 'checkout:update-delivery-charge' %}" hx-target="#order-summary-container" hx-select="#order-summary-container" hx-include="#checkout-form" hx-swap="outerHTML" {% if delivery_method == 'express' %}checked{% endif %}>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
               <span><strong>{% trans "Express Delivery" %}</strong><small>{{ settings.express_delivery_text|default:_("Delivered in 1–2 business days") }}</small></span>
-              <em>+ {% money_label settings.express_delivery_charge display_currency %}</em>
+              <em>+ {% money_label express_delivery_charge display_currency %}</em>
             </label>
             {% endif %}
           </div>
@@ -304,14 +304,16 @@
               {% endif %}
               <div class="sv-sumline__meta">{% trans "Qty:" %} {{ line.quantity }}</div>
               
-              {% if line.is_out_of_stock %}
+              {% if line.is_unavailable %}
+              <div class="text-danger fw-semibold mt-1" style="font-size: 0.75rem;">{% blocktrans with country=summary.country_name %}Not available in {{ country }}{% endblocktrans %}</div>
+              {% elif line.is_out_of_stock %}
               <div class="text-danger fw-semibold mt-1" style="font-size: 0.75rem;">{% trans "Out of stock" %}</div>
               {% elif line.exceeds_stock %}
               <div class="text-danger fw-semibold mt-1" style="font-size: 0.75rem;">{% trans "Only" %} {{ line.max_stock }} {% trans "items available in stock." %}</div>
               {% endif %}
             </div>
           </div>
-          {% with mrp=line.variant.mrp|default:line.product.mrp %}<span class="sv-sumline__price"><strong>{% money_label line.line_subtotal display_currency %}</strong>{% if mrp and mrp > line.unit_price_at_add %}<span class="sv-price__was">{% money_label mrp|times:line.quantity display_currency %}</span>{% with pct=line.unit_price_at_add|discount_percent:mrp %}{% if pct %}<span class="sv-pill-off">{{ pct }}% {% trans "Off" %}</span>{% endif %}{% endwith %}{% endif %}</span>{% endwith %}
+          {% with mrp=line.variant.market_mrp|default:line.product.market_mrp %}<span class="sv-sumline__price">{% if line.is_unavailable %}<strong class="text-danger">&mdash;</strong>{% else %}<strong>{% money_label line.line_subtotal display_currency %}</strong>{% endif %}{% if mrp and mrp > line.unit_price_at_add %}<span class="sv-price__was">{% money_label mrp|times:line.quantity display_currency %}</span>{% with pct=line.unit_price_at_add|discount_percent:mrp %}{% if pct %}<span class="sv-pill-off">{{ pct }}% {% trans "Off" %}</span>{% endif %}{% endwith %}{% endif %}</span>{% endwith %}
         </div>
         {% endfor %}
 
@@ -350,7 +352,11 @@
           <span>{% trans "Total" %}</span>
           <span>{% money_label summary.grand_total display_currency %}</span>
         </div>
-        {% if summary.has_stock_issues %}
+        {% if summary.has_unavailable_items %}
+          {% include "cart/partials/_unavailable_banner.html" with target="checkout" %}
+          <button type="button" class="btn btn-floward w-100 py-2 mt-3" disabled style="cursor: not-allowed;">{% trans "Place Order" %}</button>
+          <div class="text-danger small mt-2 text-center">{% blocktrans with country=summary.country_name %}Some products are not available in {{ country }}. Remove them to place your order.{% endblocktrans %}</div>
+        {% elif summary.has_stock_issues %}
           <button type="button" class="btn btn-floward w-100 py-2 mt-3" disabled style="cursor: not-allowed;">{% trans "Place Order & Pay" %}</button>
           {% if is_buy_now %}
             {% if summary.has_out_of_stock_items %}
@@ -391,7 +397,7 @@
       <div id="checkout-result" class="mt-3"></div>
     </div>
       <ul class="sv-trust sv-trust--mini">
-        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="M1 6h13v10H1zM14 9h4l3 3v4h-7"/><circle cx="5.5" cy="17.5" r="1.8"/><circle cx="17.5" cy="17.5" r="1.8"/></svg><div><strong>{% trans "Free Shipping" %}</strong><span>{% trans "Above" %} {% if site_settings.free_shipping_threshold %}{% money_label site_settings.free_shipping_threshold display_currency %}{% else %}{% money_label 999 display_currency %}{% endif %}</span></div></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="M1 6h13v10H1zM14 9h4l3 3v4h-7"/><circle cx="5.5" cy="17.5" r="1.8"/><circle cx="17.5" cy="17.5" r="1.8"/></svg><div><strong>{% trans "Free Shipping" %}</strong><span>{% trans "Above" %} {% if free_shipping_threshold %}{% money_label free_shipping_threshold display_currency %}{% else %}{% money_label 999 display_currency %}{% endif %}</span></div></li>
         <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="M12 2l9 5v10l-9 5-9-5V7z"/><path d="M3 7l9 5 9-5M12 12v10"/></svg><div><strong>{% trans "Easy Returns" %}</strong><span>{% trans "7-Day Returns" %}</span></div></li>
         <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M8.5 12l2.5 2.5 4.5-5"/></svg><div><strong>{% trans "Secure Payment" %}</strong><span>{% trans "100% Safe & Secure" %}</span></div></li>
       </ul>

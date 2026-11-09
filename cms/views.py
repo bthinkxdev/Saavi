@@ -15,7 +15,12 @@ from core.seo import seo_context
 @require_GET
 def homepage_view(request: HttpRequest) -> HttpResponse:
     """Render the Saavi homepage (fixed design layout fed by CMS hero slides and product rails)."""
-    from catalog.selectors import get_category_tree, get_products_by_category_slug
+    from catalog.selectors import (
+        get_category_tree,
+        get_collection_rails,
+        get_featured_collections,
+        get_products_by_category_slug,
+    )
 
     sections = get_active_homepage_sections()
     product_rails = get_homepage_product_rails()
@@ -48,6 +53,16 @@ def homepage_view(request: HttpRequest) -> HttpResponse:
         image = sample[0].primary_images[0] if sample and getattr(sample[0], "primary_images", None) else None
         cat.banner_image_url = image.image.url if image and image.image else ""
 
+    # Collection rails are driven by the "Featured Collections" homepage section's slug list.
+    rail_slugs: list[str] = []
+    for section in sections:
+        if section["section_type"] == "featured_collections":
+            slugs = (section.get("config") or {}).get("collection_slugs") or []
+            rail_slugs = [s.strip() for s in slugs.split(",")] if isinstance(slugs, str) else list(slugs)
+            break
+    collection_rails = get_collection_rails(slugs=rail_slugs, per_rail=5)
+    featured_collections = get_featured_collections()
+
     context = seo_context(
         request=request,
         title="Saavi By Neethu | Sarees & Ethnic Wear",
@@ -66,6 +81,10 @@ def homepage_view(request: HttpRequest) -> HttpResponse:
             "collections": collections,
             "new_arrival_tabs": _tabs("new_arrivals"),
             "bestseller_tabs": _tabs("bestsellers"),
+            "featured_collections": featured_collections,
+            "wedding_cover": next((c.cover_url for c in featured_collections if c.slug == "wedding-season"), ""),
+            "collection_rails_top": collection_rails[:2],
+            "collection_rails_bottom": collection_rails[2:4],
         }
     )
     response = render(request, "cms/homepage.html", context)

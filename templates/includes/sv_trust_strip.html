@@ -2,7 +2,7 @@
 <ul class="sv-trust {{ trust_class|default:'' }}">
   <li>
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" aria-hidden="true"><path d="M1 6h13v10H1zM14 9h4l3 3v4h-7"/><circle cx="5.5" cy="17.5" r="1.8"/><circle cx="17.5" cy="17.5" r="1.8"/></svg>
-    <div><strong>{% trans "Free Shipping" %}</strong><span>{% trans "On orders above" %} {% if site_settings.free_shipping_threshold %}{% money_label site_settings.free_shipping_threshold display_currency %}{% else %}{% money_label 999 display_currency %}{% endif %}</span></div>
+    <div><strong>{% trans "Free Shipping" %}</strong><span>{% trans "On orders above" %} {% if free_shipping_threshold %}{% money_label free_shipping_threshold display_currency %}{% else %}{% money_label 999 display_currency %}{% endif %}</span></div>
   </li>
   <li>
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" aria-hidden="true"><path d="M12 2l9 5v10l-9 5-9-5V7z"/><path d="M3 7l9 5 9-5M12 12v10"/></svg>

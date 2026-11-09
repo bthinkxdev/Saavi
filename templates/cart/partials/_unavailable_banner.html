@@ -1,0 +1,27 @@
+{% load i18n %}
+{% comment %}
+Prominent warning listing cart products that are not sold in the visitor's country, with a one-click remove.
+Expects: summary, target ("drawer" | "page" | "checkout"). For HTMX targets also: hx_target, hx_swap.
+{% endcomment %}
+{% if summary.has_unavailable_items %}
+<div class="alert alert-danger mb-3 sv-unavailable" role="alert" data-unavailable-banner>
+  <strong class="d-block mb-1">
+    {% blocktrans count counter=summary.unavailable_count with country=summary.country_name %}{{ counter }} product in your cart is not available in {{ country }}.{% plural %}{{ counter }} products in your cart are not available in {{ country }}.{% endblocktrans %}
+  </strong>
+  <ul class="small mb-2 ps-3">
+    {% for line in summary.lines %}{% if line.is_unavailable %}
+    <li>{{ line.product.name }}{% if line.variant %} &middot; {{ line.variant.display_name }}{% endif %}</li>
+    {% endif %}{% endfor %}
+  </ul>
+  <p class="small mb-2">{% trans "Remove them to continue to checkout, or switch country from the header." %}</p>
+  <form method="post" action="{% url 'cart:remove-unavailable' %}" class="m-0">
+    {% csrf_token %}
+    <input type="hidden" name="target" value="{{ target }}">
+    {% if hx_target %}
+    <button type="button" class="btn btn-sm btn-danger" hx-post="{% url 'cart:remove-unavailable' %}" hx-target="{{ hx_target }}" hx-swap="{{ hx_swap }}" hx-include="closest form">{% trans "Remove unavailable products" %}</button>
+    {% else %}
+    <button type="submit" class="btn btn-sm btn-danger">{% trans "Remove unavailable products" %}</button>
+    {% endif %}
+  </form>
+</div>
+{% endif %}

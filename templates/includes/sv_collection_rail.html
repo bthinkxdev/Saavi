@@ -1,0 +1,18 @@
+{% load i18n %}
+{% comment %}Product rail for one collection. Expects: rail ({collection, products}).{% endcomment %}
+{% if rail.products %}
+<section class="container sv-section">
+  <div class="sv-section__head">
+    <div>
+      <h2 class="sv-h2">{{ rail.collection.name }}</h2>
+      {% if rail.collection.description %}<p class="sv-muted mb-0 small">{{ rail.collection.description|truncatechars:110 }}</p>{% endif %}
+    </div>
+    <a class="sv-link sv-link--sm" href="{% url 'catalog:plp' %}?collection={{ rail.collection.slug }}">{% trans "View All" %} <span aria-hidden="true">&rarr;</span></a>
+  </div>
+  <div class="sv-grid sv-grid--5">
+    {% for product in rail.products %}
+      {% include "catalog/partials/product_card.html" with product=product %}
+    {% endfor %}
+  </div>
+</section>
+{% endif %}

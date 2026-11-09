@@ -19,6 +19,7 @@ from cart.services import (
     get_or_create_cart,
     remove_coupon,
     remove_cart_item,
+    remove_unavailable_items,
     toggle_wishlist,
 )
 from catalog.selectors import get_product_for_cart_add
@@ -200,7 +201,7 @@ def cart_add_view(request: HttpRequest) -> HttpResponse:
             return response
         return redirect("checkout:checkout")
 
-    price_val = float(variant.base_price if variant and variant.base_price else product.base_price)
+    price_val = float((variant.market_base_price if variant else 0) or product.market_base_price)
     return _cart_drawer_response(
         request,
         hx_triggers={
@@ -244,6 +245,30 @@ def cart_page_remove_view(request: HttpRequest) -> HttpResponse:
         triggers["cartItemRemoved"] = {"product_id": removed_product_id}
         
     return _cart_page_response(request, hx_triggers=triggers)
+
+
+@require_POST
+def cart_remove_unavailable_view(request: HttpRequest) -> HttpResponse:
+    """Drop every line not sold in the visitor's country, then re-render where the request came from."""
+    cart = get_cart_for_request(request=request)
+    removed = remove_unavailable_items(cart=cart) if cart else 0
+    triggers = {"cartUpdated": None, "stockChanged": None}
+
+    target = request.POST.get("target")
+    if target == "checkout":
+        from django.contrib import messages
+        from django.urls import reverse
+
+        if removed:
+            messages.success(request, _("Removed the products that are not available in your country."))
+        response = HttpResponse(status=204) if request.headers.get("HX-Request") else None
+        if response is None:
+            return redirect(reverse("checkout:checkout") + "?mode=cart")
+        response["HX-Redirect"] = reverse("checkout:checkout") + "?mode=cart"
+        return response
+    if target == "page":
+        return _cart_page_response(request, hx_triggers=triggers)
+    return _cart_drawer_response(request, hx_triggers=triggers)
 
 
 @require_POST

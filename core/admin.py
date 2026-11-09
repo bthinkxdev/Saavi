@@ -5,7 +5,16 @@ from __future__ import annotations
 from django.contrib import admin
 
 from core.forms import CurrencyAdminForm
-from core.models import Currency, SiteSettings, State
+from core.models import Country, Currency, SiteSettings, State
+
+
+@admin.register(Country)
+class CountryAdmin(admin.ModelAdmin):
+    """Admin interface for served countries (India, UAE)."""
+
+    list_display = ("code", "name", "currency", "is_default", "is_active")
+    list_filter = ("is_active", "is_default")
+    search_fields = ("code", "name")
 
 
 @admin.register(Currency)
