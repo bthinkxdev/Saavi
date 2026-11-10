@@ -115,13 +115,16 @@ def plp_view(request: HttpRequest, category_slug: str | None = None) -> HttpResp
 
     subcategories = []
     if resolved_cat:
+        parent = resolved_cat.parent or resolved_cat
+        filters["parent_category_id"] = parent.pk
         if resolved_cat.parent_id:
-            subcategories = list(resolved_cat.parent.children.filter(is_active=True).annotate(product_count=Count("products", filter=Q(products__is_active=True))))
             filters["subcategory_id"] = resolved_cat.pk
-            filters["parent_category_id"] = resolved_cat.parent_id
-        else:
-            subcategories = list(resolved_cat.children.filter(is_active=True).annotate(product_count=Count("products", filter=Q(products__is_active=True))))
-            filters["parent_category_id"] = resolved_cat.pk
+
+        subcategories = list(
+            parent.children.filter(is_active=True)
+            .annotate(product_count=Count("products", filter=Q(products__in=_live_products())))
+            .filter(Q(product_count__gt=0) | Q(pk=filters.get("subcategory_id")))
+        )
 
     sort = request.GET.get("sort", "newest")
     page = int(request.GET.get("page", 1))

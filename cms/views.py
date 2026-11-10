@@ -74,8 +74,19 @@ def homepage_view(request: HttpRequest) -> HttpResponse:
         if imgs and imgs[0].image:
             festive_image = imgs[0].image.url
             break
+
+    active_sections = []
+    for s in sections:
+        active_sections.append({
+            "type": s["section_type"],
+            "title": s.get("title", ""),
+            "context": get_section_render_context(section=s, product_rails=product_rails),
+            "config": s.get("config", {}),
+        })
+
     context.update(
         {
+            "active_sections": active_sections,
             "festive_image": festive_image,
             "hero_slides": hero_slides,
             "collections": collections,

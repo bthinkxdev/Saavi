@@ -118,11 +118,7 @@ def _resolve_checkout_address_and_city(
             if saved_list:
                 address = saved_list[0]
 
-    city_name = ""
-    if address and getattr(address, "city", None):
-        city_name = address.city
-    elif raw_city:
-        city_name = raw_city
+    city_name = raw_city or (address.city if address and getattr(address, "city", None) else "")
 
     return address, city_name
 
@@ -153,6 +149,16 @@ def checkout_update_delivery_charge_view(request: HttpRequest) -> HttpResponse:
         session=session,
         profile=profile,
     )
+
+    from delivery.models import City
+    from core.country import get_current_country
+    curr_country = (getattr(request, "country_code", None) or get_current_country() or "IN").upper()
+    if cart.currency and cart.currency.code == "AED":
+        curr_country = "AE"
+    active_cities = City.objects.filter(is_active=True, country__code=curr_country)
+    if city_name and not any(c.name.lower() == city_name.lower() for c in active_cities):
+        city_name = ""
+        request.session.pop("checkout_guest_city", None)
 
     if address and session and session.address != address:
         session.address = address
@@ -245,7 +251,11 @@ def checkout_view(request: HttpRequest) -> HttpResponse:
                 addresses = [saved_list[0]]
             
     from delivery.models import City
-    active_cities = City.objects.filter(is_active=True)
+    from core.country import get_current_country
+    curr_country = (getattr(request, "country_code", None) or get_current_country() or "IN").upper()
+    if cart.currency and cart.currency.code == "AED":
+        curr_country = "AE"
+    active_cities = City.objects.filter(is_active=True, country__code=curr_country)
 
     address, city_name = _resolve_checkout_address_and_city(
         request=request,
@@ -253,6 +263,11 @@ def checkout_view(request: HttpRequest) -> HttpResponse:
         profile=profile,
         addresses=addresses,
     )
+    city_in_active_cities = any(c.name.lower() == (city_name or "").lower() for c in active_cities)
+    if not city_in_active_cities and city_name:
+        city_name = ""
+        request.session.pop("checkout_guest_city", None)
+        city_in_active_cities = False
     if address and not session.address:
         session.address = address
         session.save(update_fields=["address", "updated_at"])
@@ -587,13 +602,14 @@ def checkout_place_order_view(request: HttpRequest) -> HttpResponse:
     if not address and session.address:
         address = session.address
     
+    target_city = guest_city or (address.city if address else "")
     if gateway_key == "cod" and enable_cod:
-        new_charge = _with_delivery_method(request, get_delivery_charge(subtotal=summary.subtotal, address=address, is_cod=True))
+        new_charge = _with_delivery_method(request, get_delivery_charge(subtotal=summary.subtotal, address=address, city=target_city, is_cod=True))
         if cart.delivery_charge != new_charge:
             cart.delivery_charge = new_charge
             cart.save(update_fields=["delivery_charge", "updated_at"])
     else:
-        new_charge = _with_delivery_method(request, get_delivery_charge(subtotal=summary.subtotal, address=address, is_cod=False))
+        new_charge = _with_delivery_method(request, get_delivery_charge(subtotal=summary.subtotal, address=address, city=target_city, is_cod=False))
         if cart.delivery_charge != new_charge:
             cart.delivery_charge = new_charge
             cart.save(update_fields=["delivery_charge", "updated_at"])

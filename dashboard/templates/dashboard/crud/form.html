@@ -62,98 +62,121 @@
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-  //dynamic section_type reload for HomepageSection forms
-  const sectionTypeSelect = document.getElementById('id_section_type') || document.querySelector('select[name="section_type"]');
-  if (sectionTypeSelect) {
-    function handleSectionChange() {
-      const url = new URL(window.location.href);
-      if (sectionTypeSelect.value) {
-        url.searchParams.set('section_type', sectionTypeSelect.value);
-      } else {
-        url.searchParams.delete('section_type');
-      }
-      const form = sectionTypeSelect.form;
-      if (form) {
-        const titleInput = form.querySelector('[name="title"]');
-        if (titleInput && titleInput.value) url.searchParams.set('title', titleInput.value);
-        const orderInput = form.querySelector('[name="display_order"]');
-        if (orderInput && orderInput.value) url.searchParams.set('display_order', orderInput.value);
-        const activeInput = form.querySelector('[name="is_active"]');
-        if (activeInput) url.searchParams.set('is_active', activeInput.checked ? '1' : '0');
-      }
-      window.location.href = url.toString();
-    }
-
-    sectionTypeSelect.addEventListener('change', handleSectionChange);
-
-    const hasConfigFields = document.querySelector('[name^="config_"]');
-    const url = new URL(window.location.href);
-    if (sectionTypeSelect.value && !url.searchParams.get('section_type') && !hasConfigFields) {
-      handleSectionChange();
-    }
-  }
-
-  const destSelect = document.getElementById('id_config_destination') || document.querySelector('[name="config_destination"]');
-  const targetSelect = document.getElementById('id_config_target') || document.querySelector('[name="config_target"]');
-  if (destSelect && targetSelect) {
-    //store all original options
-    const allOptions = Array.from(targetSelect.options).map(opt => ({
-      value: opt.value,
-      text: opt.text,
-      selected: opt.selected
-    }));
-
-    function updateTargetOptions() {
-      const currentDest = destSelect.value;
-      const currentVal = targetSelect.value;
-      targetSelect.innerHTML = '';
-
-      const matchingOptions = allOptions.filter(opt => opt.value.startsWith(currentDest + ':'));
-      matchingOptions.forEach(opt => {
-        const optionEl = document.createElement('option');
-        optionEl.value = opt.value;
-        optionEl.textContent = opt.text;
-        if (opt.value === currentVal) {
-          optionEl.selected = true;
+  document.addEventListener('DOMContentLoaded', function () {
+    //dynamic section_type reload for HomepageSection forms
+    const sectionTypeSelect = document.getElementById('id_section_type') || document.querySelector('select[name="section_type"]');
+    if (sectionTypeSelect) {
+      function handleSectionChange() {
+        const url = new URL(window.location.href);
+        if (sectionTypeSelect.value) {
+          url.searchParams.set('section_type', sectionTypeSelect.value);
+        } else {
+          url.searchParams.delete('section_type');
         }
-        targetSelect.appendChild(optionEl);
-      });
+        const form = sectionTypeSelect.form;
+        if (form) {
+          const titleInput = form.querySelector('[name="title"]');
+          if (titleInput && titleInput.value) url.searchParams.set('title', titleInput.value);
+          const orderInput = form.querySelector('[name="display_order"]');
+          if (orderInput && orderInput.value) url.searchParams.set('display_order', orderInput.value);
+          const activeInput = form.querySelector('[name="is_active"]');
+          if (activeInput) url.searchParams.set('is_active', activeInput.checked ? '1' : '0');
+        }
+        window.location.href = url.toString();
+      }
 
-      if (!targetSelect.value && matchingOptions.length > 0) {
-        targetSelect.selectedIndex = 0;
+      sectionTypeSelect.addEventListener('change', handleSectionChange);
+
+      const hasConfigFields = document.querySelector('[name^="config_"]');
+      const url = new URL(window.location.href);
+      if (sectionTypeSelect.value && !url.searchParams.get('section_type') && !hasConfigFields) {
+        handleSectionChange();
       }
     }
 
-    destSelect.addEventListener('change', updateTargetOptions);
-    updateTargetOptions();
-  }
+    const destSelect = document.getElementById('id_config_destination') || document.querySelector('[name="config_destination"]');
+    const targetSelect = document.getElementById('id_config_target') || document.querySelector('[name="config_target"]');
+    if (destSelect && targetSelect) {
+      //store all original options
+      const allOptions = Array.from(targetSelect.options).map(opt => ({
+        value: opt.value,
+        text: opt.text,
+        selected: opt.selected
+      }));
 
-  //instant preview for uploaded file inputs
-  document.querySelectorAll('input[type="file"]').forEach(input => {
-    input.addEventListener('change', function() {
-      const container = document.getElementById('new-preview-' + this.id);
-      const img = document.getElementById('new-preview-img-' + this.id);
-      if (!container || !img) return;
+      function updateTargetOptions() {
+        const currentDest = destSelect.value;
+        const currentVal = targetSelect.value;
+        targetSelect.innerHTML = '';
 
-      if (this.files && this.files[0]) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-          img.src = e.target.result;
-          container.classList.remove('d-none');
-          container.classList.add('d-flex');
-        };
-        reader.readAsDataURL(this.files[0]);
-      } else {
-        container.classList.add('d-none');
-        container.classList.remove('d-flex');
-        img.src = '#';
+        const matchingOptions = allOptions.filter(opt => opt.value.startsWith(currentDest + ':'));
+        matchingOptions.forEach(opt => {
+          const optionEl = document.createElement('option');
+          optionEl.value = opt.value;
+          optionEl.textContent = opt.text;
+          if (opt.value === currentVal) {
+            optionEl.selected = true;
+          }
+          targetSelect.appendChild(optionEl);
+        });
+
+        if (!targetSelect.value && matchingOptions.length > 0) {
+          targetSelect.selectedIndex = 0;
+        }
       }
 
+      destSelect.addEventListener('change', updateTargetOptions);
+      updateTargetOptions();
+    }
 
+    //instant preview for uploaded file inputs
+    document.querySelectorAll('input[type="file"]').forEach(input => {
+      input.addEventListener('change', function () {
+        const container = document.getElementById('new-preview-' + this.id);
+        const img = document.getElementById('new-preview-img-' + this.id);
+        if (!container || !img) return;
+
+        if (this.files && this.files[0]) {
+          const reader = new FileReader();
+          reader.onload = function (e) {
+            img.src = e.target.result;
+            container.classList.remove('d-none');
+            container.classList.add('d-flex');
+          };
+          reader.readAsDataURL(this.files[0]);
+        } else {
+          container.classList.add('d-none');
+          container.classList.remove('d-flex');
+          img.src = '#';
+        }
+
+
+      });
     });
+
+    //dynamic coupon fields: toggle Value (AED) based on Discount type
+    const discountTypeSelect = document.getElementById("id_discount_type");
+    const valInrInput = document.getElementById("id_discount_value");
+    const valAeInput = document.getElementById("id_discount_value_ae");
+    if (discountTypeSelect && valInrInput && valAeInput) {
+      const valInrCol = valInrInput.closest(".col-md-6, .col-12") || valInrInput.parentElement;
+      const valAeCol = valAeInput.closest(".col-md-6, .col-12") || valAeInput.parentElement;
+      const valInrLabel = valInrCol ? valInrCol.querySelector("label") : null;
+
+      function updateCouponFields() {
+        const isFixed = discountTypeSelect.value === "fixed";
+        if (isFixed) {
+          valAeCol.style.display = "";
+          if (valInrLabel) valInrLabel.innerHTML = 'Value (INR) <span class="text-danger">*</span>';
+        } else {
+          valAeCol.style.display = "none";
+          if (valInrLabel) valInrLabel.innerHTML = 'Discount percentage (%) <span class="text-danger">*</span>';
+        }
+      }
+      discountTypeSelect.addEventListener("change", updateCouponFields);
+      updateCouponFields();
+    }
   });
-});
 </script>
 
 {% endblock %}

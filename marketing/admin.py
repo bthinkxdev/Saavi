@@ -31,9 +31,9 @@ class CouponAdmin(admin.ModelAdmin):
         "valid_until",
         "is_active",
     )
-    list_filter = ("discount_type", "is_active")
+    list_filter = ("discount_type", "is_active", "countries")
     search_fields = ("code",)
-    filter_horizontal = ("applicable_categories",)
+    filter_horizontal = ("applicable_categories", "countries")
     inlines = [CouponRedemptionInline]
 
 

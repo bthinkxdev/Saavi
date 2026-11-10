@@ -237,6 +237,8 @@ def set_country_view(request: HttpRequest) -> HttpResponse:
     code = request.POST.get("country", "").strip().upper()
     if code in SUPPORTED_COUNTRIES:
         request.session[COUNTRY_SESSION_KEY] = code
+        request.session.pop("checkout_guest_city", None)
+        request.session.pop("checkout_address_id", None)
         for row in get_active_countries():
             if row.code == code and row.currency_id and row.currency.is_active:
                 request.session[SESSION_KEY] = row.currency.code

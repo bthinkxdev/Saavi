@@ -185,12 +185,35 @@ MarketingFeaturesConfigForm = PromotionalSectionConfigForm
 
 
 class BannerConfigForm(BaseSectionConfigForm):
-    image_url = forms.URLField(
+    image = forms.ImageField(
         required=False,
-        help_text="Note: All banners should have the same resolution."
+        label="Banner Image",
+        help_text="Recommended: 1200 × 350 px (JPG, PNG, WebP up to 2MB).",
     )
-    link_url = forms.URLField(required=False)
+    link_url = forms.URLField(required=False, label="Click Link URL")
     subtitle = forms.CharField(max_length=200, required=False)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.initial and "image_url" in self.initial and not self.initial.get("image"):
+            self.initial["image"] = self.initial["image_url"]
+
+    def to_config(self) -> dict:
+        data = self.cleaned_data
+        image_url = (self.initial or {}).get("image_url", "")
+        upload = data.get("image")
+        if upload and hasattr(upload, "name"):
+            from django.core.files.storage import default_storage
+            from django.conf import settings
+
+            saved = default_storage.save(f"cms/banners/{upload.name}", upload)
+            image_url = f"{settings.MEDIA_URL}{saved}"
+
+        return {
+            "image_url": image_url,
+            "link_url": data.get("link_url", ""),
+            "subtitle": data.get("subtitle", ""),
+        }
 
 
 class InstagramConfigForm(BaseSectionConfigForm):

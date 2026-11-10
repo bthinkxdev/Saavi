@@ -36,16 +36,9 @@
         </p>
         {% else %}
         <p class="pdp-price jm-pdp-buybox__price" id="pdp-price">
-          {% if price_data.is_flash_sale == "true" %}
-          <span class="was" id="pdp-price-original">{% money_label price_data.original_price display_currency %}</span>
-          {% elif price_data.has_mrp_discount == "true" %}
-          <span class="was" id="pdp-price-mrp" style="text-decoration: line-through; margin-right: 8px;">{% money_label price_data.mrp display_currency %}</span>
-          {% else %}
-          <span class="was" id="pdp-price-mrp" style="text-decoration: line-through; margin-right: 8px; display: none;"></span>
-          {% endif %}
+          <span class="was" id="pdp-price-original" style="text-decoration: line-through; margin-right: 8px; {% if price_data.is_flash_sale != 'true' and price_data.has_mrp_discount != 'true' %}display: none;{% endif %}">{% if price_data.is_flash_sale == 'true' %}{% money_label price_data.original_price display_currency %}{% elif price_data.has_mrp_discount == 'true' %}{% money_label price_data.mrp display_currency %}{% endif %}</span>
           <span id="pdp-price-value">{% money_label price_data.price display_currency %}</span>
-          {% if price_data.is_flash_sale == "true" %}{% with pct=price_data.price|discount_percent:price_data.original_price %}{% if pct %}<span class="sv-price__off" id="pdp-price-off">({{ pct }}% {% trans "Off" %})</span>{% endif %}{% endwith %}
-          {% elif price_data.has_mrp_discount == "true" %}{% with pct=price_data.price|discount_percent:price_data.mrp %}{% if pct %}<span class="sv-price__off" id="pdp-price-off">({{ pct }}% {% trans "Off" %})</span>{% endif %}{% endwith %}{% endif %}
+          <span class="sv-price__off" id="pdp-price-off" style="{% if price_data.is_flash_sale != 'true' and price_data.has_mrp_discount != 'true' %}display: none;{% endif %}">{% with was=price_data.original_price|default:price_data.mrp %}{% with pct=price_data.price|discount_percent:was %}{% if pct %}({{ pct }}% {% trans "Off" %}){% endif %}{% endwith %}{% endwith %}</span>
         </p>
         <p class="jm-pdp-buybox__stock {% if not price_data.is_in_stock %}is-out{% elif price_data.stock_quantity <= price_data.low_stock_threshold %}is-low{% else %}is-in{% endif %}"
           id="pdp-stock-text">

@@ -206,11 +206,13 @@ def apply_coupon(*, cart: Cart, code: str) -> Cart:
     """
     summary = get_cart_summary(cart=cart)
     category_ids = [line.product.category_id for line in summary.lines]
+    country_code = "AE" if (cart.currency and cart.currency.code == "AED") else None
     result = validate_coupon_for_cart(
         code=code,
         cart_subtotal=summary.subtotal,
         customer_profile_id=cart.customer_profile_id,
         cart_category_ids=category_ids,
+        country_code=country_code,
     )
     cart.coupon_code = result["code"]
     cart.coupon_discount = result["discount_amount"]

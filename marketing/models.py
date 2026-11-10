@@ -23,12 +23,28 @@ class Coupon(TimeStampedModel):
         choices=CouponDiscountType.choices,
         default=CouponDiscountType.PERCENTAGE,
     )
-    discount_value = models.DecimalField(max_digits=12, decimal_places=2, verbose_name="Value")
+    discount_value = models.DecimalField(max_digits=12, decimal_places=2, verbose_name="Value (INR / %)")
+    discount_value_ae = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name="Value (AED)",
+        help_text="Fixed discount amount for UAE orders in AED.",
+    )
     min_order_value = models.DecimalField(
         max_digits=12,
         decimal_places=2,
         default=0,
-        verbose_name="Minimum order value",
+        verbose_name="Minimum order value (INR)",
+    )
+    min_order_value_ae = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name="Minimum order value (AED)",
+        help_text="Minimum order value for UAE orders in AED.",
     )
     max_uses = models.PositiveIntegerField(
         null=True,
@@ -48,6 +64,13 @@ class Coupon(TimeStampedModel):
         blank=True,
         related_name="coupons",
         verbose_name="Applicable categories",
+    )
+    countries = models.ManyToManyField(
+        "core.Country",
+        blank=True,
+        related_name="coupons",
+        verbose_name="Applicable countries",
+        help_text="Leave blank if valid in all countries (India & UAE).",
     )
     is_active = models.BooleanField(default=True, db_index=True)
 

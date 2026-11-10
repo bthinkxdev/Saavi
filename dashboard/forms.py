@@ -193,14 +193,11 @@ class CategoryForm(SlugAutoMixin):
             "meta_title",
             "meta_description",
             "og_image",
-            "countries",
         ]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["slug"].required = False
-        self.fields["countries"].required = False
-        self.fields["countries"].widget.attrs["class"] = "form-select form-control"
 
 
 class CollectionForm(SlugAutoMixin):
@@ -214,14 +211,11 @@ class CollectionForm(SlugAutoMixin):
             "is_active",
             "is_featured",
             "display_order",
-            "countries",
         ]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["slug"].required = False
-        self.fields["countries"].required = False
-        self.fields["countries"].widget.attrs["class"] = "form-select form-control"
 
 
 class BrandForm(SlugAutoMixin):
@@ -263,6 +257,7 @@ class CityForm(SlugAutoMixin):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["slug"].required = False
+        self.fields["country"].queryset = Country.objects.filter(is_active=True).order_by("name")
 
 
 class ReviewForm(forms.ModelForm):
@@ -481,15 +476,21 @@ class CouponForm(forms.ModelForm):
             "code",
             "discount_type",
             "discount_value",
+            "discount_value_ae",
             "min_order_value",
+            "min_order_value_ae",
             "max_uses",
             "max_uses_per_customer",
             "valid_from",
             "valid_until",
+            "countries",
             "applicable_categories",
             "is_active",
         ]
-        widgets = {"valid_from": _DATETIME, "valid_until": _DATETIME}
+        widgets = {
+            "valid_from": _DATETIME,
+            "valid_until": _DATETIME,
+        }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -497,6 +498,18 @@ class CouponForm(forms.ModelForm):
         now = timezone.localtime().strftime('%Y-%m-%dT%H:%M')
         self.fields["valid_from"].widget.attrs["min"] = now
         self.fields["valid_until"].widget.attrs["min"] = now
+        self.fields["discount_value"].label = "Value (INR / %)"
+        self.fields["discount_value_ae"].label = "Value (AED)"
+        self.fields["discount_value_ae"].required = False
+        self.fields["min_order_value"].label = "Minimum order value (INR)"
+        self.fields["min_order_value_ae"].label = "Minimum order value (AED)"
+        self.fields["min_order_value_ae"].required = False
+        self.fields["countries"].required = False
+        self.fields["countries"].widget.attrs["class"] = "form-select form-control"
+        self.fields["countries"].widget.attrs["size"] = "3"
+        self.fields["countries"].label = "Applicable countries"
+        self.fields["countries"].help_text = "Select India or UAE. Leave empty for all countries."
+        self.fields["applicable_categories"].required = False
 
     def clean(self):
         cleaned_data = super().clean()

@@ -429,6 +429,13 @@ def _render_product_form(request, product, mode):
                     product.variants.all().delete()
                     product.attribute_values.clear()
 
+                if product.color:
+                    val, _ = ProductAttributeValue.objects.get_or_create(
+                        attribute=ProductAttribute.objects.get_or_create(name="Color")[0],
+                        value=product.color.strip(),
+                    )
+                    product.attribute_values.add(val)
+
                 def save_media_formset(formset):
                     formset.instance = product
                     instances = formset.save(commit=False)
@@ -540,13 +547,13 @@ def _render_product_form(request, product, mode):
     else:
         has_existing_variants = False
         if product:
-            has_existing_variants = product.variants.exists() or product.attribute_values.exists()
-            
-            for av in product.attribute_values.select_related("attribute").all():
-                if av.attribute.name not in dynamic_options:
-                    dynamic_options[av.attribute.name] = []
-                if av.value not in dynamic_options[av.attribute.name]:
-                    dynamic_options[av.attribute.name].append(av.value)
+            has_existing_variants = product.variants.exists()
+            if has_existing_variants:
+                for av in product.attribute_values.select_related("attribute").all():
+                    if av.attribute.name not in dynamic_options:
+                        dynamic_options[av.attribute.name] = []
+                    if av.value not in dynamic_options[av.attribute.name]:
+                        dynamic_options[av.attribute.name].append(av.value)
 
         if has_existing_variants:
             for variant in product.variants.prefetch_related("attribute_values").all():

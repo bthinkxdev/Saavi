@@ -117,14 +117,18 @@
               elPriceValue.textContent = symbol + window.svMoney(data.price);
             }
 
-            var elMrp = document.getElementById('pdp-price-mrp');
-            if (elMrp) {
-              if (data.is_flash_sale !== 'true' && data.has_mrp_discount === 'true' && data.mrp) {
-                elMrp.textContent = symbol + window.svMoney(data.mrp);
-                elMrp.style.display = 'inline';
-              } else {
-                elMrp.style.display = 'none';
-              }
+            var elWas = document.getElementById('pdp-price-original') || document.getElementById('pdp-price-mrp');
+            var was = data.is_flash_sale === 'true' ? data.original_price : (data.has_mrp_discount === 'true' ? data.mrp : null);
+            if (elWas) {
+              elWas.textContent = was ? symbol + window.svMoney(was) : '';
+              elWas.style.display = was ? 'inline' : 'none';
+            }
+
+            var elOff = document.getElementById('pdp-price-off');
+            if (elOff) {
+              var pct = (was && data.price && +was > +data.price) ? Math.round((1 - data.price / was) * 100) : 0;
+              elOff.textContent = pct > 0 ? '(' + pct + '% Off)' : '';
+              elOff.style.display = pct > 0 ? '' : 'none';
             }
 
             if (retailContainer) {

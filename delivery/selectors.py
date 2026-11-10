@@ -44,9 +44,14 @@ def get_delivery_charge(*, subtotal: Decimal, address=None, city=None, is_cod: b
 
     charge = market_setting(settings, "default_shipping_charge") or Decimal("0.00")
 
-    # City overrides are Indian cities priced in INR; they never apply to UAE orders.
-    if target_city_name and get_current_country() != "AE":
-        city_obj = City.objects.filter(name__iexact=target_city_name, is_active=True).first()
+    # City overrides match the current market's country
+    if target_city_name:
+        current_code = get_current_country()
+        city_obj = City.objects.filter(
+            name__iexact=target_city_name,
+            country__code=current_code,
+            is_active=True,
+        ).first()
         if city_obj:
             charge = city_obj.delivery_charge_base
 

@@ -24,11 +24,12 @@ def validate_coupon_for_cart(
     cart_subtotal: Decimal,
     customer_profile_id: Optional[int] = None,
     cart_category_ids: Optional[list[int]] = None,
+    country_code: Optional[str] = None,
 ) -> dict[str, Decimal | str]:
     """
     Validate a coupon and return the discount amount for a cart subtotal.
 
-    Enforces date windows, usage limits, min order value, and category scope.
+    Enforces date windows, usage limits, min order value, category, and country scope.
     """
     now = timezone.now()
     coupon = (
@@ -44,7 +45,15 @@ def validate_coupon_for_cart(
     if coupon.valid_until and now > coupon.valid_until:
         raise InvalidCouponError("Coupon has expired.")
 
-    if cart_subtotal < coupon.min_order_value:
+    from core.country import get_current_country
+    current = (country_code or get_current_country() or "IN").upper()
+
+    if current == "AE" and coupon.min_order_value_ae is not None:
+        min_order = coupon.min_order_value_ae
+    else:
+        min_order = coupon.min_order_value
+
+    if cart_subtotal < min_order:
         raise InvalidCouponError("Order does not meet the minimum value for this coupon.")
 
     if coupon.max_uses is not None and coupon.redemption_count >= coupon.max_uses:
@@ -65,13 +74,23 @@ def validate_coupon_for_cart(
         if not allowed.intersection(cart_category_ids):
             raise InvalidCouponError("Coupon does not apply to items in your cart.")
 
+    if coupon.countries.exists():
+        allowed_countries = set(coupon.countries.values_list("code", flat=True))
+        if current and current not in allowed_countries:
+            allowed_names = ", ".join(coupon.countries.values_list("name", flat=True))
+            raise InvalidCouponError(f"This coupon is only valid for orders in {allowed_names}.")
+
     discount_type = coupon.discount_type
     if discount_type in (CouponDiscountType.PERCENTAGE, "percent", "percentage"):
         discount = (cart_subtotal * coupon.discount_value / Decimal("100")).quantize(
             Decimal("0.01")
         )
     else:
-        discount = min(coupon.discount_value, cart_subtotal)
+        if current == "AE" and coupon.discount_value_ae is not None:
+            val = coupon.discount_value_ae
+        else:
+            val = coupon.discount_value
+        discount = min(val, cart_subtotal)
 
     return {"code": coupon.code, "discount_amount": discount, "coupon_id": coupon.pk}
 
