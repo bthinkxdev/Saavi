@@ -127,11 +127,8 @@ def update_exchange_rates() -> dict[str, str]:
     return updated
 
 
-# Checkout country choices: primary markets first, then common international destinations.
+# Checkout country choices: supported markets (India and UAE).
 CHECKOUT_COUNTRIES = [
-    ("IN", "India"), ("AE", "United Arab Emirates"), ("SA", "Saudi Arabia"), ("QA", "Qatar"),
-    ("OM", "Oman"), ("KW", "Kuwait"), ("BH", "Bahrain"), ("US", "United States"),
-    ("GB", "United Kingdom"), ("CA", "Canada"), ("AU", "Australia"), ("NZ", "New Zealand"),
-    ("SG", "Singapore"), ("MY", "Malaysia"), ("DE", "Germany"), ("FR", "France"),
-    ("IE", "Ireland"), ("NL", "Netherlands"), ("IT", "Italy"), ("ES", "Spain"),
+    ("IN", "India"),
+    ("AE", "United Arab Emirates"),
 ]

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from django.db.models import Sum
+from django.db.models import Sum, Count
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
 from django.views.decorators.http import require_GET
@@ -10,6 +10,8 @@ from django.views.decorators.http import require_GET
 from core.models import Currency
 from dashboard import selectors
 from dashboard.access import dashboard_required
+from orders.models import Order
+from orders.services import REVENUE_ORDER_STATUSES
 from reports.models import DailySalesReport
 from reports.selectors import get_admin_dashboard_summary
 
@@ -36,6 +38,10 @@ def home_view(request: HttpRequest) -> HttpResponse:
     from reports.selectors import get_live_today_sales_report
 
     today = timezone.localdate()
+    rev_orders = Order.objects.filter(order_status__in=REVENUE_ORDER_STATUSES)
+    today_curr = selectors.get_currency_metrics(rev_orders.filter(created_at__date=today))
+    total_curr = selectors.get_currency_metrics(rev_orders)
+
     totals = DailySalesReport.objects.exclude(report_date=today).aggregate(
         revenue=Sum("revenue"),
         orders=Sum("order_count"),
@@ -54,6 +60,10 @@ def home_view(request: HttpRequest) -> HttpResponse:
         "currency_symbol": default_currency.symbol if default_currency else "",
         "summary": summary,
         "counts": counts,
+        "today_inr": today_curr["INR"],
+        "today_aed": today_curr["AED"],
+        "total_inr": total_curr["INR"],
+        "total_aed": total_curr["AED"],
         "revenue_delta": _pct_delta(summary["today_revenue"], summary["yesterday_revenue"]),
         "order_delta": _pct_delta(summary["today_order_count"], summary["yesterday_order_count"]),
         "total_revenue": total_revenue,

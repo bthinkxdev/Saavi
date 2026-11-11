@@ -179,7 +179,23 @@
             },
           },
         ],
-        tooltip: { shared: true },
+        tooltip: {
+          shared: true,
+          y: {
+            formatter: function (val, opts) {
+              if (opts && typeof opts.seriesIndex !== "undefined" && series[opts.seriesIndex]) {
+                var sName = series[opts.seriesIndex].name;
+                if (sName === "Revenue") {
+                  if (sales.revenue_display && sales.revenue_display[opts.dataPointIndex]) {
+                    return sales.revenue_display[opts.dataPointIndex];
+                  }
+                  return (val || 0).toFixed(2);
+                }
+              }
+              return Math.round(val || 0);
+            },
+          },
+        },
         legend: { position: "top", horizontalAlign: "right", markers: { radius: 12 } },
       }).render();
     }

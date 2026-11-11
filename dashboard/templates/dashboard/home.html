@@ -15,7 +15,9 @@
     <div class="kpi-tile tile-rose">
       <div class="kpi-icon"><i class="ti ti-cash"></i></div>
       <p class="kpi-label">Today's Revenue</p>
-      <h3 class="kpi-value">{{ currency_symbol }} {{ summary.today_revenue|floatformat:0 }}</h3>
+      <h3 class="kpi-value mb-1" style="font-size: 1.35rem;">
+        ₹ {{ today_inr.revenue|default:0|floatformat:0 }} <span class="text-muted fw-light mx-1">|</span> AED {{ today_aed.revenue|default:0|floatformat:2 }}
+      </h3>
       {% if revenue_delta is not None %}
       <span class="trend {% if revenue_delta >= 0 %}trend-up{% else %}trend-down{% endif %}">
         <i class="ti {% if revenue_delta >= 0 %}ti-trending-up{% else %}ti-trending-down{% endif %}"></i>
@@ -28,13 +30,10 @@
     <div class="kpi-tile tile-green">
       <div class="kpi-icon"><i class="ti ti-shopping-cart"></i></div>
       <p class="kpi-label">Today's Orders</p>
-      <h3 class="kpi-value">{{ summary.today_order_count }}</h3>
-      {% if order_delta is not None %}
-      <span class="trend {% if order_delta >= 0 %}trend-up{% else %}trend-down{% endif %}">
-        <i class="ti {% if order_delta >= 0 %}ti-trending-up{% else %}ti-trending-down{% endif %}"></i>
-        {{ order_delta }}% vs yesterday
-      </span>
-      {% else %}<span class="kpi-sub">vs yesterday</span>{% endif %}
+      <h3 class="kpi-value mb-1" style="font-size: 1.35rem;">
+        IN {{ today_inr.orders|default:0 }} <span class="text-muted fw-light mx-1">|</span> AE {{ today_aed.orders|default:0 }}
+      </h3>
+      <span class="kpi-sub">{{ summary.today_order_count }} orders today</span>
     </div>
   </div>
   <div class="col-xl-3 col-md-6">
@@ -61,7 +60,9 @@
     <div class="card stat-card h-100">
       <div class="card-body d-flex justify-content-between align-items-start">
         <div>
-          <h3 class="stat-value">{{ currency_symbol }} {{ total_revenue|floatformat:0 }}</h3>
+          <h3 class="stat-value mb-1" style="font-size: 1.35rem;">
+            ₹ {{ total_inr.revenue|default:0|floatformat:0 }} <span class="text-muted fw-light mx-1">|</span> AED {{ total_aed.revenue|default:0|floatformat:2 }}
+          </h3>
           <p class="stat-label">Total Revenue</p>
           <a href="{% url 'dashboard:reports' %}" class="stat-link">View reports <i class="ti ti-arrow-right"></i></a>
         </div>
@@ -73,8 +74,10 @@
     <div class="card stat-card h-100">
       <div class="card-body d-flex justify-content-between align-items-start">
         <div>
-          <h3 class="stat-value">{{ total_orders }}</h3>
-          <p class="stat-label">Total Orders</p>
+          <h3 class="stat-value mb-1" style="font-size: 1.35rem;">
+            IN {{ total_inr.orders|default:0 }} <span class="text-muted fw-light mx-1">|</span> AE {{ total_aed.orders|default:0 }}
+          </h3>
+          <p class="stat-label">Total Orders <small class="text-muted">({{ total_orders }} total)</small></p>
           <a href="{% url 'dashboard:order-list' %}" class="stat-link">View orders <i class="ti ti-arrow-right"></i></a>
         </div>
         <span class="stat-icon icon-blue"><i class="ti ti-package"></i></span>
@@ -85,7 +88,9 @@
     <div class="card stat-card h-100">
       <div class="card-body d-flex justify-content-between align-items-start">
         <div>
-          <h3 class="stat-value">{{ currency_symbol }} {{ avg_order_value|floatformat:0 }}</h3>
+          <h3 class="stat-value mb-1" style="font-size: 1.35rem;">
+            ₹ {{ total_inr.aov|default:0|floatformat:0 }} <span class="text-muted fw-light mx-1">|</span> AED {{ total_aed.aov|default:0|floatformat:2 }}
+          </h3>
           <p class="stat-label">Avg. Order Value</p>
           <a href="{% url 'dashboard:reports' %}" class="stat-link">View reports <i class="ti ti-arrow-right"></i></a>
         </div>
@@ -141,7 +146,7 @@
         <div class="list-row">
           {% if p.image %}<img src="{{ p.image }}" class="thumb" alt="">{% else %}<span class="thumb thumb-fallback">{{ p.name|first|upper }}</span>{% endif %}
           <div class="list-main">
-            <p class="list-title">{{ p.name }}</p>
+            <p class="list-title">{{ p.name }} {% for c in p.countries %}<span class="badge bg-light text-dark border py-0 px-1">{{ c }}</span>{% endfor %}</p>
             <p class="list-meta">{{ currency_symbol }} {{ p.revenue|floatformat:0 }} · {{ p.units }} sold</p>
           </div>
           <span class="share-badge">{{ p.share }}%</span>
@@ -164,7 +169,7 @@
         <div class="list-row">
           {% if prod.image %}<img src="{{ prod.image }}" class="thumb" alt="">{% else %}<span class="thumb thumb-fallback">{{ prod.name|first|upper }}</span>{% endif %}
           <div class="list-main">
-            <p class="list-title">{{ prod.name }}</p>
+            <p class="list-title">{{ prod.name }} {% for c in prod.countries %}<span class="badge bg-light text-dark border py-0 px-1">{{ c }}</span>{% endfor %}</p>
             <p class="list-meta">SKU: {{ prod.sku }}</p>
           </div>
           <div class="text-end">
@@ -191,7 +196,7 @@
           <span class="thumb thumb-fallback">{{ order.customer_profile|default:"G"|stringformat:"s"|first|upper }}</span>
           <div class="list-main">
             <a href="{% url 'dashboard:order-detail' order.pk %}" class="list-title link">{{ order.order_number }}</a>
-            <p class="list-meta">{{ order.customer_profile|default:"Guest" }} · {{ currency_symbol }} {{ order.total_amount|floatformat:0 }}</p>
+            <p class="list-meta">{{ order.customer_profile|default:"Guest" }} · <span class="badge bg-light text-dark border py-0 px-1">{{ order.currency.code }}</span> {{ order.currency.symbol|default:'' }} {{ order.total_amount|floatformat:2 }}</p>
           </div>
           <span class="pill {{ order.order_status|status_pill }}">{{ order.get_order_status_display }}</span>
         </div>

@@ -57,7 +57,7 @@
       <nav class="sv-nav d-none d-lg-block" aria-label="{% trans 'Primary' %}">
         <ul class="sv-nav__links">
           <li><a class="sv-nav__link {% if request.resolver_match.url_name == 'homepage' %}is-active{% endif %}" href="{% url 'cms:homepage' %}">{% trans "Home" %}</a></li>
-          {% for cat in category_tree|slice:":3" %}
+          {% for cat in category_tree %}
           <li><a class="sv-nav__link {% if request.resolver_match.kwargs.category_slug == cat.slug %}is-active{% endif %}" href="{% url 'catalog:plp-category' category_slug=cat.slug %}">{{ cat.name }}</a></li>
           {% endfor %}
           <li><a class="sv-nav__link {% if request.GET.new_arrival == '1' %}is-active{% endif %}" href="{% url 'catalog:plp' %}?new_arrival=1">{% trans "New Arrivals" %}</a></li>

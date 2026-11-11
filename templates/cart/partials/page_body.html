@@ -1,5 +1,6 @@
 {% load i18n static storefront_tags %}
-<div id="cart-page-body" hx-get="{% url 'cart:page' %}" hx-trigger="cartUpdated from:body" hx-select="#cart-page-body" hx-swap="outerHTML">
+<div id="cart-page-body">
+<h1 class="sv-h1">{% trans "Your Cart" %} {% if cart_count %}<small>({{ cart_count }} {% trans "Items" %})</small>{% endif %}</h1>
 {% if error and not error_item_id %}
 <div class="alert alert-danger py-2 small mb-3" role="alert">{{ error }}</div>
 {% endif %}
@@ -87,7 +88,7 @@
   <aside>
     <div class="sv-panel sv-panel--cream sv-summary">
       <h2 class="sv-h3">{% trans "Order Summary" %}</h2>
-      <div class="sv-summary__row"><span>{% trans "Subtotal" %} ({{ summary.lines|length }} {% trans "Items" %})</span><span>{% money_label summary.subtotal display_currency %}</span></div>
+      <div class="sv-summary__row"><span>{% trans "Subtotal" %} ({{ summary.item_count }} {% trans "Items" %})</span><span>{% money_label summary.subtotal display_currency %}</span></div>
       {% if summary.coupon_discount %}<div class="sv-summary__row"><span>{% trans "Discount" %}</span><span class="sv-green">&minus; {% money_label summary.coupon_discount display_currency %}</span></div>{% endif %}
       <div class="sv-summary__row"><span>{% trans "Shipping" %} <span class="sv-info" title="{% trans 'Free above the free-shipping amount; otherwise based on your city at checkout.' %}">i</span></span><span>{% if summary.delivery_charge and summary.delivery_charge > 0 %}{% money_label summary.delivery_charge display_currency %}{% elif free_shipping_threshold and summary.subtotal >= free_shipping_threshold %}<span class="sv-green">{% trans "Free" %}</span>{% else %}<span class="sv-muted">{% trans "Calculated at checkout" %}</span>{% endif %}</span></div>
       <div class="sv-summary__total"><span>{% trans "Total" %}</span><span>{% money_label summary.grand_total display_currency %}</span></div>

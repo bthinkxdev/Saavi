@@ -296,9 +296,6 @@ def get_cart_summary(
                 user=cart.customer_profile.user if hasattr(cart, "customer_profile") and cart.customer_profile else None,
                 quantity=item.quantity,
             )
-            if item.unit_price_at_add != unit_price:
-                item.unit_price_at_add = unit_price
-                item.save(update_fields=["unit_price_at_add", "updated_at"])
         except Exception:
             unit_price = item.unit_price_at_add
 

@@ -165,6 +165,7 @@
               <input type="hidden" name="product_id" value="{{ product.pk }}">
               <input type="hidden" name="quantity" class="pdp-qty-input" value="1">
               <input type="hidden" name="variant_id" class="pdp-variant-id-input" value="{{ selected_variant_id }}">
+              <input type="hidden" name="buy_now" value="true">
               <button type="submit" name="buy_now" value="true"
                 class="btn btn-floward w-100 jm-pdp-btn jm-pdp-btn--primary" {% if not price_data.is_in_stock %}style="cursor: not-allowed;" onclick="event.preventDefault();" {% endif %}>
                 {% trans "Buy Now" %}
@@ -238,6 +239,7 @@
           <input type="hidden" name="product_id" value="{{ product.pk }}">
           <input type="hidden" name="quantity" class="pdp-qty-input" value="1">
           <input type="hidden" name="variant_id" class="pdp-variant-id-input" value="{{ selected_variant_id }}">
+          <input type="hidden" name="buy_now" value="true">
           <button type="submit" name="buy_now" value="true" class="btn btn-floward jm-pdp-sticky__btn" {% if not price_data.is_in_stock %}style="cursor: not-allowed;" onclick="event.preventDefault();" {% endif %}>{% trans "Buy Now" %}</button>
         </form>
       </div>

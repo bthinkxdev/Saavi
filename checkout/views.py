@@ -152,9 +152,7 @@ def checkout_update_delivery_charge_view(request: HttpRequest) -> HttpResponse:
 
     from delivery.models import City
     from core.country import get_current_country
-    curr_country = (getattr(request, "country_code", None) or get_current_country() or "IN").upper()
-    if cart.currency and cart.currency.code == "AED":
-        curr_country = "AE"
+    curr_country = (get_current_country() or "IN").upper()
     active_cities = City.objects.filter(is_active=True, country__code=curr_country)
     if city_name and not any(c.name.lower() == city_name.lower() for c in active_cities):
         city_name = ""
@@ -223,6 +221,15 @@ def checkout_fix_stock_view(request: HttpRequest) -> HttpResponse:
 def checkout_view(request: HttpRequest) -> HttpResponse:
     """Multi-step checkout page with gift Order Preview partial."""
     cart = _get_checkout_cart(request=request, create=True)
+    if cart:
+        from cart.services import _resolve_unit_price
+        from django.contrib import messages
+        for item in cart.items.select_related("product", "variant"):
+            current_unit_price = _resolve_unit_price(product=item.product, variant=item.variant)
+            if item.unit_price_at_add is not None and item.unit_price_at_add != current_unit_price:
+                messages.warning(request, f"Price for '{item.product.name}' has changed. Please review before ordering.")
+                item.unit_price_at_add = current_unit_price
+                item.save(update_fields=["unit_price_at_add", "updated_at"])
     summary = get_cart_summary(cart=cart)
     if not summary.lines:
         #do not redirect,render the empty state in checkout.html
@@ -241,15 +248,10 @@ def checkout_view(request: HttpRequest) -> HttpResponse:
     )
 
 
-    addresses = []
-    if profile:
-        addresses = list(profile.addresses.all().order_by("-is_default", "-id"))
-            
     from delivery.models import City
     from core.country import get_current_country
-    curr_country = (getattr(request, "country_code", None) or get_current_country() or "IN").upper()
-    if cart.currency and cart.currency.code == "AED":
-        curr_country = "AE"
+    curr_country = (get_current_country() or "IN").upper()
+    addresses = list(profile.addresses.filter(country__in=("IN", "India") if curr_country == "IN" else ("AE", "United Arab Emirates")).order_by("-is_default", "-id")) if profile else []
     active_cities = City.objects.filter(is_active=True, country__code=curr_country)
 
     address, city_name = _resolve_checkout_address_and_city(
@@ -263,7 +265,10 @@ def checkout_view(request: HttpRequest) -> HttpResponse:
         city_name = ""
         request.session.pop("checkout_guest_city", None)
         city_in_active_cities = False
-    if address and not session.address:
+    if session and session.address and session.address.country not in (("IN", "India") if curr_country == "IN" else ("AE", "United Arab Emirates")):
+        session.address = None
+        session.save(update_fields=["address", "updated_at"])
+    elif address and not session.address:
         session.address = address
         session.save(update_fields=["address", "updated_at"])
 

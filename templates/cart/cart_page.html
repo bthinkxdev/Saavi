@@ -6,7 +6,14 @@
 {% block content %}
 <div class="container sv-page">
   <nav class="sv-crumbs" aria-label="{% trans 'Breadcrumb' %}"><a href="{% url 'cms:homepage' %}">{% trans "Home" %}</a><span aria-hidden="true">&rsaquo;</span><span>{% trans "Your Cart" %}</span></nav>
-  <h1 class="sv-h1">{% trans "Your Cart" %} {% if cart_count %}<small>({{ cart_count }} {% trans "Items" %})</small>{% endif %}</h1>
   {% include "cart/partials/page_body.html" %}
 </div>
+<script>
+  if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+  let y = 0;
+  document.addEventListener('htmx:beforeRequest', (e) => { if (e.target.closest('#cart-page-body')) y = window.scrollY; });
+  document.addEventListener('htmx:beforeSwap', () => { if (y) window.scrollTo(0, y); });
+  document.addEventListener('htmx:afterSwap', () => { if (y) window.scrollTo(0, y); });
+  document.addEventListener('htmx:afterSettle', () => { if (y) window.scrollTo(0, y); y = 0; });
+</script>
 {% endblock %}

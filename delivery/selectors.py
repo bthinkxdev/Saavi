@@ -39,9 +39,6 @@ def get_delivery_charge(*, subtotal: Decimal, address=None, city=None, is_cod: b
         elif hasattr(address, "city") and address.city:
             target_city_name = address.city
 
-    if not address and not target_city_name:
-        return Decimal("0.00")
-
     charge = market_setting(settings, "default_shipping_charge") or Decimal("0.00")
 
     # City overrides match the current market's country

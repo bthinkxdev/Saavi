@@ -51,9 +51,16 @@
           {% endfor %}
         </select>
       </div>
+      <div class="col-6 col-md-auto">
+        <select name="country" class="form-select">
+          <option value="">All Countries</option>
+          <option value="INR" {% if current_country == "INR" or current_country == "IN" %}selected{% endif %}>India (INR)</option>
+          <option value="AED" {% if current_country == "AED" or current_country == "AE" %}selected{% endif %}>UAE (AED)</option>
+        </select>
+      </div>
       <div class="col-12 col-md-auto d-flex align-items-center gap-2">
         <button type="submit" class="btn btn-outline-secondary flex-fill flex-md-grow-0">Filter</button>
-        {% if current_status or current_payment_status %}
+        {% if current_status or current_payment_status or current_country or search_query %}
         <a href="{% url 'dashboard:order-list' %}{% if current_view == 'abandoned' %}?view=abandoned{% endif %}" class="btn btn-outline-secondary flex-fill flex-md-grow-0">Clear</a>
         {% endif %}
       </div>

@@ -114,7 +114,11 @@ def cart_count_view(request: HttpRequest) -> HttpResponse:
 def cart_status_view(request: HttpRequest) -> JsonResponse:
     """JSON endpoint returning active cart count, product IDs, and item keys for JS state sync."""
     from cart.models import CartItem
-    cart = get_cart_for_request(request=request)
+    if request.session.get("checkout_mode") == "buy_now":
+        from checkout.views import _get_checkout_cart
+        cart = _get_checkout_cart(request=request)
+    else:
+        cart = get_cart_for_request(request=request)
     cart_item_keys = []
     count = 0
     if cart:

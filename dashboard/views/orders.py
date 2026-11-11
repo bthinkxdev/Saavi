@@ -46,6 +46,11 @@ def order_list(request: HttpRequest) -> HttpResponse:
     if customer_id:
         qs = qs.filter(customer_profile_id=customer_id)
 
+    country = request.GET.get("country", "").strip()
+    if country in ("INR", "AED", "IN", "AE"):
+        curr = "INR" if country in ("INR", "IN") else "AED"
+        qs = qs.filter(currency__code=curr)
+
     from django.db.models import Q
     query = request.GET.get("q", "").strip()
     if query:
@@ -114,6 +119,7 @@ def order_list(request: HttpRequest) -> HttpResponse:
         "payment_statuses": PaymentStatus.choices,
         "current_status": status,
         "current_payment_status": payment_status,
+        "current_country": country,
         "search_query": query,
         "querystring": params.urlencode(),
         "active_filters": active_filters,

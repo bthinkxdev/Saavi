@@ -113,14 +113,16 @@
               if (elSku) elSku.textContent = 'SKU: ' + data.sku;
             }
 
+            var sep = (symbol && /[a-zA-Z]$/.test(symbol)) ? ' ' : '';
             if (elPriceValue) {
-              elPriceValue.textContent = symbol + window.svMoney(data.price);
+              elPriceValue.textContent = data.formatted_price || (symbol + sep + window.svMoney(data.price));
             }
 
             var elWas = document.getElementById('pdp-price-original') || document.getElementById('pdp-price-mrp');
             var was = data.is_flash_sale === 'true' ? data.original_price : (data.has_mrp_discount === 'true' ? data.mrp : null);
             if (elWas) {
-              elWas.textContent = was ? symbol + window.svMoney(was) : '';
+              var formattedWas = data.is_flash_sale === 'true' ? data.formatted_original_price : data.formatted_mrp;
+              elWas.textContent = was ? (formattedWas || (symbol + sep + window.svMoney(was))) : '';
               elWas.style.display = was ? 'inline' : 'none';
             }
 
@@ -138,7 +140,7 @@
                 retailContainer.classList.add("d-none");
               }
             }
-            if (elSticky) elSticky.textContent = hasPrice ? (symbol + window.svMoney(data.price)) : 'Unavailable';
+            if (elSticky) elSticky.textContent = hasPrice ? (data.formatted_price || (symbol + sep + window.svMoney(data.price))) : 'Unavailable';
             
             var stickyVariantName = document.getElementById('pdp-sticky-variant-name');
             if (stickyVariantName) {
@@ -151,7 +153,7 @@
 
             var elRetail = document.getElementById('pdp-retail-price');
             if (elRetail && data.retail_price) {
-              elRetail.textContent = symbol + window.svMoney(data.retail_price);
+              elRetail.textContent = symbol + sep + window.svMoney(data.retail_price);
             }
             var elRetailVal = document.getElementById('pdp-retail-price-val');
             if (elRetailVal && data.retail_price) {
@@ -328,6 +330,7 @@
     var currQty = parseInt(qtyInput.value) || 1;
     var errorMsg = document.getElementById('pdp-stock-error-msg');
     var atcBtn = document.querySelector('#buy-form button');
+    var bnForm = document.getElementById('buy-now-form');
     var bnBtn = document.querySelector('#buy-now-form button');
     var stickyAtcBtn = document.querySelector('#sticky-buy-form button');
     var stickyBnBtn = document.querySelector('#sticky-buy-now-form button');

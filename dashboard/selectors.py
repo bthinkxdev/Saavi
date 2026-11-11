@@ -2,11 +2,22 @@
 
 from __future__ import annotations
 
-from datetime import timedelta
+from datetime import date, timedelta
 from typing import Any
 
-from django.db.models import F
+from django.db.models import F, Sum, Count
+from django.db.models.functions import TruncDate
 from django.utils import timezone
+
+
+def get_currency_metrics(queryset) -> dict[str, dict[str, float]]:
+    """Aggregate revenue, count and AOV for INR and AED."""
+    res = {"INR": {"revenue": 0.0, "orders": 0, "aov": 0.0}, "AED": {"revenue": 0.0, "orders": 0, "aov": 0.0}}
+    for r in queryset.values("currency__code").annotate(rev=Sum("total_amount"), cnt=Count("id")):
+        code = r["currency__code"] or "INR"
+        rev, cnt = float(r["rev"] or 0), r["cnt"] or 0
+        res[code] = {"revenue": rev, "orders": cnt, "aov": (rev / cnt) if cnt else 0.0}
+    return res
 
 from accounts.models import CustomerProfile
 from catalog.models import Product, ProductVariant
@@ -22,24 +33,36 @@ from reports.models import (
 def get_sales_series(*, days: int = 14) -> dict[str, list]:
     """Return ordered date labels, revenue and order counts for the last N days."""
     start = timezone.localdate() - timedelta(days=days - 1)
-    rows = {
-        r.report_date: r
-        for r in DailySalesReport.objects.filter(report_date__gte=start).order_by("report_date")
-    }
-    
-    from reports.selectors import get_live_today_sales_report
-    today = timezone.localdate()
-    rows[today] = get_live_today_sales_report()
-    categories: list[str] = []
-    revenue: list[float] = []
-    orders: list[int] = []
+    orders = (
+        Order.objects.filter(created_at__date__gte=start, order_status__in=REVENUE_ORDER_STATUSES)
+        .annotate(date=TruncDate("created_at"))
+        .values("date", "currency__code")
+        .annotate(rev=Sum("total_amount"), cnt=Count("id"))
+    )
+    daily = {}
+    for r in orders:
+        d = r["date"]
+        if d not in daily:
+            daily[d] = {"INR": 0.0, "AED": 0.0, "orders": 0}
+        code = r["currency__code"] or "INR"
+        daily[d][code] = float(r["rev"] or 0)
+        daily[d]["orders"] += r["cnt"]
+
+    categories, revenue, revenue_disp, order_counts = [], [], [], []
     for offset in range(days):
         day = start + timedelta(days=offset)
         categories.append(day.strftime("%b %d"))
-        row = rows.get(day)
-        revenue.append(float(row.revenue) if row else 0.0)
-        orders.append(row.order_count if row else 0)
-    return {"categories": categories, "revenue": revenue, "orders": orders}
+        info = daily.get(day, {"INR": 0.0, "AED": 0.0, "orders": 0})
+        revenue.append(info["INR"] + info["AED"])
+        revenue_disp.append(f"₹ {info['INR']:.2f} | AED {info['AED']:.2f}")
+        order_counts.append(info["orders"])
+
+    return {
+        "categories": categories,
+        "revenue": revenue,
+        "revenue_display": revenue_disp,
+        "orders": order_counts,
+    }
 
 
 def get_customer_split() -> dict[str, list[float]]:
@@ -98,7 +121,7 @@ def get_top_products(*, limit: int = 5) -> list[dict[str, Any]]:
         return []
 
     product_ids = [r["product_id"] for r in rows]
-    products = Product.objects.filter(id__in=product_ids).prefetch_related("images")
+    products = Product.objects.filter(id__in=product_ids).prefetch_related("images", "countries")
     product_map = {p.id: p for p in products}
 
     top_revenue = float(rows[0]["total_revenue"]) if rows else 0.0
@@ -115,6 +138,7 @@ def get_top_products(*, limit: int = 5) -> list[dict[str, Any]]:
                 "category": r["product__category__name"] if r["product__category_id"] else "",
                 "image": _primary_image_url(product) if product else None,
                 "share": round(100 * rev / top_revenue) if top_revenue else 0,
+                "countries": [c.code for c in product.countries.all()] if product else ["IN", "AE"],
             }
         )
     return result
@@ -130,7 +154,7 @@ def get_low_stock_products(*, limit: int = 5) -> list[dict[str, Any]]:
             | Q(variants__isnull=True, stock_quantity__lte=F("low_stock_threshold"), stock_quantity__gt=0)
         )
         .select_related("category")
-        .prefetch_related("images", "variants__attribute_values")
+        .prefetch_related("images", "variants__attribute_values", "countries")
         .distinct()[:limit]
     )
     result = []
@@ -166,6 +190,7 @@ def get_low_stock_products(*, limit: int = 5) -> list[dict[str, Any]]:
             "stock": stock,
             "category": p.category.name if p.category_id else "",
             "image": _primary_image_url(p),
+            "countries": [c.code for c in p.countries.all()] or ["IN", "AE"],
         })
 
     result.sort(key=lambda x: x["stock"])

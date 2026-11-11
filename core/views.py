@@ -239,9 +239,18 @@ def set_country_view(request: HttpRequest) -> HttpResponse:
         request.session[COUNTRY_SESSION_KEY] = code
         request.session.pop("checkout_guest_city", None)
         request.session.pop("checkout_address_id", None)
-        for row in get_active_countries():
-            if row.code == code and row.currency_id and row.currency.is_active:
-                request.session[SESSION_KEY] = row.currency.code
+        country_obj = next((c for c in get_active_countries() if c.code == code and c.currency_id and c.currency.is_active), None)
+        if country_obj:
+            request.session[SESSION_KEY] = country_obj.currency.code
+            from cart.selectors import get_cart_for_request
+            cart = get_cart_for_request(request=request)
+            if cart and cart.currency_id != country_obj.currency_id:
+                cart.currency = country_obj.currency
+                cart.save(update_fields=["currency", "updated_at"])
+                from cart.services import _resolve_unit_price
+                for item in cart.items.select_related("product", "variant"):
+                    item.unit_price_at_add = _resolve_unit_price(product=item.product, variant=item.variant)
+                    item.save(update_fields=["unit_price_at_add", "updated_at"])
 
     if not is_htmx_request(request):
         return redirect(request.META.get("HTTP_REFERER", "/"))

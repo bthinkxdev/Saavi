@@ -499,9 +499,14 @@ class CouponForm(forms.ModelForm):
         self.fields["valid_from"].widget.attrs["min"] = now
         self.fields["valid_until"].widget.attrs["min"] = now
         self.fields["discount_value"].label = "Value (INR / %)"
+        self.fields["discount_value"].required = False
         self.fields["discount_value_ae"].label = "Value (AED)"
         self.fields["discount_value_ae"].required = False
         self.fields["min_order_value"].label = "Minimum order value (INR)"
+        self.fields["min_order_value"].required = False
+        if not self.instance.pk:
+            self.fields["min_order_value"].initial = None
+            self.initial["min_order_value"] = None
         self.fields["min_order_value_ae"].label = "Minimum order value (AED)"
         self.fields["min_order_value_ae"].required = False
         self.fields["countries"].required = False
@@ -518,6 +523,9 @@ class CouponForm(forms.ModelForm):
 
         if valid_from and valid_until and valid_from >= valid_until:
             self.add_error("valid_until", "Valid until date must be after valid from date.")
+
+        cleaned_data["discount_value"] = cleaned_data.get("discount_value") or 0
+        cleaned_data["min_order_value"] = cleaned_data.get("min_order_value") or 0
 
         return cleaned_data
 

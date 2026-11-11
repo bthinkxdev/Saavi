@@ -21,6 +21,7 @@ def inventory_list(request: HttpRequest) -> HttpResponse:
     category_id = request.GET.get("category", "").strip()
     status_filter = request.GET.get("status", "").strip()
     type_filter = request.GET.get("type", "").strip()
+    country_filter = request.GET.get("country", "").strip()
 
     qs = (
         Product.objects.all()
@@ -61,6 +62,11 @@ def inventory_list(request: HttpRequest) -> HttpResponse:
         subcat_ids = list(Category.objects.filter(parent_id=cat_id).values_list("id", flat=True))
         all_cat_ids = [cat_id] + subcat_ids
         qs = qs.filter(category_id__in=all_cat_ids)
+
+    if country_filter in ("IN", "INR"):
+        qs = qs.filter(countries__code="IN")
+    elif country_filter in ("AE", "AED"):
+        qs = qs.filter(countries__code="AE")
 
     if type_filter == "variant":
         qs = qs.filter(variants__isnull=False).distinct()
@@ -162,6 +168,7 @@ def inventory_list(request: HttpRequest) -> HttpResponse:
         "category_filter": category_id,
         "status_filter": status_filter,
         "type_filter": type_filter,
+        "country_filter": country_filter,
     }
     return render(request, "dashboard/inventory/inventory_list.html", context)
 

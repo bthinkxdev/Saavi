@@ -41,6 +41,14 @@
   </div>
   <div class="row g-4">
     <div class="col-lg-7 sv-checkout__steps">
+      {% if messages %}
+      {% for message in messages %}
+      <div class="alert alert-{% if 'error' in message.tags or 'danger' in message.tags %}danger{% elif 'warning' in message.tags %}warning{% else %}success{% endif %} alert-dismissible fade show mb-3" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+      {% endfor %}
+      {% endif %}
       <form id="checkout-form" method="post" action="{% url 'checkout:place-order' %}"
         hx-post="{% url 'checkout:place-order' %}" hx-target="#checkout-result" hx-swap="innerHTML" novalidate>
         {% csrf_token %}
@@ -168,11 +176,8 @@
               </div>
               <div class="col-md-6">
                 <label class="form-label small">{% trans "Country" %} <span class="text-danger">*</span></label>
-                {% with cur_country=checkout_session.address.country|default:request.session.visitor_country|default:"IN" %}
-                <select name="guest_country" id="guest_country" class="form-select form-select-sm">
-                  {% for code, label in sv_countries %}<option value="{{ code }}" {% if cur_country|upper == code %}selected{% endif %}>{{ label }}</option>{% endfor %}
-                </select>
-                {% endwith %}
+                <input type="text" class="form-control form-control-sm bg-light" value="{{ current_country_name|default:'India' }}" readonly style="cursor: not-allowed;">
+                <input type="hidden" name="guest_country" id="guest_country" value="{{ current_country|default:'IN' }}">
                 <div id="error-guest_country" class="text-danger small mt-1"></div>
               </div>
             </div>
@@ -191,7 +196,7 @@
             <div class="col-md-4"><label class="form-label small">{% trans "City" %}</label><input type="text" name="billing_city" class="form-control form-control-sm"></div>
             <div class="col-md-4"><label class="form-label small">{% trans "State" %}</label><input type="text" name="billing_state" class="form-control form-control-sm"></div>
             <div class="col-md-4"><label class="form-label small">{% trans "PIN / Postal Code" %}</label><input type="text" name="billing_pincode" class="form-control form-control-sm"></div>
-            <div class="col-md-6"><label class="form-label small">{% trans "Country" %}</label><select name="billing_country" class="form-select form-select-sm">{% for code, label in sv_countries %}<option value="{{ code }}">{{ label }}</option>{% endfor %}</select></div>
+            <div class="col-md-6"><label class="form-label small">{% trans "Country" %}</label><input type="text" class="form-control form-control-sm bg-light" value="{{ current_country_name|default:'India' }}" readonly style="cursor: not-allowed;"><input type="hidden" name="billing_country" value="{{ current_country|default:'IN' }}"></div>
           </div>
         </div>
 
@@ -204,7 +209,7 @@
               <input type="radio" name="delivery_method" value="standard" hx-post="{% url 'checkout:update-delivery-charge' %}" hx-target="#order-summary-container" hx-select="#order-summary-container" hx-include="#checkout-form" hx-swap="outerHTML" {% if delivery_method != 'express' or not express_delivery_charge %}checked{% endif %}>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="M1 6h13v10H1zM14 9h4l3 3v4h-7"/><circle cx="5.5" cy="17.5" r="1.8"/><circle cx="17.5" cy="17.5" r="1.8"/></svg>
               <span><strong>{% trans "Standard Delivery" %}</strong><small>{{ settings.standard_delivery_text|default:_("Delivered in 3–5 business days") }}</small></span>
-              <em>{% if summary.delivery_charge and delivery_method != 'express' %}{% money_label summary.delivery_charge display_currency %}{% elif delivery_method != 'express' %}{% trans "Free" %}{% else %}{% trans "Standard rate" %}{% endif %}</em>
+              <em id="standard-delivery-rate">{% if summary.delivery_charge and delivery_method != 'express' %}{% money_label summary.delivery_charge display_currency %}{% elif delivery_method != 'express' %}{% trans "Free" %}{% else %}{% trans "Standard rate" %}{% endif %}</em>
             </label>
             {% if express_delivery_charge %}
             <label class="sv-option">
@@ -253,6 +258,7 @@
     <div class="col-lg-5">
       <div class="sticky-top" style="top: 100px;">
         <div class="checkout-step sv-checkout__summary" id="order-summary-container" hx-get="{% url 'checkout:checkout' %}" hx-trigger="stockChanged from:body, cartUpdated from:body" hx-select="#order-summary-container" hx-swap="outerHTML">
+        <div style="display:none;"><em id="standard-delivery-rate" hx-swap-oob="true">{% if summary.delivery_charge and delivery_method != 'express' %}{% money_label summary.delivery_charge display_currency %}{% elif delivery_method != 'express' %}{% trans "Free" %}{% else %}{% trans "Standard rate" %}{% endif %}</em></div>
         <div class="d-flex justify-content-between align-items-center mb-3">
           <h2 class="mb-0">{% trans "Order Summary" %} <small>({{ summary.lines|length }} {% trans "Items" %})</small></h2>
           {% if is_buy_now and summary.lines %}
@@ -464,9 +470,11 @@
       checkoutForm.addEventListener('input', saveDraft);
       checkoutForm.addEventListener('change', saveDraft);
 
+      {% if not is_buy_now %}
       document.body.addEventListener('cartUpdated', function() {
         fetch("{% url 'cart:status' %}").then(function(r) { return r.json(); }).then(function(d) { if (!d || d.cart_count === 0) location.reload(); }).catch(function() {});
       });
+      {% endif %}
 
       function validateCheckoutForm() {
         var isValid = true;
@@ -698,10 +706,6 @@
       if (/^\d+$/.test(val)) return "State cannot consist of numbers only.";
       if (/^[^a-zA-Z0-9]+$/.test(val)) return "State cannot consist of special characters only.";
       if (/^[^a-zA-Z]+$/.test(val)) return "State cannot consist of only numbers and special characters.";
-      return "";
-    });
-    setupInputListener('input[name="guest_country"]', 'error-guest_country', function(val) {
-      if (val && !/^[a-zA-Z]{2}$/.test(val)) return "Country must be exactly a 2-letter code (e.g. NZ).";
       return "";
     });
     setupInputListener('input[name="guest_pincode"]', 'error-guest_pincode', function(val) {
