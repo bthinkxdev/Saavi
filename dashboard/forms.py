@@ -524,6 +524,14 @@ class CouponForm(forms.ModelForm):
         if valid_from and valid_until and valid_from >= valid_until:
             self.add_error("valid_until", "Valid until date must be after valid from date.")
 
+        codes = [c.code for c in cleaned_data.get("countries") or []]
+        if codes == ["AE"]:
+            if not cleaned_data.get("discount_value_ae"):
+                self.add_error("discount_value_ae", "AED amount is required for UAE.")
+            cleaned_data["discount_value"] = 0
+        elif codes == ["IN"] and not cleaned_data.get("discount_value"):
+            self.add_error("discount_value", "INR amount is required for India.")
+
         cleaned_data["discount_value"] = cleaned_data.get("discount_value") or 0
         cleaned_data["min_order_value"] = cleaned_data.get("min_order_value") or 0
 

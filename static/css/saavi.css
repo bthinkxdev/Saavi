@@ -346,6 +346,7 @@ body.sv-body { background: var(--sv-cream); color: var(--sv-text); font-family: 
 .sv-trust--pdp { grid-template-columns: repeat(3, 1fr); padding: 1.1rem 0; margin-top: 1.25rem; border-bottom: 1px solid var(--sv-border); }
 .sv-trust--pdp li { justify-content: flex-start; padding: 0 .75rem; gap: .6rem; }
 .sv-trust--pdp li:first-child { padding-left: 0; }
+.sv-trust--pdp li:nth-child(3) { border-left: 1px solid var(--sv-border) !important; }
 .sv-trust--pdp li:nth-child(4) { display: none; }
 .sv-trust--pdp svg { width: 30px; height: 30px; }
 @media (max-width: 576px) { .sv-trust--pdp li { flex-direction: column; text-align: center; padding: 0 .25rem; gap: .3rem; } .sv-trust--pdp svg { margin: 0 auto; width: 26px; height: 26px; } }

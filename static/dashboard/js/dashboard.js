@@ -436,7 +436,7 @@
     document.addEventListener("submit", function (e) {
       var form = e.target;
       var table = document.querySelector(".table-responsive");
-      if (!table || !form || (form.method && form.method.toLowerCase() === "post")) return;
+      if (!table || !form || (form.method && form.method.toLowerCase() === "post") || form.dataset.ajax === "false") return;
 
       var pathname = form.getAttribute("action") || window.location.pathname;
       var cleanParams = new URLSearchParams();
@@ -463,12 +463,17 @@
           var newActive = doc.querySelector("#active-filters");
           var curActive = document.querySelector("#active-filters");
 
-          if (newTable) table.innerHTML = newTable.innerHTML;
+          if (newTable) {
+            table.innerHTML = newTable.innerHTML;
+            initTableLabels();
+          }
           if (newForm) form.innerHTML = newForm.innerHTML;
           if (curPagination && newPagination) curPagination.innerHTML = newPagination.innerHTML;
           else if (curPagination && !newPagination) curPagination.innerHTML = "";
           if (curActive && newActive) curActive.innerHTML = newActive.innerHTML;
           else if (curActive && !newActive) curActive.innerHTML = "";
+          var curHeader = document.querySelector("h1 + p"), newHeader = doc.querySelector("h1 + p");
+          if (curHeader && newHeader) curHeader.innerHTML = newHeader.innerHTML;
 
           window.history.replaceState({}, "", url);
         })

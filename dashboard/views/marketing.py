@@ -11,6 +11,10 @@ from dashboard.views.base import (
 )
 from marketing.models import Coupon, FlashSale, NewsletterSubscriber
 
+Coupon.display_value = property(
+    lambda self: f"{self.discount_value_ae} AED" if self.discount_value_ae and [c.code for c in self.countries.all()] == ["AE"] else (f"{self.discount_value}%" if self.discount_type == "percent" else f"₹{self.discount_value}")
+)
+
 
 class CouponListView(DashboardListView):
     model = Coupon
@@ -19,10 +23,11 @@ class CouponListView(DashboardListView):
     singular_name = "Coupon"
     plural_name = "Coupons"
     search_fields = ["code"]
+    prefetch_related = ["countries"]
     columns = [
         {"label": "Code", "name": "code"},
         {"label": "Type", "name": "get_discount_type_display"},
-        {"label": "Value", "name": "discount_value", "type": "money"},
+        {"label": "Value", "name": "display_value"},
         {"label": "Valid until", "name": "valid_until", "type": "datetime"},
         {"label": "Active", "name": "is_active", "type": "bool"},
     ]

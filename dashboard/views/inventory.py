@@ -10,6 +10,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
 from catalog.models import Category, Product, ProductVariant
+from core.country import available_in_country
 from dashboard import selectors
 from dashboard.access import dashboard_required
 
@@ -64,9 +65,9 @@ def inventory_list(request: HttpRequest) -> HttpResponse:
         qs = qs.filter(category_id__in=all_cat_ids)
 
     if country_filter in ("IN", "INR"):
-        qs = qs.filter(countries__code="IN")
+        qs = available_in_country(qs, "IN")
     elif country_filter in ("AE", "AED"):
-        qs = qs.filter(countries__code="AE")
+        qs = available_in_country(qs, "AE")
 
     if type_filter == "variant":
         qs = qs.filter(variants__isnull=False).distinct()
