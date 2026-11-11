@@ -323,6 +323,7 @@
     var qtyInput = document.getElementById('pdp-qty');
     if (!qtyInput) return;
     var maxStock = parseInt(qtyInput.getAttribute('data-max-stock'));
+    var isAvailable = qtyInput.getAttribute('data-available') !== 'false';
     if (isNaN(maxStock)) return;
     var currQty = parseInt(qtyInput.value) || 1;
     var errorMsg = document.getElementById('pdp-stock-error-msg');
@@ -338,7 +339,7 @@
       document.querySelectorAll('.pdp-qty-input').forEach(function (i) { i.value = maxStock; });
     }
 
-    if (maxStock <= 0) {
+    if (maxStock <= 0 || !isAvailable) {
       if (errorMsg) {
         errorMsg.textContent = '';
         errorMsg.classList.add('d-none');
@@ -353,6 +354,8 @@
       });
       updateBtnText(atcBtn, 'Sold out');
       updateBtnText(stickyAtcBtn, 'Sold out');
+      if (bnForm) bnForm.classList.add('d-none');
+      if (stickyBnBtn) stickyBnBtn.classList.add('d-none');
       toggleQtyDisplay(false);
     } else {
       if (errorMsg) {
@@ -369,6 +372,8 @@
       });
       updateBtnText(atcBtn, 'Add to Cart');
       updateBtnText(stickyAtcBtn, 'Add to cart');
+      if (bnForm) bnForm.classList.remove('d-none');
+      if (stickyBnBtn) stickyBnBtn.classList.remove('d-none');
       toggleQtyDisplay(true);
     }
   };

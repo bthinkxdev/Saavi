@@ -182,17 +182,19 @@ def get_cart_item_keys(*, request: HttpRequest) -> set[str]:
 def _wishlist_items_qs(*, request: HttpRequest):
     """Shared queryset for the current request's wishlist items."""
     from accounts.models import WishlistItem
+    from catalog.selectors import _live_products
 
     if request.user.is_authenticated and hasattr(request.user, "customer_profile"):
-        return WishlistItem.objects.filter(
+        qs = WishlistItem.objects.filter(
             wishlist__customer_profile=request.user.customer_profile
         )
-    guest_id = request.session.get("guest_wishlist_id")
-    if guest_id:
-        return WishlistItem.objects.filter(wishlist_id=guest_id)
-    if not request.session.session_key:
+    elif guest_id := request.session.get("guest_wishlist_id"):
+        qs = WishlistItem.objects.filter(wishlist_id=guest_id)
+    elif not request.session.session_key:
         return WishlistItem.objects.none()
-    return WishlistItem.objects.filter(wishlist__session_key=request.session.session_key)
+    else:
+        qs = WishlistItem.objects.filter(wishlist__session_key=request.session.session_key)
+    return qs.filter(product__in=_live_products())
 
 
 def get_wishlist_count(*, request: HttpRequest) -> int:
@@ -294,6 +296,9 @@ def get_cart_summary(
                 user=cart.customer_profile.user if hasattr(cart, "customer_profile") and cart.customer_profile else None,
                 quantity=item.quantity,
             )
+            if item.unit_price_at_add != unit_price:
+                item.unit_price_at_add = unit_price
+                item.save(update_fields=["unit_price_at_add", "updated_at"])
         except Exception:
             unit_price = item.unit_price_at_add
 

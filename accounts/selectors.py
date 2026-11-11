@@ -173,14 +173,22 @@ def get_wishlist(
 
     from accounts.models import WishlistItem
     from accounts.subscription_services import WISHLIST_SHARE_SALT
+    from catalog.selectors import _live_products
+
+    from catalog.models import ProductVariant
 
     items_prefetch = Prefetch(
         "items",
-        queryset=WishlistItem.objects.select_related("product").prefetch_related(
+        queryset=WishlistItem.objects.filter(product__in=_live_products()).select_related("product").prefetch_related(
             Prefetch(
                 "product__images",
                 queryset=ProductImage.objects.order_by("-is_primary", "display_order"),
                 to_attr="primary_images",
+            ),
+            Prefetch(
+                "product__variants",
+                queryset=ProductVariant.objects.order_by("id"),
+                to_attr="variant_list",
             ),
         ),
     )

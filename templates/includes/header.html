@@ -35,10 +35,19 @@
 
   <div class="sv-header__main">
     <div class="container sv-header__inner">
-      <button class="sv-icon-btn sv-menu-toggle d-lg-none" type="button" data-bs-toggle="collapse" data-bs-target="#jmMainNav"
-        aria-controls="jmMainNav" aria-expanded="false" aria-label="{% trans 'Menu' %}">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
-      </button>
+      <div class="d-flex align-items-center gap-1 d-lg-none">
+        <button class="sv-icon-btn sv-menu-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#jmMainNav"
+          aria-controls="jmMainNav" aria-expanded="false" aria-label="{% trans 'Menu' %}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+        </button>
+        {% if served_countries|length > 1 %}
+        <form method="post" action="{% url 'core:set-country' %}" class="m-0">{% csrf_token %}
+          <select name="country" class="sv-country-pill" onchange="this.form.submit()" aria-label="{% trans 'Country' %}">
+            {% for c in served_countries %}<option value="{{ c.code }}" {% if current_country == c.code %}selected{% endif %}>{% if c.code == 'AE' %}UAE{% else %}{{ c.code }}{% endif %}</option>{% endfor %}
+          </select>
+        </form>
+        {% endif %}
+      </div>
 
       <a class="sv-logo" href="{% url 'cms:homepage' %}" aria-label="Saavi By Neethu">
         <span class="sv-logo__name">Saavi</span>

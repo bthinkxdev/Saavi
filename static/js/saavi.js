@@ -26,11 +26,15 @@
   document.addEventListener('click', function (e) {
     var b = e.target.closest('[data-sv-view]');
     if (!b) return;
+    localStorage.setItem('sv_view', b.getAttribute('data-sv-view'));
     var grid = document.getElementById('product-grid');
     if (!grid) return;
     document.querySelectorAll('[data-sv-view]').forEach(function (x) { x.classList.toggle('is-active', x === b); });
     grid.classList.toggle('is-list', b.getAttribute('data-sv-view') === 'list');
   });
+  if (window.innerWidth >= 768 && localStorage.getItem('sv_view') === 'list') {
+    document.querySelector('[data-sv-view="list"]')?.click();
+  }
 })();
 document.addEventListener('click', function (e) {
   var a = e.target.closest('[data-sv-open-tab]');

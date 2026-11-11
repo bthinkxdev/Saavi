@@ -25,9 +25,9 @@
             <h2 class="sv-h3">{% trans "Order Items" %} ({{ items|length }})</h2>
             {% for item in items %}
             <div class="sv-oitem">
-              {% with img=item.product.images.first %}{% if img %}<img src="{{ img.image.url }}" alt="" loading="lazy">{% endif %}{% endwith %}
+              {% with img=item.product.images.first %}{% if img %}<a href="{{ item.product.get_absolute_url }}"><img src="{{ img.image.url }}" alt="" loading="lazy"></a>{% endif %}{% endwith %}
               <div class="flex-grow-1">
-                <strong>{{ item.product.name }}</strong>
+                <a href="{{ item.product.get_absolute_url }}" class="text-reset text-decoration-none"><strong>{{ item.product.name }}</strong></a>
                 {% if item.variant %}<p>{{ item.variant.display_name|default:item.variant.name }}</p>{% endif %}
                 <p>{% trans "Qty:" %} {{ item.quantity }}</p>
                 {% if order.order_status == 'delivered' %}
@@ -70,8 +70,7 @@
 
           {% if order.delivery_address_snapshot %}{% with a=order.delivery_address_snapshot %}
           <section class="sv-panel">
-            <div class="d-flex justify-content-between align-items-start"><h2 class="sv-h3">{% trans "Delivery Address" %}</h2>
-            {% if order.order_status in "checkout_pending placed_cod confirmed processing" %}<a class="sv-icon-btn sv-icon-btn--sm" target="_blank" rel="noopener" title="{% trans 'Request an address change' %}" aria-label="{% trans 'Request an address change' %}" href="https://wa.me/{{ site_settings.whatsapp_number|default:'971509635106'|cut:'+'|cut:' ' }}?text={% filter urlencode %}Hi Saavi, I'd like to change the delivery address for order {{ order.order_number }}{% endfilter %}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg></a>{% endif %}</div>
+            <h2 class="sv-h3">{% trans "Delivery Address" %}</h2>
             <div class="sv-address p-0 border-0 bg-transparent">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-top:0"><path d="M12 22s7-6.5 7-12a7 7 0 0 0-14 0c0 5.5 7 12 7 12z"/><circle cx="12" cy="10" r="2.5"/></svg>
               <div>

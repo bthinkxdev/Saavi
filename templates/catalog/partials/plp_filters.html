@@ -17,11 +17,11 @@
     <div class="sv-filter__body">
       {% if active_category %}
         {% for sub in subcategories %}
-        <label class="sv-check"><input type="checkbox" name="subcategory" onclick="this.form.querySelectorAll('input[name=subcategory]').forEach(x=>{if(x!==this)x.checked=false})" value="{{ sub.pk }}" {% if filters.subcategory_id == sub.pk %}checked{% endif %}><span>{{ sub.name }}{% if sub.product_count is not None %} <em>({{ sub.product_count }})</em>{% endif %}</span></label>
+        <label class="sv-check"><input type="checkbox" name="subcategory" onclick="this.form.querySelectorAll('input[name=subcategory]').forEach(x=>{if(x!==this)x.checked=false})" onchange="location='{% if filters.subcategory_id == sub.pk %}{% if active_category.parent %}{% url 'catalog:plp-category' category_slug=active_category.parent.slug %}{% else %}{% url 'catalog:plp-category' category_slug=active_category.slug %}{% endif %}{% else %}{% url 'catalog:plp-category' category_slug=sub.slug %}{% endif %}'" value="{{ sub.pk }}" {% if filters.subcategory_id == sub.pk %}checked{% endif %}><span>{{ sub.name }}{% if sub.product_count is not None %} <em>({{ sub.product_count }})</em>{% endif %}</span></label>
         {% endfor %}
       {% else %}
         {% for cat in categories %}
-        <label class="sv-check"><input type="radio" name="category" value="{{ cat.pk }}" {% if filters.category_id == cat.pk or filters.parent_category_id == cat.pk %}checked{% endif %}><span>{{ cat.name }}</span></label>
+        <label class="sv-check"><input type="radio" name="category" value="{{ cat.pk }}" onchange="location='{% url 'catalog:plp-category' category_slug=cat.slug %}'" {% if filters.category_id == cat.pk or filters.parent_category_id == cat.pk %}checked{% endif %}><span>{{ cat.name }}</span></label>
         {% endfor %}
       {% endif %}
     </div>

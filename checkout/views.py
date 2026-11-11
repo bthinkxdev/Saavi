@@ -243,12 +243,7 @@ def checkout_view(request: HttpRequest) -> HttpResponse:
 
     addresses = []
     if profile:
-        if profile.default_address:
-            addresses = [profile.default_address]
-        else:
-            saved_list = list(get_saved_addresses(customer_profile=profile, page_size=1)["results"])
-            if saved_list:
-                addresses = [saved_list[0]]
+        addresses = list(profile.addresses.all().order_by("-is_default", "-id"))
             
     from delivery.models import City
     from core.country import get_current_country
@@ -416,6 +411,7 @@ def checkout_place_order_view(request: HttpRequest) -> HttpResponse:
     guest_name = request.POST.get("guest_name", "").strip()
     guest_email = request.POST.get("guest_email", "").strip()
     guest_phone = request.POST.get("guest_phone", "").strip()
+    guest_city = ""
 
     errors = {}
     if not guest_name:

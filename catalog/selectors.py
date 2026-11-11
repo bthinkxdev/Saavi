@@ -750,7 +750,7 @@ def get_variant_price(
 
     product = Product.objects.filter(pk=product_id, is_active=True).first() or _live_products().get(pk=product_id)
 
-    retail_price = product.market_base_price or 0
+    retail_price = product.effective_base_price or product.market_base_price or 0
     resolved_variant_id = None
     
     # Safely evaluate product in-stock status
@@ -761,7 +761,7 @@ def get_variant_price(
     elif hasattr(product, 'stock_quantity'):
         is_in_stock = product.stock_quantity > 0
 
-    mrp = product.market_mrp
+    mrp = product.effective_mrp or product.market_mrp
 
     if variant_id:
         variant = ProductVariant.objects.filter(pk=variant_id, product=product).first()
@@ -870,7 +870,7 @@ def get_category_by_slug(*, slug: str):
     return _live_categories(slug=slug).first()
 
 
-def get_plp_filter_options() -> dict:
+def get_plp_filter_options(category=None) -> dict:
     """Return sidebar filter options for PLP."""
     from catalog.models import Category, ProductAttribute, Collection
     categories = list(_live_categories(parent__isnull=True).prefetch_related("children").order_by("display_order", "name"))
@@ -882,8 +882,10 @@ def get_plp_filter_options() -> dict:
     from django.db.models import Prefetch, Q
     from catalog.models import ProductAttributeValue
     
+    cat_q = Q(category=category) | Q(category__parent=category) if category else Q()
+    prods = _live_products().filter(cat_q)
     active_value_ids = list(ProductAttributeValue.objects.filter(
-        Q(products__is_active=True) | Q(variants__product__is_active=True)
+        Q(products__in=prods) | Q(variants__product__in=prods)
     ).values_list("id", flat=True).distinct())
     
     raw_attributes = list(

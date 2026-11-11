@@ -116,7 +116,7 @@ def order_reorder_view(request: HttpRequest, order_id: int) -> HttpResponse:
     added = skipped = 0
     for item in tracking.order.items.select_related("product", "variant"):
         try:
-            add_to_cart(cart=cart, product=item.product, variant=item.variant, quantity=item.quantity)
+            add_to_cart(cart=cart, product=item.product, variant=item.variant, quantity=item.quantity, overwrite=True)
             added += 1
         except Exception:  # out of stock / inactive product
             skipped += 1

@@ -67,7 +67,7 @@
               {% for order in dashboard.recent_orders %}
               {% with st=order.order_status %}
               <tr data-group="{% if st == 'delivered' %}is-done{% elif st == 'cancelled' or st == 'refunded' %}is-off{% else %}is-progress{% endif %}">
-                <td><strong>{{ order.order_number }}</strong></td>
+                <td><strong>{{ order.order_number }}</strong><small class="d-block text-muted d-md-none">{{ order.created_at|date:"d M Y" }}</small></td>
                 <td>{{ order.created_at|date:"d M Y" }}</td>
                 <td><div class="sv-thumbs">{% for item in order.items.all|slice:":3" %}{% with img=item.product.images.first %}{% if img %}<img src="{{ img.image.url }}" alt="">{% endif %}{% endwith %}{% endfor %}<span>{{ order.items.count }} {% trans "Item" %}{{ order.items.count|pluralize }}</span></div></td>
                 <td><strong>{% money_label order.total_amount order.currency %}</strong></td>

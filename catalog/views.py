@@ -129,7 +129,7 @@ def plp_view(request: HttpRequest, category_slug: str | None = None) -> HttpResp
     sort = request.GET.get("sort", "newest")
     page = int(request.GET.get("page", 1))
     plp_data = get_plp_products(filters=filters, sort=sort, page=page, user=request.user)
-    filter_options = get_plp_filter_options()
+    filter_options = get_plp_filter_options(resolved_cat)
 
     active_cat = resolved_cat if resolved_cat else None
     

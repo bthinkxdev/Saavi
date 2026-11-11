@@ -98,7 +98,8 @@
                 onclick="if(window.handlePdpQtyChange) window.handlePdpQtyChange(-1);"
                 aria-label="{% trans 'Decrease quantity' %}">&minus;</button>
               <input type="number" id="pdp-qty" class="qty-stepper__value pdp-qty-input"
-                data-max-stock="{{ price_data.stock_quantity|default_if_none:product.stock_quantity }}"
+                data-max-stock="{% if not price_data.is_in_stock %}0{% else %}{{ price_data.stock_quantity|default_if_none:product.stock_quantity }}{% endif %}"
+                data-available="{% if price_data.is_in_stock %}true{% else %}false{% endif %}"
                 value="1" min="1" readonly aria-label="{% trans 'Quantity' %}">
               <button class="qty-stepper__btn" type="button"
                 onclick="if(window.handlePdpQtyChange) window.handlePdpQtyChange(1);"
@@ -284,14 +285,16 @@
           <p><a href="{% url 'core:shipping-policy' %}">{% trans "Shipping Policy" %}</a> · <a href="{% url 'core:refund-policy' %}">{% trans "Returns & Refunds" %}</a></p>
         </div>
       </div>
+      {% if product.size_chart and product.size_chart.is_active %}
       <aside class="sv-sizefit">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><ellipse cx="9" cy="10" rx="7" ry="4"/><path d="M2 10v4c0 2.2 3.1 4 7 4h13v-4H16M9 14h0"/></svg>
         <div>
           <strong>{% trans "Size & Fit" %}</strong>
           <p>{% for spec in product.specifications.all %}{% if "length" in spec.name|lower or "blouse" in spec.name|lower or "size" in spec.name|lower or "fit" in spec.name|lower %}{{ spec.name }}: {{ spec.value|truncatechars:40 }}{% if not forloop.last %} | {% endif %}{% endif %}{% empty %}{% trans "See the size guide for measurements." %}{% endfor %}</p>
         </div>
-        {% if product.size_chart and product.size_chart.is_active %}<a href="#" data-bs-toggle="modal" data-bs-target="#sizeGuideModal" aria-label="{% trans 'Size Guide' %}">&rarr;</a>{% endif %}
+        <a href="#" data-bs-toggle="modal" data-bs-target="#sizeGuideModal" aria-label="{% trans 'Size Guide' %}">&rarr;</a>
       </aside>
+      {% endif %}
     </div>
   </section>
   {% if related_products %}
@@ -470,7 +473,7 @@
 {% endblock %}
 
 {% block extra_js %}
-<script src="{% static 'js/pdp.js' %}?v=11"></script>
+<script src="{% static 'js/pdp.js' %}?v=12"></script>
 <script>
   document.addEventListener("DOMContentLoaded", function () {
     //analytics: view_item & ViewContent
