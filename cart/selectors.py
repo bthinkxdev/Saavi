@@ -83,6 +83,7 @@ class CartSummary:
     coupon_code: str = ""
     coupon_discount: Decimal = Decimal("0.00")
     delivery_charge: Decimal = Decimal("0.00")
+    tax_amount: Decimal = Decimal("0.00")
     grand_total: Decimal = Decimal("0.00")
     item_count: int = 0
     has_stock_issues: bool = False
@@ -267,8 +268,15 @@ def get_cart_summary(
 
     from cart.services import _resolve_unit_price
     from core.country import get_active_countries, get_current_country
+    from core.models import SiteSettings
 
     country_code = get_current_country()
+    site_settings=SiteSettings.objects.first()
+    if country_code == "AE":
+        tax_rate = site_settings.uae_tax_rate_percent if site_settings else Decimal("0.00")
+    else:
+        tax_rate = site_settings.tax_rate_percent if site_settings else Decimal("0.00")
+
     country_name = next((c.name for c in get_active_countries() if c.code == country_code), country_code)
     unavailable_ids = get_unavailable_item_ids(cart=cart) if items else set()
     unavailable_count = 0
@@ -362,7 +370,9 @@ def get_cart_summary(
             coupon_code = ""
             coupon_discount = Decimal("0.00")
 
-    grand_total = max(subtotal - coupon_discount + delivery_charge, Decimal("0.00"))
+    taxable_amount = max(subtotal - coupon_discount, Decimal("0.00"))
+    tax_amount = (taxable_amount * tax_rate / Decimal("100")).quantize(Decimal("0.01"))
+    grand_total = taxable_amount + tax_amount + delivery_charge
 
     return CartSummary(
         cart=cart,
@@ -371,6 +381,7 @@ def get_cart_summary(
         coupon_code=coupon_code,
         coupon_discount=coupon_discount,
         delivery_charge=delivery_charge,
+        tax_amount=tax_amount,
         grand_total=grand_total,
         item_count=item_count,
         has_stock_issues=has_stock_issues,

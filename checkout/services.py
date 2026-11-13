@@ -112,12 +112,13 @@ def _sync_checkout_pending_order(
     order.subtotal = summary.subtotal
     order.coupon_discount = summary.coupon_discount
     order.delivery_charge = summary.delivery_charge
+    order.tax_amount = summary.tax_amount
     order.total_amount = summary.grand_total
     order.idempotency_key = idempotency_key
     order.delivery_address_snapshot = address_snapshot
     order.currency = session.cart.currency
     order.save(
-        update_fields=["subtotal", "coupon_discount", "delivery_charge", "total_amount", "currency", "idempotency_key", "delivery_address_snapshot", "updated_at"]
+        update_fields=["subtotal", "coupon_discount", "delivery_charge", "tax_amount", "total_amount", "currency", "idempotency_key", "delivery_address_snapshot", "updated_at"]
     )
 
     if gateway_key == "cod":
@@ -284,6 +285,7 @@ def place_order(
             subtotal=summary.subtotal,
             coupon_discount=summary.coupon_discount,
             delivery_charge=summary.delivery_charge,
+            tax_amount=summary.tax_amount,
             total_amount=summary.grand_total,
             currency=session.cart.currency,
             delivery_address_snapshot=address_snapshot,

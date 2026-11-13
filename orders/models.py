@@ -97,6 +97,7 @@ class Order(TimeStampedModel):
     subtotal = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     coupon_discount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     delivery_charge = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    tax_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     total_amount = models.DecimalField(
         max_digits=12,
         decimal_places=2,

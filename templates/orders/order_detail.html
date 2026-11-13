@@ -44,6 +44,9 @@
             <div class="sv-summary__row"><span>{% trans "Subtotal" %} ({{ items|length }} {% trans "Items" %})</span><span>{% money_label order.subtotal order.currency %}</span></div>
             {% if order.coupon_discount > 0 %}<div class="sv-summary__row"><span>{% trans "Discount" %}</span><span class="sv-green">&minus; {% money_label order.coupon_discount order.currency %}</span></div>{% endif %}
             <div class="sv-summary__row"><span>{% trans "Shipping" %}</span><span>{% if order.delivery_charge > 0 %}{% money_label order.delivery_charge order.currency %}{% else %}<span class="sv-green">{% trans "Free" %}</span>{% endif %}</span></div>
+            {% if order.tax_amount > 0 %}
+            <div class="sv-summary__row"><span>{% trans "Tax" %}</span><span>{% money_label order.tax_amount order.currency %}</span></div>
+            {% endif %}
             <div class="sv-summary__total"><span>{% trans "Total Paid" %}</span><span>{% money_label order.total_amount order.currency %}</span></div>
             <div class="sv-oactions">
               <form method="post" action="{% url 'orders:reorder' order_id=order.pk %}" class="sv-oactions__form">{% csrf_token %}<button type="submit" class="sv-btn w-100"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 11a8 8 0 1 0-2.3 5.7M20 5v6h-6"/></svg>{% trans "Reorder" %}</button></form>

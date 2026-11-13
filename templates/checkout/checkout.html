@@ -329,6 +329,9 @@
           <div class="sv-summary__row"><span>{% trans "Shipping" %} <span class="sv-info" title="{% trans 'Based on your delivery city and the delivery method you choose.' %}">i</span></span><span>{% if summary.delivery_charge > 0 %}{% money_label summary.delivery_charge display_currency %}{% elif selected_city or checkout_session.address %}<span class="sv-green">{% trans "Free" %}</span>{% else %}<span class="sv-muted">{% trans "Enter address" %}</span>{% endif %}</span></div>
         </div>
 
+        {% if summary.tax_amount %}<div class="sv-summary__row"><span>{% trans "Tax" %}</span><span>{% money_label summary.tax_amount display_currency %}</span></div>
+        {% endif %}
+
         {% if estimated_delivery_text %}
         <div class="d-flex justify-content-between py-1 border-bottom text-success" style="font-size: 0.8rem;">
           <span class="d-flex align-items-center gap-1">

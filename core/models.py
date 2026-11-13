@@ -338,7 +338,8 @@ class SiteSettings(TimeStampedModel):
         related_name="+",
     )
     default_language = models.CharField(max_length=5, default="en")
-    tax_rate_percent = models.DecimalField(max_digits=5, decimal_places=2, default=0)
+    tax_rate_percent = models.DecimalField("India Tax Percentage", max_digits=5, decimal_places=2, default=0)
+    uae_tax_rate_percent = models.DecimalField("UAE Tax Percentage", max_digits=5, decimal_places=2, default=0)
     enable_cod = models.BooleanField(
         default=True,
         verbose_name="Enable Cash on Delivery (COD)",

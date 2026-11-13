@@ -344,29 +344,43 @@
                 </table>
             </div>
 
-            <div class="totals-section">
+            <div class="totals-section">     
                 <table class="totals-table">
                     <tr>
                         <td>Subtotal</td>
                         <td>{% money_label order.subtotal order.currency %}</td>
                     </tr>
-                    {% if order.delivery_charge > 0 %}
                     <tr>
-                        <td>Delivery Charge</td>
-                        <td>{% money_label order.delivery_charge order.currency %}</td>
+                        <td>Shipping Charge</td>
+                        <td>
+                        {% if order.delivery_charge > 0 %}
+                            {% money_label order.delivery_charge order.currency %}
+                        {% else %}
+                            Free
+                        {% endif %}
+                        </td>
+                    </tr>
+
+                    {% if order.tax_amount > 0 %}
+                    <tr>
+                        <td>Tax</td>
+                        <td>{% money_label order.tax_amount order.currency %}</td>
                     </tr>
                     {% endif %}
+
                     {% if order.coupon_discount > 0 %}
                     <tr>
                         <td>Discount</td>
                         <td>- {% money_label order.coupon_discount order.currency %}</td>
                     </tr>
                     {% endif %}
+
                     <tr class="total-row">
                         <td>Total Amount</td>
                         <td>{% money_label order.total_amount order.currency %}</td>
                     </tr>
                 </table>
+
             </div>
 
             <div class="invoice-footer">

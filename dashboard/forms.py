@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from django import forms
 from django.utils.text import slugify
+from payments.registry import CHECKOUT_GATEWAY_KEYS
 
 from accounts.models import CustomerProfile
 from catalog.models import (
@@ -736,6 +737,7 @@ class SiteSettingsForm(forms.ModelForm):
         "notify_low_stock",
         "notify_enquiry",
         "tax_rate_percent",
+        "uae_tax_rate_percent",
         "cod_delivery_charge",
         "default_shipping_charge",
         "free_shipping_threshold",
@@ -775,6 +777,7 @@ class SiteSettingsForm(forms.ModelForm):
             "notify_low_stock",
             "notify_enquiry",
             "tax_rate_percent",
+            "uae_tax_rate_percent",
             "cod_delivery_charge",
             "default_shipping_charge",
             "free_shipping_threshold",
@@ -809,8 +812,8 @@ class SiteSettingsForm(forms.ModelForm):
         if default_curr:
             if "default_currency" in self.fields:
                 self.fields["default_currency"].initial = default_curr.pk
-        if self.instance and not getattr(self.instance, "enable_cod", True):
-            self.fields.pop("cod_delivery_charge", None)
+        if "cod" not in CHECKOUT_GATEWAY_KEYS:
+            self.fields["cod_delivery_charge"].disabled = True
         if self.instance and not getattr(self.instance, "enable_stripe", True):
             self.fields.pop("stripe_publishable_key", None)
             self.fields.pop("stripe_secret_key", None)
