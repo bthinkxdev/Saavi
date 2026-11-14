@@ -85,6 +85,6 @@ class HomepageRenderTests(TestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertContains(resp, "Shop by Collection")
         self.assertContains(resp, "sv-coltile")
-        self.assertContains(resp, "Why Shop with Sarocchi")
+        self.assertContains(resp, "Why Shop with Saavi By Neethu")
         self.assertContains(resp, "collection=wedding-season")
         self.assertContains(resp, "Product 1")
