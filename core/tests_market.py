@@ -112,6 +112,17 @@ class CartCountryAvailabilityTests(TestCase):
         self.assertEqual(s.subtotal, Decimal("100.00"))
         self.assertEqual(s.item_count, 1)
 
+    def test_tax_uses_the_country_rate_and_ignores_unavailable_lines(self):
+        from core.models import SiteSettings
+
+        SiteSettings.objects.update_or_create(
+            pk=1, defaults={"tax_rate_percent": Decimal("5"), "uae_tax_rate_percent": Decimal("10")}
+        )
+        india = self._summary("IN")  # UAE-only line is excluded: taxable base is 100
+        self.assertEqual((india.subtotal, india.tax_amount, india.grand_total), (Decimal("100.00"), Decimal("5.00"), Decimal("105.00")))
+        uae = self._summary("AE")  # AED prices: 10 + 2*20 = 50, taxed at the UAE rate
+        self.assertEqual((uae.subtotal, uae.tax_amount, uae.grand_total), (Decimal("50.00"), Decimal("5.00"), Decimal("55.00")))
+
     def test_remove_unavailable_items(self):
         from cart.services import remove_unavailable_items
 
