@@ -168,3 +168,29 @@ document.addEventListener('change', function (e) {
   if (lab && out) out.textContent = lab.getAttribute('data-name') || lab.textContent.trim();
 });
 window.addEventListener('pageshow', function () { if (window.htmx) htmx.trigger('#cart-count-badge', 'cartUpdated'); });
+
+/* Country switcher dropdown: outside click + Escape close, arrow keys move between options */
+(function () {
+  function openOnes() { return document.querySelectorAll('[data-sv-country][open]'); }
+  document.addEventListener('click', function (e) {
+    openOnes().forEach(function (d) { if (!d.contains(e.target)) d.removeAttribute('open'); });
+  });
+  document.addEventListener('keydown', function (e) {
+    var d = e.target.closest && e.target.closest('[data-sv-country]');
+    if (e.key === 'Escape') {
+      openOnes().forEach(function (o) { o.removeAttribute('open'); var s = o.querySelector('summary'); if (s && o === d) s.focus(); });
+      return;
+    }
+    if (!d || !d.hasAttribute('open') || (e.key !== 'ArrowDown' && e.key !== 'ArrowUp')) return;
+    var opts = Array.prototype.slice.call(d.querySelectorAll('.sv-country__opt'));
+    var i = opts.indexOf(document.activeElement);
+    i = e.key === 'ArrowDown' ? (i + 1) % opts.length : (i <= 0 ? opts.length - 1 : i - 1);
+    opts[i].focus(); e.preventDefault();
+  });
+  document.addEventListener('toggle', function (e) {
+    var d = e.target;
+    if (!d.matches || !d.matches('[data-sv-country]') || !d.open) return;
+    var active = d.querySelector('.sv-country__opt.is-active') || d.querySelector('.sv-country__opt');
+    if (active) active.focus({ preventScroll: true });
+  }, true);
+})();
