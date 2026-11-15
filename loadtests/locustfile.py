@@ -53,7 +53,7 @@ class StorefrontUser(HttpUser):
 
     @task(1)
     def checkout_flow(self) -> None:
-        csrf = self.client.cookies.get("csrftoken", "")
+        csrf = self.client.cookies.get("saavi_csrftoken", "")
         headers = {"X-CSRFToken": csrf} if csrf else {}
         self.client.post(
             "/cart/add/",

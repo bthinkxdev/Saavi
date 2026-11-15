@@ -85,6 +85,14 @@ class HomepageRenderTests(TestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertContains(resp, "Shop by Collection")
         self.assertContains(resp, "sv-coltile")
-        self.assertContains(resp, "Why Shop with Sarocchi")
+        self.assertContains(resp, "Why Shop with Saavi By Neethu")
         self.assertContains(resp, "collection=wedding-season")
         self.assertContains(resp, "Product 1")
+
+    def test_country_switcher_lists_both_markets_and_marks_the_current_one(self):
+        resp = self.client.get("/", HTTP_CF_IPCOUNTRY="AE")
+        self.assertContains(resp, "Select your country")
+        self.assertContains(resp, 'name="country" value="IN"')
+        self.assertContains(resp, 'name="country" value="AE"')
+        self.assertContains(resp, 'sv-country__opt is-active')
+        self.assertNotContains(resp, "sv-country-pill")  # the old native select is gone

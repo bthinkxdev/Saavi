@@ -1,0 +1,27 @@
+{% load i18n %}
+{% comment %}
+Country switcher dropdown (India / UAE). Expects: variant ("top" on the dark topbar, "light" on the white header).
+{% endcomment %}
+{% if served_countries|length > 1 %}
+<form class="sv-country sv-country--{{ variant }}" method="post" action="{% url 'core:set-country' %}">
+  {% csrf_token %}
+  <details class="sv-country__details" data-sv-country>
+    <summary class="sv-country__btn" aria-label="{% trans 'Select your country' %}">
+      {% include "includes/_flag.html" with code=current_country %}
+      <span class="sv-country__name">{{ current_country_name }}</span>
+      <span class="sv-country__code">{{ current_country }}</span>
+      <svg class="sv-country__chev" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+    </summary>
+    <div class="sv-country__menu" role="menu">
+      <p class="sv-country__title">{% trans "Shop in" %}</p>
+      {% for c in served_countries %}
+      <button type="submit" name="country" value="{{ c.code }}" role="menuitemradio" aria-checked="{% if current_country == c.code %}true{% else %}false{% endif %}" class="sv-country__opt{% if current_country == c.code %} is-active{% endif %}">
+        {% include "includes/_flag.html" with code=c.code %}
+        <span class="sv-country__optname">{{ c.name }}{% if c.currency %}<small>{{ c.currency.code }}{% if c.currency.symbol != c.currency.code %} &middot; {{ c.currency.symbol }}{% endif %}</small>{% endif %}</span>
+        <svg class="sv-country__tick" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>
+      </button>
+      {% endfor %}
+    </div>
+  </details>
+</form>
+{% endif %}

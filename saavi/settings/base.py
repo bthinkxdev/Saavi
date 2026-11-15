@@ -22,6 +22,15 @@ DEBUG = env.bool("DEBUG", default=False)
 
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["localhost", "127.0.0.1"])
 
+# Origins allowed to POST over HTTPS, e.g. https://saavi.bthinkx.com (comma separated).
+CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS", default=[])
+
+# App-specific cookie names. Several Django apps share this server and parent domain; with the
+# default "csrftoken"/"sessionid" names their cookies collide and CSRF checks fail with
+# "CSRF token from POST incorrect".
+CSRF_COOKIE_NAME = env("CSRF_COOKIE_NAME", default="saavi_csrftoken")
+SESSION_COOKIE_NAME = env("SESSION_COOKIE_NAME", default="saavi_sessionid")
+
 LOCAL_APPS = [
     "core",
     "accounts",
