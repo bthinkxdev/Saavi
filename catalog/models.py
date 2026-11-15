@@ -34,6 +34,13 @@ class Category(TimeStampedModel):
         null=True,
         verbose_name="Open Graph image",
     )
+    image = models.ImageField(
+        upload_to="categories/",
+        blank=True,
+        null=True,
+        verbose_name="Category image",
+        help_text="Banner shown for this category on the homepage and category page. Recommended 1200x800 (3:2).",
+    )
     parent = models.ForeignKey(
         "self",
         on_delete=models.SET_NULL,
@@ -185,7 +192,12 @@ class Collection(TimeStampedModel):
     name = models.CharField(max_length=120, verbose_name="Name")
     slug = models.SlugField(max_length=120, unique=True, db_index=True, verbose_name="Slug")
     description = models.TextField(blank=True, verbose_name="Description")
-    image = models.ImageField(upload_to="collections/", blank=True, verbose_name="Image")
+    image = models.ImageField(
+        upload_to="collections/",
+        blank=True,
+        verbose_name="Image",
+        help_text="Cover for the collection tile and homepage banners. Recommended 800x1000 (4:5).",
+    )
     is_active = models.BooleanField(
         default=True,
         db_index=True,

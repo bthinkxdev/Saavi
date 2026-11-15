@@ -880,3 +880,8 @@ body.sv-body { background: var(--sv-cream); color: var(--sv-text); font-family: 
 .sv-promise__item strong { display: block; margin-bottom: .4rem; font-family: var(--sv-serif); font-size: 1.1rem; color: var(--sv-olive-deep); }
 @media (max-width: 991.98px) { .sv-promise { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 575.98px) { .sv-promise { grid-template-columns: 1fr; } }
+
+/* Uploaded header/footer logo (Dashboard -> Settings -> Header & footer logo) */
+.sv-logo__img { display: block; height: 52px; width: auto; max-width: 240px; object-fit: contain; }
+@media (max-width: 991.98px) { .sv-logo__img { height: 42px; max-width: 170px; } }
+.sv-logo--footer .sv-logo__img { height: 56px; padding: 6px 12px; border-radius: 10px; background: var(--sv-cream); }

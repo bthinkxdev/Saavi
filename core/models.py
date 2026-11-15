@@ -253,7 +253,20 @@ class SiteSettings(TimeStampedModel):
     """
 
     site_name = models.CharField(max_length=120, default="Saavi By Neethu")
-    logo = models.ImageField(upload_to="site/", blank=True, null=True, verbose_name="Logo")
+    logo = models.ImageField(
+        upload_to="site/",
+        blank=True,
+        null=True,
+        verbose_name="Logo",
+        help_text="Used on invoices, as the browser-tab icon and in social share previews. A square image works best.",
+    )
+    header_logo = models.ImageField(
+        upload_to="site/",
+        blank=True,
+        null=True,
+        verbose_name="Header & footer logo",
+        help_text="Wide logo (about 400x120, transparent PNG) shown in the site header and footer. Leave empty to show the text logo.",
+    )
     primary_color = models.CharField(max_length=7, default="#1B4D3E")
     secondary_color = models.CharField(max_length=7, default="#C5A059")
     font_family = models.CharField(max_length=120, default="Inter, sans-serif")

@@ -89,6 +89,50 @@ class HomepageRenderTests(TestCase):
         self.assertContains(resp, "collection=wedding-season")
         self.assertContains(resp, "Product 1")
 
+    def test_category_card_uses_its_own_uploaded_image(self):
+        Category.objects.filter(slug="sarees").update(image="categories/sarees-banner.jpg")
+        resp = self.client.get("/", HTTP_CF_IPCOUNTRY="IN")
+        self.assertContains(resp, "/media/categories/sarees-banner.jpg")
+
+    def test_category_card_falls_back_to_a_product_photo_without_an_image(self):
+        p = Product.objects.get(sku="P1")
+        ProductImage.objects.create(product=p, image="products/placeholders/product-1.png", is_primary=True)
+        resp = self.client.get("/", HTTP_CF_IPCOUNTRY="IN")
+        self.assertContains(resp, "/media/products/placeholders/product-1.png")
+
+    def test_collection_image_is_used_for_tile_and_festive_banner(self):
+        col = Collection.objects.get(slug="wedding-season")
+        col.image = "collections/wedding-cover.jpg"
+        col.save()
+        resp = self.client.get("/", HTTP_CF_IPCOUNTRY="IN")
+        self.assertContains(resp, "/media/collections/wedding-cover.jpg")
+
+    def test_header_shows_uploaded_logo_else_text_logo(self):
+        from core.models import SiteSettings
+
+        text = self.client.get("/", HTTP_CF_IPCOUNTRY="IN")
+        self.assertContains(text, "sv-logo__name")
+        self.assertNotContains(text, "sv-logo__img")
+
+        s, _ = SiteSettings.objects.get_or_create(pk=1)
+        s.header_logo = "site/header-logo.png"
+        s.save()
+        from django.core.cache import cache
+
+        cache.delete("site_settings_singleton")
+        img = self.client.get("/", HTTP_CF_IPCOUNTRY="IN")
+        self.assertContains(img, "/media/site/header-logo.png")
+        self.assertContains(img, "sv-logo__img")
+
+    def test_dashboard_forms_expose_the_new_image_fields(self):
+        from dashboard.forms import CategoryForm, SiteSettingsForm
+
+        self.assertIn("image", CategoryForm().fields)
+        self.assertIn("header_logo", SiteSettingsForm().fields)
+        from dashboard.forms import CollectionForm
+
+        self.assertIn("image", CollectionForm().fields)
+
     def test_country_switcher_lists_both_markets_and_marks_the_current_one(self):
         resp = self.client.get("/", HTTP_CF_IPCOUNTRY="AE")
         self.assertContains(resp, "Select your country")

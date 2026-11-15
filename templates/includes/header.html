@@ -34,8 +34,8 @@
       </div>
 
       <a class="sv-logo" href="{% url 'cms:homepage' %}" aria-label="Saavi By Neethu">
-        <span class="sv-logo__name">Saavi</span>
-        <span class="sv-logo__sub">BY NEETHU</span>
+{% if site_settings.header_logo %}<img class="sv-logo__img" src="{{ site_settings.header_logo.url }}" alt="{{ site_settings.site_name|default:'Saavi By Neethu' }}">{% else %}<span class="sv-logo__name">Saavi</span>
+        <span class="sv-logo__sub">BY NEETHU</span>{% endif %}
       </a>
 
       <nav class="sv-nav d-none d-lg-block" aria-label="{% trans 'Primary' %}">

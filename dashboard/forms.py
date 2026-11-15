@@ -193,6 +193,7 @@ class CategoryForm(SlugAutoMixin):
             "is_active",
             "meta_title",
             "meta_description",
+            "image",
             "og_image",
         ]
 
@@ -719,6 +720,7 @@ class SiteSettingsForm(forms.ModelForm):
     field_order = [
         "site_name",
         "logo",
+        "header_logo",
         "primary_color",
         "secondary_color",
         "font_family",
@@ -760,6 +762,7 @@ class SiteSettingsForm(forms.ModelForm):
         fields = [
             "site_name",
             "logo",
+            "header_logo",
             "primary_color",
             "secondary_color",
             "font_family",

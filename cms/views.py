@@ -47,11 +47,24 @@ def homepage_view(request: HttpRequest) -> HttpResponse:
             tabs.append({"category": cat, "products": items})
         return tabs
 
+    def _own_image_url(obj) -> str:
+        """Image uploaded for the category itself (banner image, then the SEO image)."""
+        for attr in ("image", "og_image"):
+            file = getattr(obj, attr, None)
+            if file:
+                try:
+                    return file.url
+                except ValueError:
+                    continue
+        return ""
+
     collections = list(get_category_tree())[:2]
     for cat in collections:
-        sample = get_products_by_category_slug(cat.slug, limit=1)
-        image = sample[0].primary_images[0] if sample and getattr(sample[0], "primary_images", None) else None
-        cat.banner_image_url = image.image.url if image and image.image else ""
+        cat.banner_image_url = _own_image_url(cat)
+        if not cat.banner_image_url:  # fall back to a product photo from the category
+            sample = get_products_by_category_slug(cat.slug, limit=1)
+            image = sample[0].primary_images[0] if sample and getattr(sample[0], "primary_images", None) else None
+            cat.banner_image_url = image.image.url if image and image.image else ""
 
     # Collection rails are driven by the "Featured Collections" homepage section's slug list.
     rail_slugs: list[str] = []
@@ -68,12 +81,14 @@ def homepage_view(request: HttpRequest) -> HttpResponse:
         title="Saavi By Neethu | Sarees & Ethnic Wear",
         description="Shop elegant sarees and men's kurtas from Saavi By Neethu. Rooted in tradition, woven with elegance. Delivered to India, the UAE and worldwide.",
     )
-    festive_image = ""
-    for product in product_rails.get("featured", []) + product_rails.get("bestsellers", []):
-        imgs = getattr(product, "primary_images", None) or []
-        if imgs and imgs[0].image:
-            festive_image = imgs[0].image.url
-            break
+    # Festive banner: the "Festive Celebrations" collection image, else a featured product photo.
+    festive_image = next((c.cover_url for c in get_featured_collections() if c.slug == "festive-celebrations" and c.cover_url), "")
+    if not festive_image:
+        for product in product_rails.get("featured", []) + product_rails.get("bestsellers", []):
+            imgs = getattr(product, "primary_images", None) or []
+            if imgs and imgs[0].image:
+                festive_image = imgs[0].image.url
+                break
 
     active_sections = []
     for s in sections:

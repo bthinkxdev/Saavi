@@ -444,12 +444,14 @@ def _price_bounds(category) -> dict:
 
 
 def _banner_image(category, plp_data) -> str:
-    """Category banner: the category's OG image, else the first listed product photo."""
-    if category is not None and getattr(category, "og_image", None):
-        try:
-            return category.og_image.url
-        except ValueError:
-            pass
+    """Category banner: the category image, then its OG image, else the first listed product photo."""
+    for attr in ("image", "og_image"):
+        file = getattr(category, attr, None) if category is not None else None
+        if file:
+            try:
+                return file.url
+            except ValueError:
+                continue
     for product in (plp_data.get("results") if isinstance(plp_data, dict) else getattr(plp_data, "results", [])) or []:
         imgs = getattr(product, "primary_images", None) or []
         if imgs and getattr(imgs[0], "image", None):

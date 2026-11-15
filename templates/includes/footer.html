@@ -4,7 +4,8 @@
     <div class="jm-footer__grid">
       <div class="jm-footer__brand">
         <a class="sv-logo sv-logo--footer" href="{% url 'cms:homepage' %}" aria-label="Saavi By Neethu">
-          <span class="sv-logo__name">Saavi</span><span class="sv-logo__sub">BY NEETHU</span>
+{% if site_settings.header_logo %}<img class="sv-logo__img" src="{{ site_settings.header_logo.url }}" alt="{{ site_settings.site_name|default:'Saavi By Neethu' }}">{% else %}<span class="sv-logo__name">Saavi</span>
+          <span class="sv-logo__sub">BY NEETHU</span>{% endif %}
         </a>
         <p class="jm-footer__tagline">{% trans "Sarees & Ethnic Wear — Rooted in Tradition, Woven with Elegance." %}</p>
         <div class="jm-footer__social">
